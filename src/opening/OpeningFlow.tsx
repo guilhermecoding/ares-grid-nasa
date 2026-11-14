@@ -67,11 +67,6 @@ export function OpeningFlow({
     [savedProfile, playerName, initialProfile, onSaveProfile, onEnterWorld],
   )
 
-  const skip = () => {
-    soundEngine.goStart()
-    finishToWorld()
-  }
-
   const startIntro = () => {
     void unlockAudio()
     setMuted(false)
@@ -83,8 +78,6 @@ export function OpeningFlow({
     setPhase('scene1_countdown')
   }
 
-  const showSkip = phase !== 'ready_gate' && phase !== 'start_mission_1'
-
   useEffect(() => {
     if (phase !== 'scene2_takeoff') return
     soundEngine.cockpitEnter()
@@ -92,16 +85,6 @@ export function OpeningFlow({
 
   return (
     <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-void-950" style={{ touchAction: 'manipulation' }}>
-      {showSkip && (
-        <button
-          type="button"
-          className="absolute top-3 right-3 z-50 min-h-12 rounded-lg border border-void-500/50 bg-void-900/70 px-3 text-sm text-void-300 backdrop-blur-sm hover:text-void-100"
-          onClick={skip}
-        >
-          Pular Introdução
-        </button>
-      )}
-
       {phase === 'ready_gate' && (
         <ReadyGate
           openingCompleted={openingCompleted}

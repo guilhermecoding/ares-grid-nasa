@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { soundEngine } from '../services/soundEngine'
 
 const CHAR_MS = 10
@@ -19,11 +19,12 @@ interface PixelDialogBoxProps {
   className?: string
 }
 
-function Rivet({ className }: { className: string }) {
+function CornerRivet({ className }: { className: string }) {
   return (
-    <span className={`pointer-events-none absolute font-pixel text-[10px] leading-none text-[#f4fff4] select-none ${className}`} aria-hidden>
-      +
-    </span>
+    <span
+      className={`pointer-events-none absolute h-2.5 w-2.5 border-[#c8a090]/80 ${className}`}
+      aria-hidden
+    />
   )
 }
 
@@ -44,17 +45,29 @@ export function PixelDialogBox({
   const [charIdx, setCharIdx] = useState(0)
   const [typingDone, setTypingDone] = useState(false)
   const [visible, setVisible] = useState(open)
+  const [imgFailed, setImgFailed] = useState(false)
+  const wasOpenRef = useRef(open)
+  const onTypingCompleteRef = useRef(onTypingComplete)
+  onTypingCompleteRef.current = onTypingComplete
 
   useEffect(() => {
-    if (open) setVisible(true)
-  }, [open])
+    if (open) {
+      setVisible(true)
+      if (!wasOpenRef.current) soundEngine.dialogOpen()
+    } else if (wasOpenRef.current && visible) {
+      soundEngine.dialogClose()
+    }
+    wasOpenRef.current = open
+  }, [open, visible])
+
+  const linesKey = lines.join('\0')
 
   useEffect(() => {
     if (!open || !entered) return
     setLineIdx(0)
     setCharIdx(0)
     setTypingDone(false)
-  }, [open, entered, lines])
+  }, [open, entered, linesKey])
 
   useEffect(() => {
     if (!entered || !open || typingDone || lines.length === 0) return
@@ -73,7 +86,7 @@ export function PixelDialogBox({
     if (lineIdx >= lines.length - 1) {
       const id = window.setTimeout(() => {
         setTypingDone(true)
-        onTypingComplete?.()
+        onTypingCompleteRef.current?.()
       }, LINE_PAUSE_MS)
       return () => clearTimeout(id)
     }
@@ -83,12 +96,14 @@ export function PixelDialogBox({
       setCharIdx(0)
     }, LINE_PAUSE_MS)
     return () => clearTimeout(id)
-  }, [entered, open, typingDone, lines, lineIdx, charIdx, onTypingComplete])
+  }, [entered, open, typingDone, lines, lineIdx, charIdx])
 
   if (!visible) return null
 
   return (
-    <div className={`pointer-events-auto absolute inset-0 z-20 flex items-center justify-center p-4 ${className}`}>
+    <div
+      className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center p-3 pb-4 sm:p-5 sm:pb-6 ${className}`}
+    >
       <AnimatePresence
         onExitComplete={() => {
           setVisible(false)
@@ -99,7 +114,7 @@ export function PixelDialogBox({
         {open && (
           <motion.div
             key="pixel-tv"
-            className="relative w-full max-w-lg origin-center"
+            className="pointer-events-auto relative w-full max-w-2xl origin-center overflow-visible"
             style={{ imageRendering: 'pixelated' }}
             initial={{ scaleY: 0.02, scaleX: 0.96, opacity: 0.85 }}
             animate={{ scaleY: 1, scaleX: 1, opacity: 1 }}
@@ -114,46 +129,54 @@ export function PixelDialogBox({
               }
             }}
           >
+            {/* Character breaks the frame (right side) */}
+            {characterSrc && !imgFailed ? (
+              <img
+                src={characterSrc}
+                alt={characterAlt}
+                className="pointer-events-none absolute -top-10 -right-1 z-20 h-28 w-28 object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.55)] sm:-top-14 sm:right-0 sm:h-36 sm:w-36"
+                draggable={false}
+                onError={() => setImgFailed(true)}
+              />
+            ) : null}
+
             {/* Outer dark outline */}
-            <div className="rounded-md bg-[#1a1c3a] p-[3px] shadow-[0_8px_32px_rgba(0,0,0,0.55)]">
-              {/* Mint border */}
-              <div className="rounded-[5px] bg-[#f4fff4] p-[6px] sm:p-[8px]">
+            <div className="relative rounded-md bg-[#1a1c3a] p-[3px] shadow-[0_8px_32px_rgba(0,0,0,0.55)]">
+              {/* Mint / cream border */}
+              <div className="rounded-[5px] bg-[#f4fff4] p-[5px] sm:p-[7px]">
                 {/* Inner dark outline */}
                 <div className="rounded-sm bg-[#1a1c3a] p-[2px]">
                   {/* Indigo panel */}
                   <div
-                    className="relative min-h-[160px] rounded-sm bg-[#30346d] px-4 pt-4 pb-3 sm:min-h-[180px] sm:px-5 sm:pt-5 sm:pb-4"
+                    className={`relative min-h-[120px] rounded-sm bg-[#30346d] px-4 pt-3 pb-3 sm:min-h-[132px] sm:px-5 sm:pt-4 sm:pb-4 ${
+                      characterSrc ? 'pr-24 sm:pr-32' : ''
+                    }`}
                     style={{
                       backgroundImage: `
-                        radial-gradient(circle at 18% 22%, rgba(244,255,244,0.12) 0 1px, transparent 1.5px),
-                        radial-gradient(circle at 72% 38%, rgba(244,255,244,0.1) 0 1px, transparent 1.5px),
-                        radial-gradient(circle at 40% 78%, rgba(244,255,244,0.08) 0 1px, transparent 1.5px),
-                        radial-gradient(circle at 85% 70%, rgba(244,255,244,0.09) 0 1px, transparent 1.5px)
+                        radial-gradient(circle at 18% 22%, rgba(244,255,244,0.1) 0 1px, transparent 1.5px),
+                        radial-gradient(circle at 72% 38%, rgba(244,255,244,0.08) 0 1px, transparent 1.5px),
+                        radial-gradient(circle at 40% 78%, rgba(244,255,244,0.07) 0 1px, transparent 1.5px),
+                        radial-gradient(circle at 85% 70%, rgba(244,255,244,0.08) 0 1px, transparent 1.5px)
                       `,
                     }}
                   >
-                    <Rivet className="top-2 left-2" />
-                    <Rivet className="top-2 right-2" />
-                    <Rivet className="bottom-2 left-2" />
-                    <Rivet className="right-2 bottom-2" />
+                    <CornerRivet className="top-1.5 left-1.5 border-t-2 border-l-2" />
+                    <CornerRivet className="top-1.5 right-1.5 border-t-2 border-r-2" />
+                    <CornerRivet className="bottom-1.5 left-1.5 border-b-2 border-l-2" />
+                    <CornerRivet className="right-1.5 bottom-1.5 border-r-2 border-b-2" />
 
                     {title ? (
-                      <p className="mb-2 border-b border-[#f4fff4]/25 pb-1 font-pixel text-[10px] tracking-widest text-[#f4fff4]/70 uppercase sm:text-xs">
+                      <p className="mb-1.5 border-b border-[#f4fff4]/25 pb-1 font-pixel text-[10px] tracking-widest text-[#f4fff4]/70 uppercase sm:text-xs">
                         {title}
                       </p>
                     ) : null}
 
-                    <div
-                      className={`font-pixel text-sm leading-relaxed text-[#f4fff4] sm:text-base ${characterSrc ? 'pr-16 sm:pr-20' : ''}`}
-                      role="log"
-                      aria-live="polite"
-                    >
+                    <div className="font-pixel text-sm leading-relaxed text-[#f4fff4] sm:text-base" role="log" aria-live="polite">
                       {lines.slice(0, Math.min(lineIdx + 1, lines.length)).map((line, i) => {
                         const text = i < lineIdx || typingDone ? line : line.slice(0, charIdx)
                         const isCurrent = i === lineIdx && entered && !typingDone
                         return (
-                          <p key={i} className={i === 0 ? 'font-bold' : 'mt-1 opacity-95'}>
-                            <span className="mr-2 text-[#f4fff4]/60">{'>'}</span>
+                          <p key={i} className={i === 0 ? '' : 'mt-1 opacity-95'}>
                             {text}
                             {isCurrent && <span className="ml-0.5 inline-block w-2 animate-pulse bg-[#f4fff4]">▌</span>}
                           </p>
@@ -161,16 +184,7 @@ export function PixelDialogBox({
                       })}
                     </div>
 
-                    {footer ? <div className="relative z-[1] mt-4 flex justify-end">{footer}</div> : null}
-
-                    {characterSrc ? (
-                      <img
-                        src={characterSrc}
-                        alt={characterAlt}
-                        className="pointer-events-none absolute right-1 bottom-1 h-14 w-14 object-contain sm:h-16 sm:w-16"
-                        draggable={false}
-                      />
-                    ) : null}
+                    {footer ? <div className="relative z-[1] mt-3 flex justify-center">{footer}</div> : null}
                   </div>
                 </div>
               </div>
@@ -179,7 +193,7 @@ export function PixelDialogBox({
             {/* Brief CRT scan flash on open */}
             <motion.div
               className="pointer-events-none absolute inset-0 rounded-md bg-[#f4fff4]"
-              initial={{ opacity: 0.35 }}
+              initial={{ opacity: 0.3 }}
               animate={{ opacity: 0 }}
               transition={{ duration: 0.35 }}
             />

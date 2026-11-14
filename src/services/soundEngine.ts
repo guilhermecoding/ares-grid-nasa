@@ -155,4 +155,48 @@ export const soundEngine = {
     setTimeout(() => beep(880, 0.1, 'sine', 0.08), 280)
     setTimeout(() => beep(1175, 0.16, 'sine', 0.09), 400)
   },
+  /** CRT / pixel-dialog power-on. */
+  dialogOpen: () => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+
+    const whoosh = audio.createOscillator()
+    const g = audio.createGain()
+    whoosh.type = 'sawtooth'
+    whoosh.frequency.setValueAtTime(90, audio.currentTime)
+    whoosh.frequency.exponentialRampToValueAtTime(480, audio.currentTime + 0.18)
+    g.gain.setValueAtTime(0.001, audio.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.1, audio.currentTime + 0.04)
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.22)
+    whoosh.connect(g)
+    g.connect(audio.destination)
+    whoosh.start()
+    whoosh.stop(audio.currentTime + 0.22)
+
+    beep(880, 0.06, 'square', 0.06)
+    setTimeout(() => beep(1320, 0.08, 'sine', 0.05), 50)
+  },
+  /** CRT / pixel-dialog power-off. */
+  dialogClose: () => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+
+    const whoosh = audio.createOscillator()
+    const g = audio.createGain()
+    whoosh.type = 'sawtooth'
+    whoosh.frequency.setValueAtTime(420, audio.currentTime)
+    whoosh.frequency.exponentialRampToValueAtTime(70, audio.currentTime + 0.2)
+    g.gain.setValueAtTime(0.001, audio.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.09, audio.currentTime + 0.03)
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.24)
+    whoosh.connect(g)
+    g.connect(audio.destination)
+    whoosh.start()
+    whoosh.stop(audio.currentTime + 0.24)
+
+    beep(330, 0.07, 'square', 0.05)
+    setTimeout(() => beep(180, 0.1, 'triangle', 0.04), 40)
+  },
 }

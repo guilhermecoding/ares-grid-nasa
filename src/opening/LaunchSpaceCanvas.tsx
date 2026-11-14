@@ -308,8 +308,9 @@ export function LaunchSpaceCanvas({
 
     let w = 0
     let h = 0
+    let lastNow = performance.now()
     const stars: Star[] = []
-    const STAR_COUNT = 180
+    const STAR_COUNT = 240
 
     const resize = () => {
       const parent = canvas.parentElement
@@ -324,10 +325,12 @@ export function LaunchSpaceCanvas({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
+    /** Spawn far away; staggered Z keeps a continuous stream on screen. */
     const resetStar = (s: Star, randomZ = true) => {
-      s.x = (Math.random() - 0.5) * w * 2
-      s.y = (Math.random() - 0.5) * h * 2
-      s.z = randomZ ? Math.random() * w : w
+      const spread = Math.max(w, h) * 1.1
+      s.x = (Math.random() - 0.5) * spread
+      s.y = (Math.random() - 0.5) * spread
+      s.z = randomZ ? Math.random() * w * 0.9 + w * 0.1 : w * (0.92 + Math.random() * 0.08)
       s.pz = s.z
     }
 
@@ -343,10 +346,17 @@ export function LaunchSpaceCanvas({
 
     let earthY = h * 0.92
     const t0 = performance.now()
+    const margin = 48
 
     const draw = (now: number) => {
       const t = (now - t0) / 1000
-      const speed = 4 + warpRef.current * 28
+      const dt = Math.min(0.05, (now - lastNow) / 1000)
+      lastNow = now
+
+      const warpAmt = Math.min(1, Math.max(0, warpRef.current))
+      // Units/sec — smooth continuous fly-by, not frame-tied blinks
+      const speed = (90 + warpAmt * 780) * dt
+
       ctx.fillStyle = '#05030c'
       ctx.fillRect(0, 0, w, h)
 
@@ -362,39 +372,110 @@ export function LaunchSpaceCanvas({
       for (const s of stars) {
         s.pz = s.z
         s.z -= speed
-        if (s.z <= 1) {
+
+        if (s.z <= 2) {
           resetStar(s, false)
           continue
         }
+
         const sx = cx + (s.x / s.z) * w * 0.5
         const sy = cy + (s.y / s.z) * h * 0.5
         const px = cx + (s.x / s.pz) * w * 0.5
         const py = cy + (s.y / s.pz) * h * 0.5
-        const alpha = Math.min(1, (1 - s.z / w) * 1.4)
+
+        // Recycle off-screen after drawing would be invisible — keep stream steady
+        if (
+          (sx < -margin && px < -margin) ||
+          (sx > w + margin && px > w + margin) ||
+          (sy < -margin && py < -margin) ||
+          (sy > h + margin && py > h + margin)
+        ) {
+          resetStar(s, false)
+          continue
+        }
+
+        // Fade in from far, fade out near camera — no hard pop
+        const depth = 1 - s.z / w
+        const fadeIn = Math.min(1, depth * 2.4)
+        const fadeOut = Math.min(1, (s.z - 2) / (w * 0.12))
+        const alpha = Math.min(0.95, fadeIn * fadeOut * (0.35 + warpAmt * 0.65))
+        if (alpha < 0.02) continue
+
+        const streak = Math.max(1.2, Math.min(28, Math.hypot(sx - px, sy - py)))
         ctx.strokeStyle = `rgba(200,220,255,${alpha})`
-        ctx.lineWidth = Math.max(1, (1 - s.z / w) * 2.2)
+        ctx.lineWidth = Math.max(1, depth * (1.2 + warpAmt * 2.4))
+        ctx.lineCap = 'round'
         ctx.beginPath()
-        ctx.moveTo(px, py)
-        ctx.lineTo(sx, sy)
+        // Stretch trail slightly for continuous warp feel
+        const ux = streak > 0.01 ? (sx - px) / streak : 0
+        const uy = streak > 0.01 ? (sy - py) / streak : 0
+        const extend = 1 + warpAmt * 1.8
+        ctx.moveTo(px - ux * streak * 0.15, py - uy * streak * 0.15)
+        ctx.lineTo(sx + ux * streak * (extend - 1), sy + uy * streak * (extend - 1))
         ctx.stroke()
       }
 
-      earthY = h * (0.78 + 0.18 * (1 - Math.min(1, warpRef.current)))
-      const earthR = w * 1.4
-      const earthGrad = ctx.createRadialGradient(cx, earthY + earthR * 0.55, earthR * 0.4, cx, earthY + earthR * 0.55, earthR)
-      earthGrad.addColorStop(0, '#1a6bb5')
-      earthGrad.addColorStop(0.45, '#0d3d6e')
-      earthGrad.addColorStop(0.7, 'rgba(40,120,200,0.35)')
-      earthGrad.addColorStop(1, 'transparent')
-      ctx.fillStyle = earthGrad
+      // Huge globe below the frame: thin upper limb near the bottom edge.
+      const earthR = w * (0.78 - warpAmt * 0.04)
+      const ex = cx
+      earthY = h + earthR * (0.82 - (1 - warpAmt) * 0.02)
+      const ey = earthY
+
+      // Soft atmosphere glow along the limb
+      const atmoGlow = ctx.createRadialGradient(ex, ey, earthR * 0.92, ex, ey, earthR * 1.12)
+      atmoGlow.addColorStop(0, 'rgba(94,231,255,0.2)')
+      atmoGlow.addColorStop(1, 'transparent')
+      ctx.fillStyle = atmoGlow
       ctx.beginPath()
-      ctx.arc(cx, earthY + earthR * 0.55, earthR, 0, Math.PI * 2)
+      ctx.arc(ex, ey, earthR * 1.12, 0, Math.PI * 2)
       ctx.fill()
 
-      ctx.strokeStyle = `rgba(94,231,255,${0.35 + Math.sin(t * 2) * 0.1})`
+      const earthGrad = ctx.createRadialGradient(
+        ex - earthR * 0.2,
+        ey - earthR * 0.85,
+        earthR * 0.05,
+        ex,
+        ey,
+        earthR,
+      )
+      earthGrad.addColorStop(0, '#5ab0e8')
+      earthGrad.addColorStop(0.25, '#1a6bb5')
+      earthGrad.addColorStop(0.55, '#0d3d6e')
+      earthGrad.addColorStop(0.85, '#071e32')
+      earthGrad.addColorStop(1, '#041018')
+      ctx.fillStyle = earthGrad
+      ctx.beginPath()
+      ctx.arc(ex, ey, earthR, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Continent blobs on the thin visible limb
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(ex, ey, earthR, 0, Math.PI * 2)
+      ctx.clip()
+      ctx.fillStyle = 'rgba(52, 120, 72, 0.55)'
+      ctx.beginPath()
+      ctx.ellipse(ex - earthR * 0.32, ey - earthR * 0.92, earthR * 0.22, earthR * 0.06, -0.2, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.beginPath()
+      ctx.ellipse(ex + earthR * 0.18, ey - earthR * 0.88, earthR * 0.26, earthR * 0.07, 0.15, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(40, 100, 58, 0.4)'
+      ctx.beginPath()
+      ctx.ellipse(ex - earthR * 0.02, ey - earthR * 0.84, earthR * 0.16, earthR * 0.045, 0.05, 0, Math.PI * 2)
+      ctx.fill()
+      const hi = ctx.createRadialGradient(ex - earthR * 0.2, ey - earthR * 0.95, 0, ex - earthR * 0.2, ey - earthR * 0.95, earthR * 0.35)
+      hi.addColorStop(0, 'rgba(200,230,255,0.28)')
+      hi.addColorStop(1, 'transparent')
+      ctx.fillStyle = hi
+      ctx.fillRect(ex - earthR, ey - earthR, earthR * 2, earthR * 2)
+      ctx.restore()
+
+      // Atmosphere rim on the visible limb
+      ctx.strokeStyle = `rgba(94,231,255,${0.45 + Math.sin(t * 2) * 0.12})`
       ctx.lineWidth = 3
       ctx.beginPath()
-      ctx.arc(cx, earthY + earthR * 0.55, earthR * 0.72, Math.PI * 1.05, Math.PI * 1.95)
+      ctx.arc(ex, ey, earthR * 1.015, Math.PI * 1.05, Math.PI * 1.95)
       ctx.stroke()
 
       rafRef.current = requestAnimationFrame(draw)

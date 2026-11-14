@@ -7,5 +7,6 @@ export const MEDIA = {
   },
   opening: {
     pixelDialogFrame: '/art/opening/pixel-dialog-frame.png',
+    pixelDialogRef: '/art/opening/pixel-dialog-ref.png',
   },
 } as const
