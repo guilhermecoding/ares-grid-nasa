@@ -32,7 +32,7 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
           <div className="absolute inset-0 rounded-full bg-cyan-hud/20 blur-2xl" aria-hidden />
           {!imgFailed ? (
             <img
-              src={MEDIA.capi.neutral}
+              src={MEDIA.capi.emblem}
               alt="Capi, assistente virtual"
               className="relative h-36 w-36 object-contain drop-shadow-[0_0_20px_rgba(94,231,255,0.35)] sm:h-44 sm:w-44"
               onError={() => setImgFailed(true)}

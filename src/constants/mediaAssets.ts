@@ -2,7 +2,10 @@
 
 export const MEDIA = {
   capi: {
-    neutral: '/assets/capi/capi-neutral.png',
+    /** Emblem for title / ready gate */
+    emblem: '/assets/artefacts/arcadia_emblema_capivara.png',
+    /** Portrait used in PixelDialogBox / CapiDialog */
+    neutral: '/assets/artefacts/capi-neutral.png',
     ref: '/assets/capi/capi-ref.jpeg',
   },
   opening: {
