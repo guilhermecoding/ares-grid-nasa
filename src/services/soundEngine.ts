@@ -60,6 +60,8 @@ export const soundEngine = {
   },
   fail: () => beep(150, 0.35, 'sawtooth', 0.05),
   click: () => beep(640, 0.04, 'square', 0.025),
+  /** Soft Matrix keystroke for mission brief typing. */
+  typeTick: () => beep(980 + Math.random() * 220, 0.022, 'square', 0.018),
   /** Rising engine rumble for final countdown seconds (3,2,1,0). */
   ignition: (count: number) => {
     if (muted) return

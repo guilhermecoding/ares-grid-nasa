@@ -113,32 +113,32 @@ export function OpeningFlow({
       {phase === 'scene2_takeoff' && (
         <div className="relative h-full w-full">
           <LaunchSpaceCanvas warp={0.85} hologramActive={hologram} />
-          <div className="relative z-10 flex h-full flex-col items-center justify-center p-4">
-            {takeoffRevealed && (
-              <>
-                <TypewriterHud
-                  className="w-full max-w-lg"
-                  lines={TAKEOFF_HUD_LINES}
-                  onComplete={() => {
-                    setHologram(true)
-                    setTakeoffReady(true)
-                  }}
-                />
-                {takeoffReady && (
-                  <button
-                    type="button"
-                    className="pixel-btn mt-6 min-h-12 rounded-xl bg-star px-6 font-pixel text-lg font-bold text-void-950"
-                    onClick={() => {
-                      soundEngine.click()
-                      setPhase('scene3_capi_intro')
-                    }}
-                  >
-                    Continuar
-                  </button>
-                )}
-              </>
-            )}
-          </div>
+          {takeoffRevealed && (
+            <div className="pointer-events-auto absolute top-4 left-4 z-20 w-[min(100%-2rem,22rem)] sm:top-5 sm:left-5 sm:w-[min(100%-2.5rem,26rem)]">
+              <TypewriterHud
+                variant="matrix"
+                lines={TAKEOFF_HUD_LINES}
+                onComplete={() => {
+                  setHologram(true)
+                  setTakeoffReady(true)
+                }}
+                footer={
+                  takeoffReady ? (
+                    <button
+                      type="button"
+                      className="mc-btn min-h-12 px-6 font-pixel text-lg font-bold"
+                      onClick={() => {
+                        soundEngine.click()
+                        setPhase('scene3_capi_intro')
+                      }}
+                    >
+                      Continuar
+                    </button>
+                  ) : null
+                }
+              />
+            </div>
+          )}
           {/* Continues the countdown white flash into the cockpit */}
           <motion.div
             className="pointer-events-none absolute inset-0 z-30 bg-white"
