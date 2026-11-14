@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { DialogBox } from './components/DialogBox'
-import { HomeScreen } from './components/HomeScreen'
 import { NasaDataModal } from './components/NasaDataModal'
 import { WorldScreen } from './components/WorldScreen'
 import { applyWeatherBundle, createWorldState, interact, moveRover, sleep } from './engine/worldEngine'
+import { OpeningFlow } from './opening/OpeningFlow'
 import { fetchDonkiBundle } from './services/donkiService'
 import { loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
 import { setMuted, soundEngine, unlockAudio } from './services/soundEngine'
@@ -177,12 +177,22 @@ export default function App() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       {screen === 'home' && (
-        <HomeScreen
+        <OpeningFlow
+          openingCompleted={progress.openingCompleted}
           playerName={progress.playerName}
-          level={progress.level}
-          solsPlayed={progress.solsPlayed}
-          onNameChange={(name) => setProgress(updateProgress({ playerName: name }))}
-          onStart={() => void enterWorld()}
+          initialProfile={{
+            name: progress.playerName,
+            suitColor: progress.suitColor,
+            helmet: progress.helmet,
+            backpack: progress.backpack,
+            insignia: progress.insignia,
+          }}
+          onSaveProfile={(patch) => {
+            setMuted(false)
+            setMutedState(false)
+            setProgress(updateProgress({ ...patch, muted: false }))
+          }}
+          onEnterWorld={() => void enterWorld()}
         />
       )}
 

@@ -1,3 +1,4 @@
+import type { BackpackId, HelmetId, InsigniaId, SuitColorId } from '../data/openingData'
 import type { ToolId } from '../types/game'
 
 const STORAGE_KEY = 'aresgrid-progress-v2'
@@ -12,6 +13,11 @@ export interface PlayerProgress {
   solsPlayed: number
   unlockedTools: ToolId[]
   muted: boolean
+  openingCompleted: boolean
+  suitColor: SuitColorId
+  helmet: HelmetId
+  backpack: BackpackId
+  insignia: InsigniaId
 }
 
 const DEFAULT_PROGRESS: PlayerProgress = {
@@ -24,6 +30,11 @@ const DEFAULT_PROGRESS: PlayerProgress = {
   solsPlayed: 0,
   unlockedTools: ['walk', 'clean'],
   muted: true,
+  openingCompleted: false,
+  suitColor: 'nasa-white',
+  helmet: 'classic',
+  backpack: 'standard',
+  insignia: 'ares',
 }
 
 function canUseStorage(): boolean {

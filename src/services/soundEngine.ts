@@ -60,4 +60,21 @@ export const soundEngine = {
   },
   fail: () => beep(150, 0.35, 'sawtooth', 0.05),
   click: () => beep(640, 0.04, 'square', 0.025),
+  /** Rising engine rumble for final countdown seconds (3,2,1,0). */
+  ignition: (count: number) => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+    const osc = audio.createOscillator()
+    const g = audio.createGain()
+    const intensity = Math.max(0, 3 - count) / 3
+    osc.type = 'sawtooth'
+    osc.frequency.value = 55 + intensity * 40
+    g.gain.value = 0.02 + intensity * 0.05
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.55)
+    osc.connect(g)
+    g.connect(audio.destination)
+    osc.start()
+    osc.stop(audio.currentTime + 0.55)
+  },
 }
