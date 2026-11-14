@@ -132,6 +132,11 @@
     box-shadow: inset 0 2px 0 rgba(255, 220, 170, 0.2);
   }
 
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
   .rover-bob {
     animation: bob 0.9s ease-in-out infinite;
   }

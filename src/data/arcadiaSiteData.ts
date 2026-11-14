@@ -73,13 +73,3 @@ export const TILE_HINTS: Record<TileType, string> = {
   RADIATION_SHIELD: 'Traga regolito aqui para proteger da tempestade solar.',
   HABITAT: 'Sua casinha. Durma aqui para o próximo Sol.',
 }
-
-export const TILE_EMOJI: Record<TileType, string> = {
-  EMPTY: '',
-  SOLAR_PANEL: '☀️',
-  HYDROPONIC_BAY: '🌱',
-  SWIM_ICE_DRILL: '🧊',
-  REGOLITH_PIT: '🪨',
-  RADIATION_SHIELD: '🛡️',
-  HABITAT: '🏠',
-}

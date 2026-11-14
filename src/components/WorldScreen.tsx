@@ -43,7 +43,13 @@ export function WorldScreen({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden p-1.5 sm:gap-2 sm:p-2">
+    <div
+      className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden p-1.5 sm:gap-2 sm:p-2"
+      style={{
+        backgroundImage:
+          'radial-gradient(ellipse at 50% 0%, rgba(88,40,140,0.35), transparent 45%), radial-gradient(ellipse at 80% 100%, rgba(20,40,90,0.4), transparent 40%)',
+      }}
+    >
       <TopStatusBar
         level={state.level}
         levelTitle={levelDef.title}
