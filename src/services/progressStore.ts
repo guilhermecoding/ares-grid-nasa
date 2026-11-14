@@ -6,6 +6,7 @@ export interface PlayerProgress {
   version: 2
   playerName: string
   tutorialDone: boolean
+  controlsHintSeen: boolean
   level: number
   xp: number
   solsPlayed: number
@@ -17,6 +18,7 @@ const DEFAULT_PROGRESS: PlayerProgress = {
   version: 2,
   playerName: 'Robô Jr.',
   tutorialDone: false,
+  controlsHintSeen: false,
   level: 1,
   xp: 0,
   solsPlayed: 0,

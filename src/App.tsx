@@ -190,6 +190,8 @@ export default function App() {
         <WorldScreen
           state={world}
           muted={muted}
+          showControlHints={!progress.controlsHintSeen && !tutorialOpen}
+          onControlHintsDone={() => setProgress(updateProgress({ controlsHintSeen: true }))}
           onMove={handleMove}
           onInteract={handleInteract}
           onSleep={() => void handleSleep()}

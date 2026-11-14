@@ -150,4 +150,25 @@
       transform: translateY(-3px);
     }
   }
+
+  /* First-visit control labels: hold, then collapse to icon-only */
+  @keyframes hint-label-collapse {
+    0%,
+    72% {
+      max-width: 7rem;
+      opacity: 1;
+    }
+    100% {
+      max-width: 0;
+      opacity: 0;
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  .hint-label-collapse {
+    display: inline-block;
+    max-width: 7rem;
+    animation: hint-label-collapse 3.2s ease forwards;
+  }
 }
