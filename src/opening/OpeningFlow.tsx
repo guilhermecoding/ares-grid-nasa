@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
 import {
   CAPI_INTRO_LINES,
@@ -13,6 +14,8 @@ import { LandingScene } from './LandingScene'
 import { LaunchSpaceCanvas } from './LaunchSpaceCanvas'
 import { ReadyGate } from './ReadyGate'
 import { TypewriterHud } from './TypewriterHud'
+
+const TAKEOFF_REVEAL_S = 1.8
 
 export interface OpeningProfilePatch {
   playerName: string
@@ -41,6 +44,7 @@ export function OpeningFlow({
   const [phase, setPhase] = useState<OpeningPhase>('ready_gate')
   const [hologram, setHologram] = useState(false)
   const [takeoffReady, setTakeoffReady] = useState(false)
+  const [takeoffRevealed, setTakeoffRevealed] = useState(false)
   const [savedProfile, setSavedProfile] = useState<AstronautProfile | null>(null)
 
   const finishToWorld = useCallback(
@@ -68,6 +72,9 @@ export function OpeningFlow({
     void unlockAudio()
     setMuted(false)
     soundEngine.click()
+    setHologram(false)
+    setTakeoffReady(false)
+    setTakeoffRevealed(false)
     setPhase('scene1_countdown')
   }
 
@@ -107,27 +114,39 @@ export function OpeningFlow({
         <div className="relative h-full w-full">
           <LaunchSpaceCanvas warp={0.85} hologramActive={hologram} />
           <div className="relative z-10 flex h-full flex-col items-center justify-center p-4">
-            <TypewriterHud
-              className="w-full max-w-lg"
-              lines={TAKEOFF_HUD_LINES}
-              onComplete={() => {
-                setHologram(true)
-                setTakeoffReady(true)
-              }}
-            />
-            {takeoffReady && (
-              <button
-                type="button"
-                className="pixel-btn mt-6 min-h-12 rounded-xl bg-star px-6 font-pixel text-lg font-bold text-void-950"
-                onClick={() => {
-                  soundEngine.click()
-                  setPhase('scene3_capi_intro')
-                }}
-              >
-                Continuar
-              </button>
+            {takeoffRevealed && (
+              <>
+                <TypewriterHud
+                  className="w-full max-w-lg"
+                  lines={TAKEOFF_HUD_LINES}
+                  onComplete={() => {
+                    setHologram(true)
+                    setTakeoffReady(true)
+                  }}
+                />
+                {takeoffReady && (
+                  <button
+                    type="button"
+                    className="pixel-btn mt-6 min-h-12 rounded-xl bg-star px-6 font-pixel text-lg font-bold text-void-950"
+                    onClick={() => {
+                      soundEngine.click()
+                      setPhase('scene3_capi_intro')
+                    }}
+                  >
+                    Continuar
+                  </button>
+                )}
+              </>
             )}
           </div>
+          {/* Continues the countdown white flash into the cockpit */}
+          <motion.div
+            className="pointer-events-none absolute inset-0 z-30 bg-white"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: TAKEOFF_REVEAL_S, ease: [0.22, 0.08, 0.25, 1] }}
+            onAnimationComplete={() => setTakeoffRevealed(true)}
+          />
         </div>
       )}
 
