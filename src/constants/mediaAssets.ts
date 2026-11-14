@@ -6,6 +6,6 @@ export const MEDIA = {
     ref: '/assets/capi/capi-ref.jpeg',
   },
   opening: {
-    // Reserved for optional static art under /public/art/opening/
+    pixelDialogFrame: '/art/opening/pixel-dialog-frame.png',
   },
 } as const

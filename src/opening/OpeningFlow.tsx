@@ -13,8 +13,8 @@ import { CountdownScene } from './CountdownScene'
 import { LandingScene } from './LandingScene'
 import { LaunchSpaceCanvas } from './LaunchSpaceCanvas'
 import { McButton } from './McButton'
+import { PixelDialogBox } from './PixelDialogBox'
 import { ReadyGate } from './ReadyGate'
-import { TypewriterHud } from './TypewriterHud'
 
 const TAKEOFF_REVEAL_S = 1.8
 const CAPI_SCENE_REVEAL_S = 1.2
@@ -47,6 +47,7 @@ export function OpeningFlow({
   const [hologram, setHologram] = useState(false)
   const [takeoffReady, setTakeoffReady] = useState(false)
   const [takeoffRevealed, setTakeoffRevealed] = useState(false)
+  const [takeoffDialogOpen, setTakeoffDialogOpen] = useState(false)
   const [capiSceneReady, setCapiSceneReady] = useState(false)
   const [savedProfile, setSavedProfile] = useState<AstronautProfile | null>(null)
 
@@ -77,6 +78,7 @@ export function OpeningFlow({
     setHologram(false)
     setTakeoffReady(false)
     setTakeoffRevealed(false)
+    setTakeoffDialogOpen(false)
     setCapiSceneReady(false)
     setPhase('scene1_countdown')
   }
@@ -121,39 +123,36 @@ export function OpeningFlow({
         <div className="relative h-full w-full">
           <LaunchSpaceCanvas warp={0.85} hologramActive={hologram} />
           {takeoffRevealed && (
-            <div className="pointer-events-auto absolute top-4 left-4 z-20 w-[min(100%-2rem,22rem)] sm:top-5 sm:left-5 sm:w-[min(100%-2.5rem,26rem)]">
-              <TypewriterHud
-                variant="matrix"
-                lines={TAKEOFF_HUD_LINES}
-                charMs={10}
-                linePauseMs={160}
-                onComplete={() => {
-                  setHologram(true)
-                  setTakeoffReady(true)
-                }}
-                footer={
-                  takeoffReady ? (
-                    <McButton
-                      className="min-h-12 px-6 font-pixel text-lg font-bold"
-                      onClick={() => {
-                        setCapiSceneReady(false)
-                        setPhase('scene3_capi_intro')
-                      }}
-                    >
-                      Continuar
-                    </McButton>
-                  ) : null
-                }
-              />
-            </div>
+            <PixelDialogBox
+              open={takeoffDialogOpen}
+              lines={TAKEOFF_HUD_LINES}
+              title="SYS // DECOLAGEM"
+              onTypingComplete={() => {
+                setHologram(true)
+                setTakeoffReady(true)
+              }}
+              onClosed={() => {
+                setCapiSceneReady(false)
+                setPhase('scene3_capi_intro')
+              }}
+              footer={
+                takeoffReady ? (
+                  <McButton className="min-h-12 px-6 font-pixel text-lg font-bold" onClick={() => setTakeoffDialogOpen(false)}>
+                    Continuar
+                  </McButton>
+                ) : null
+              }
+            />
           )}
-          {/* Continues the countdown white flash into the cockpit */}
           <motion.div
             className="pointer-events-none absolute inset-0 z-30 bg-white"
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
             transition={{ duration: TAKEOFF_REVEAL_S, ease: [0.22, 0.08, 0.25, 1] }}
-            onAnimationComplete={() => setTakeoffRevealed(true)}
+            onAnimationComplete={() => {
+              setTakeoffRevealed(true)
+              setTakeoffDialogOpen(true)
+            }}
           />
         </div>
       )}
