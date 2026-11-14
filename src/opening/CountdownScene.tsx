@@ -193,10 +193,12 @@ function WarpStarsCanvas({ progress, warp }: { progress: number; warp: number })
 const FLASH_DURATION_S = 2.8
 const TICK_MS = 1000
 
+const GO_COLOR = '#e67a2e'
+const GO_GLOW = '0 0 42px rgba(230, 122, 46, 0.85)'
+
 export function CountdownScene({ onComplete }: CountdownSceneProps) {
   const [count, setCount] = useState<number | null>(null)
-  const [phase, setPhase] = useState<'counting' | 'flash' | 'done'>('counting')
-  const [showDigit, setShowDigit] = useState(true)
+  const [phase, setPhase] = useState<'counting' | 'go' | 'flash' | 'done'>('counting')
 
   // Absolute timeline: digit + beep fire in the same callback every 1s
   useEffect(() => {
@@ -216,8 +218,8 @@ export function CountdownScene({ onComplete }: CountdownSceneProps) {
             timers.push(
               window.setTimeout(() => {
                 if (cancelled) return
-                setShowDigit(false)
-                setPhase('flash')
+                setPhase('go')
+                soundEngine.success()
               }, TICK_MS),
             )
           }
@@ -232,6 +234,12 @@ export function CountdownScene({ onComplete }: CountdownSceneProps) {
   }, [phase])
 
   useEffect(() => {
+    if (phase !== 'go') return
+    const id = window.setTimeout(() => setPhase('flash'), TICK_MS)
+    return () => window.clearTimeout(id)
+  }, [phase])
+
+  useEffect(() => {
     if (phase !== 'done') return
     onComplete()
     // eslint-disable-next-line react-hooks/exhaustive-deps -- invoke once when done
@@ -242,16 +250,20 @@ export function CountdownScene({ onComplete }: CountdownSceneProps) {
   const warp =
     phase === 'flash' || phase === 'done'
       ? 1
-      : displayCount >= 6
-        ? Math.max(0, (10 - displayCount) / 10) * 0.12
-        : Math.max(0, Math.min(1, (5.5 - displayCount) / 5.5))
+      : phase === 'go'
+        ? 1
+        : displayCount >= 6
+          ? Math.max(0, (10 - displayCount) / 10) * 0.12
+          : Math.max(0, Math.min(1, (5.5 - displayCount) / 5.5))
 
   const shake =
     phase === 'counting' && count !== null && count <= 3
       ? 0.45 + (3 - count) * 0.4
-      : phase === 'flash'
-        ? 0.55
-        : 0
+      : phase === 'go'
+        ? 0.7
+        : phase === 'flash'
+          ? 0.55
+          : 0
   const shakeX = shake > 0 ? [0, -7 * shake, 6 * shake, -5 * shake, 4 * shake, 0] : 0
   const shakeY = shake > 0 ? [0, 5 * shake, -6 * shake, 4 * shake, -3 * shake, 0] : 0
   const color = countColor(displayCount)
@@ -266,7 +278,7 @@ export function CountdownScene({ onComplete }: CountdownSceneProps) {
       <WarpStarsCanvas progress={progress} warp={warp} />
 
       <AnimatePresence>
-        {showDigit && phase === 'counting' && count !== null && (
+        {phase === 'counting' && count !== null && (
           <motion.span
             key={count}
             className="absolute z-10 font-pixel text-[7rem] leading-none sm:text-[9rem]"
@@ -277,6 +289,19 @@ export function CountdownScene({ onComplete }: CountdownSceneProps) {
             transition={{ duration: 0.12, ease: 'easeOut' }}
           >
             {count}
+          </motion.span>
+        )}
+        {phase === 'go' && (
+          <motion.span
+            key="go"
+            className="absolute z-10 font-pixel text-[5.5rem] leading-none tracking-wide sm:text-[7.5rem]"
+            style={{ color: GO_COLOR, textShadow: GO_GLOW }}
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: [0.4, 1.15, 1], opacity: 1 }}
+            exit={{ scale: 1.4, opacity: 0 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+          >
+            GO!!!
           </motion.span>
         )}
       </AnimatePresence>
