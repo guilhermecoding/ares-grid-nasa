@@ -70,7 +70,7 @@ export const soundEngine = {
     const intensity = Math.max(0, 3 - count) / 3
     osc.type = 'sawtooth'
     osc.frequency.value = 55 + intensity * 40
-    g.gain.value = 0.02 + intensity * 0.05
+    g.gain.value = 0.06 + intensity * 0.1
     g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.55)
     osc.connect(g)
     g.connect(audio.destination)
@@ -80,17 +80,18 @@ export const soundEngine = {
   /** Dedicated launch-pad countdown beep; intensifies as n approaches 0. */
   countdownTick: (n: number) => {
     const urgency = Math.max(0, Math.min(1, (10 - n) / 10))
-    const freq = 720 + urgency * 320
-    const dur = n === 0 ? 0.28 : 0.09 + urgency * 0.04
-    const gain = 0.035 + urgency * 0.035
+    const freq = 700 + urgency * 340
+    const dur = n === 0 ? 0.32 : 0.1 + urgency * 0.05
+    const gain = 0.1 + urgency * 0.1
     beep(freq, dur, 'square', gain)
-    beep(freq * 1.5, dur * 0.55, 'sine', gain * 0.45)
+    beep(freq * 1.5, dur * 0.6, 'sine', gain * 0.55)
+    beep(freq * 0.5, dur * 0.4, 'triangle', gain * 0.35)
     if (n <= 3) {
       soundEngine.ignition(n)
     }
     if (n === 0) {
-      beep(90, 0.45, 'sawtooth', 0.06)
-      setTimeout(() => beep(60, 0.35, 'sawtooth', 0.05), 80)
+      beep(90, 0.5, 'sawtooth', 0.14)
+      setTimeout(() => beep(55, 0.4, 'sawtooth', 0.12), 90)
     }
   },
 }
