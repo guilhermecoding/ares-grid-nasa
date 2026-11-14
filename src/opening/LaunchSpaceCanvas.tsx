@@ -12,10 +12,17 @@ interface LaunchSpaceCanvasProps {
   warp?: number
   /** Show pulsing hologram light in cockpit center */
   hologramActive?: boolean
+  /** Cockpit frame overlay (off for full-bleed title space) */
+  cockpit?: boolean
   className?: string
 }
 
-export function LaunchSpaceCanvas({ warp = 0.55, hologramActive = false, className = '' }: LaunchSpaceCanvasProps) {
+export function LaunchSpaceCanvas({
+  warp = 0.55,
+  hologramActive = false,
+  cockpit = true,
+  className = '',
+}: LaunchSpaceCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const warpRef = useRef(warp)
   const rafRef = useRef(0)
@@ -37,8 +44,9 @@ export function LaunchSpaceCanvas({ warp = 0.55, hologramActive = false, classNa
 
     const resize = () => {
       const parent = canvas.parentElement
-      w = parent?.clientWidth ?? window.innerWidth
-      h = parent?.clientHeight ?? window.innerHeight
+      const rect = parent?.getBoundingClientRect()
+      w = Math.max(1, Math.floor(rect?.width || parent?.clientWidth || window.innerWidth))
+      h = Math.max(1, Math.floor(rect?.height || parent?.clientHeight || window.innerHeight))
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       canvas.width = Math.floor(w * dpr)
       canvas.height = Math.floor(h * dpr)
@@ -134,44 +142,39 @@ export function LaunchSpaceCanvas({ warp = 0.55, hologramActive = false, classNa
   }, [])
 
   return (
-    <div className={`absolute inset-0 overflow-hidden ${className}`}>
+    <div className={`absolute inset-0 h-full w-full overflow-hidden ${className}`}>
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden />
-      {/* Cockpit SVG frame */}
-      <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-        <defs>
-          <linearGradient id="cockpitMetal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1a1738" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#07040f" stopOpacity="0.98" />
-          </linearGradient>
-        </defs>
-        {/* Top bar */}
-        <path d="M0 0 H100 V14 Q50 22 0 14 Z" fill="url(#cockpitMetal)" />
-        {/* Bottom console */}
-        <path d="M0 100 H100 V78 Q50 70 0 78 Z" fill="url(#cockpitMetal)" />
-        {/* Side pillars */}
-        <path d="M0 0 V100 L10 86 V14 Z" fill="url(#cockpitMetal)" opacity="0.9" />
-        <path d="M100 0 V100 L90 86 V14 Z" fill="url(#cockpitMetal)" opacity="0.9" />
-        {/* Window rim */}
-        <rect x="8" y="12" width="84" height="68" rx="2" fill="none" stroke="#5b4fcf" strokeWidth="0.6" opacity="0.7" />
-        {/* Panel lights */}
-        <circle cx="18" cy="88" r="1.2" fill="#5ee7ff">
-          <animate attributeName="opacity" values="0.4;1;0.4" dur="1.6s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="26" cy="90" r="1" fill="#4ea1ff">
-          <animate attributeName="opacity" values="1;0.3;1" dur="2.1s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="74" cy="90" r="1" fill="#f0b429">
-          <animate attributeName="opacity" values="0.5;1;0.5" dur="1.4s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="82" cy="88" r="1.2" fill="#8b5cf6">
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" />
-        </circle>
-        {/* Central hologram light */}
-        <circle cx="50" cy="86" r={hologramActive ? 2.8 : 1.6} fill={hologramActive ? '#5ee7ff' : '#2a6fc4'} opacity={hologramActive ? 0.95 : 0.5}>
-          {hologramActive && <animate attributeName="r" values="2.2;3.4;2.2" dur="1.2s" repeatCount="indefinite" />}
-          {hologramActive && <animate attributeName="opacity" values="0.55;1;0.55" dur="1.2s" repeatCount="indefinite" />}
-        </circle>
-      </svg>
+      {cockpit ? (
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+          <defs>
+            <linearGradient id="cockpitMetal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1a1738" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#07040f" stopOpacity="0.98" />
+            </linearGradient>
+          </defs>
+          <path d="M0 0 H100 V14 Q50 22 0 14 Z" fill="url(#cockpitMetal)" />
+          <path d="M0 100 H100 V78 Q50 70 0 78 Z" fill="url(#cockpitMetal)" />
+          <path d="M0 0 V100 L10 86 V14 Z" fill="url(#cockpitMetal)" opacity="0.9" />
+          <path d="M100 0 V100 L90 86 V14 Z" fill="url(#cockpitMetal)" opacity="0.9" />
+          <rect x="8" y="12" width="84" height="68" rx="2" fill="none" stroke="#5b4fcf" strokeWidth="0.6" opacity="0.7" />
+          <circle cx="18" cy="88" r="1.2" fill="#5ee7ff">
+            <animate attributeName="opacity" values="0.4;1;0.4" dur="1.6s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="26" cy="90" r="1" fill="#4ea1ff">
+            <animate attributeName="opacity" values="1;0.3;1" dur="2.1s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="74" cy="90" r="1" fill="#f0b429">
+            <animate attributeName="opacity" values="0.5;1;0.5" dur="1.4s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="82" cy="88" r="1.2" fill="#8b5cf6">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="50" cy="86" r={hologramActive ? 2.8 : 1.6} fill={hologramActive ? '#5ee7ff' : '#2a6fc4'} opacity={hologramActive ? 0.95 : 0.5}>
+            {hologramActive && <animate attributeName="r" values="2.2;3.4;2.2" dur="1.2s" repeatCount="indefinite" />}
+            {hologramActive && <animate attributeName="opacity" values="0.55;1;0.55" dur="1.2s" repeatCount="indefinite" />}
+          </circle>
+        </svg>
+      ) : null}
     </div>
   )
 }

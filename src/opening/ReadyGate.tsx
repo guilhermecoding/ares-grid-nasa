@@ -14,8 +14,11 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
   const [imgFailed, setImgFailed] = useState(false)
 
   return (
-    <div className="relative flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden" style={{ touchAction: 'manipulation' }}>
-      <LaunchSpaceCanvas warp={0.15} />
+    <div
+      className="absolute inset-0 flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden"
+      style={{ touchAction: 'manipulation' }}
+    >
+      <LaunchSpaceCanvas warp={0.18} cockpit={false} className="z-0" />
 
       <div className="relative z-10 flex max-w-lg flex-col items-center gap-4 px-5 py-8 text-center">
         <p className="font-pixel text-sm tracking-widest text-cyan-hud/80 uppercase">Missão Arcadia Planitia</p>
@@ -50,17 +53,13 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
         </p>
 
         {openingCompleted ? (
-          <div className="mt-2 flex w-full flex-col gap-3">
-            <button
-              type="button"
-              className="pixel-btn min-h-12 w-full rounded-xl bg-star px-6 font-pixel text-xl font-bold text-void-950"
-              onClick={onContinue}
-            >
+          <div className="mt-2 flex w-full flex-col items-center gap-3">
+            <button type="button" className="mc-btn min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onContinue}>
               CONTINUAR
             </button>
             <button
               type="button"
-              className="min-h-12 w-full rounded-xl border border-void-500/60 bg-void-800/60 px-4 font-body text-sm text-void-300 hover:text-void-100"
+              className="min-h-12 w-full max-w-xs border-0 bg-transparent px-4 font-body text-sm text-void-300 underline-offset-2 hover:text-void-100 hover:underline"
               onClick={onReplayIntro}
             >
               Ver introdução
@@ -69,7 +68,7 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
         ) : (
           <button
             type="button"
-            className="pixel-btn mt-2 min-h-14 w-full max-w-xs rounded-xl bg-star px-6 font-pixel text-xl font-bold text-void-950 sm:text-2xl"
+            className="mc-btn mt-2 min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl"
             onClick={onStartIntro}
           >
             INICIAR AVENTURA

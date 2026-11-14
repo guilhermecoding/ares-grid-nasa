@@ -74,7 +74,7 @@ export function OpeningFlow({
   const showSkip = phase !== 'ready_gate' && phase !== 'start_mission_1'
 
   return (
-    <div className="relative h-full min-h-0 w-full overflow-hidden" style={{ touchAction: 'manipulation' }}>
+    <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-void-950" style={{ touchAction: 'manipulation' }}>
       {showSkip && (
         <button
           type="button"

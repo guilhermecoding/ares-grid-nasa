@@ -175,7 +175,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className={`flex h-full min-h-0 flex-col ${screen === 'home' ? 'relative' : ''}`}>
       {screen === 'home' && (
         <OpeningFlow
           openingCompleted={progress.openingCompleted}

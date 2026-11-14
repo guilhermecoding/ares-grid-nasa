@@ -77,4 +77,20 @@ export const soundEngine = {
     osc.start()
     osc.stop(audio.currentTime + 0.55)
   },
+  /** Dedicated launch-pad countdown beep; intensifies as n approaches 0. */
+  countdownTick: (n: number) => {
+    const urgency = Math.max(0, Math.min(1, (10 - n) / 10))
+    const freq = 720 + urgency * 320
+    const dur = n === 0 ? 0.28 : 0.09 + urgency * 0.04
+    const gain = 0.035 + urgency * 0.035
+    beep(freq, dur, 'square', gain)
+    beep(freq * 1.5, dur * 0.55, 'sine', gain * 0.45)
+    if (n <= 3) {
+      soundEngine.ignition(n)
+    }
+    if (n === 0) {
+      beep(90, 0.45, 'sawtooth', 0.06)
+      setTimeout(() => beep(60, 0.35, 'sawtooth', 0.05), 80)
+    }
+  },
 }
