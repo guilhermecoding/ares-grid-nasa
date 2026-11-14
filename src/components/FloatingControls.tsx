@@ -66,7 +66,7 @@ export function FloatingControls({
 
   return (
     <>
-      <div className="pointer-events-none absolute right-2 top-2 z-20 flex gap-1.5 sm:right-3 sm:top-3">
+      <div className="pointer-events-none absolute left-2 top-2 z-30 flex gap-1.5 sm:left-3 sm:top-3">
         <button
           type="button"
           onClick={onNasa}
