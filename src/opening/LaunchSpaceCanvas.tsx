@@ -17,208 +17,272 @@ interface LaunchSpaceCanvasProps {
   className?: string
 }
 
-function RealisticCockpit({ hologramActive }: { hologramActive: boolean }) {
+/** Futuristic canopy cockpit — angular, luminous, not a flat monitor bezel. */
+function TechCockpit({ hologramActive }: { hologramActive: boolean }) {
   return (
-    <svg
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id="steelTop" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4a5560" />
-          <stop offset="35%" stopColor="#2c333c" />
-          <stop offset="100%" stopColor="#14181e" />
-        </linearGradient>
-        <linearGradient id="steelSide" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#1a1e24" />
-          <stop offset="40%" stopColor="#3a4450" />
-          <stop offset="100%" stopColor="#12161c" />
-        </linearGradient>
-        <linearGradient id="consoleGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3d4652" />
-          <stop offset="20%" stopColor="#232a33" />
-          <stop offset="100%" stopColor="#0c0f13" />
-        </linearGradient>
-        <linearGradient id="screenGlow" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1a3a28" />
-          <stop offset="100%" stopColor="#0a1610" />
-        </linearGradient>
-        <radialGradient id="glassSheen" cx="35%" cy="30%" r="65%">
-          <stop offset="0%" stopColor="rgba(180,210,255,0.12)" />
-          <stop offset="55%" stopColor="rgba(80,100,140,0.04)" />
-          <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-        </radialGradient>
-        <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="0.6" result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Outer hull shadow */}
-      <rect x="0" y="0" width="100" height="100" fill="#05070a" opacity="0.15" />
-
-      {/* Top structural beam */}
-      <path d="M0 0 H100 V11 L88 16 H12 L0 11 Z" fill="url(#steelTop)" />
-      <path d="M0 0 H100 V3.2 H0 Z" fill="#6a7582" opacity="0.35" />
-      <path d="M12 16 H88 L86 18 H14 Z" fill="#0a0c10" opacity="0.7" />
-      {/* Rivets top */}
-      {[8, 18, 28, 38, 50, 62, 72, 82, 92].map((x) => (
-        <circle key={`tr-${x}`} cx={x} cy="5.5" r="0.55" fill="#1a1e24" stroke="#7a8694" strokeWidth="0.15" />
-      ))}
-
-      {/* Left pillar */}
-      <path d="M0 0 V100 H9 L14 78 V18 L9 11 Z" fill="url(#steelSide)" />
-      <path d="M0 0 V100 H2.2 V0 Z" fill="#0a0c10" opacity="0.5" />
-      <path d="M9 18 V78 L11 76 V20 Z" fill="#5a6570" opacity="0.25" />
-      {[22, 34, 46, 58, 70].map((y) => (
-        <circle key={`lr-${y}`} cx="4.2" cy={y} r="0.5" fill="#1a1e24" stroke="#7a8694" strokeWidth="0.12" />
-      ))}
-
-      {/* Right pillar */}
-      <path d="M100 0 V100 H91 L86 78 V18 L91 11 Z" fill="url(#steelSide)" />
-      <path d="M100 0 V100 H97.8 V0 Z" fill="#0a0c10" opacity="0.5" />
-      <path d="M91 18 V78 L89 76 V20 Z" fill="#5a6570" opacity="0.25" />
-      {[22, 34, 46, 58, 70].map((y) => (
-        <circle key={`rr-${y}`} cx="95.8" cy={y} r="0.5" fill="#1a1e24" stroke="#7a8694" strokeWidth="0.12" />
-      ))}
-
-      {/* Window bevel */}
-      <path
-        d="M14 18 H86 V78 H14 Z"
-        fill="none"
-        stroke="#8a95a2"
-        strokeWidth="0.35"
-        opacity="0.55"
+    <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden>
+      {/* Canopy vignette / depth */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `
+            radial-gradient(ellipse 72% 62% at 50% 42%, transparent 42%, rgba(2,6,14,0.55) 78%, rgba(2,4,10,0.92) 100%),
+            linear-gradient(180deg, rgba(4,10,22,0.55) 0%, transparent 18%, transparent 62%, rgba(4,10,22,0.75) 100%)
+          `,
+        }}
       />
-      <path
-        d="M15.2 19.2 H84.8 V76.8 H15.2 Z"
-        fill="none"
-        stroke="#1a1e24"
-        strokeWidth="0.55"
-        opacity="0.85"
-      />
-      <rect x="15.2" y="19.2" width="69.6" height="57.6" fill="url(#glassSheen)" />
 
-      {/* Corner instrument pods */}
-      <rect x="15.8" y="19.8" width="9" height="6.5" rx="0.4" fill="#1a222c" stroke="#5a6570" strokeWidth="0.2" />
-      <rect x="16.4" y="20.4" width="7.8" height="3.2" rx="0.2" fill="url(#screenGlow)" />
-      <rect x="16.4" y="24.2" width="2.2" height="1.2" rx="0.15" fill="#2ecc71" opacity="0.7">
-        <animate attributeName="opacity" values="0.4;0.9;0.4" dur="1.8s" repeatCount="indefinite" />
-      </rect>
-      <rect x="19.2" y="24.2" width="2.2" height="1.2" rx="0.15" fill="#f0b429" opacity="0.65" />
-      <rect x="22" y="24.2" width="2.2" height="1.2" rx="0.15" fill="#4ea1ff" opacity="0.55" />
+      {/* Hexagonal canopy rim */}
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="techEdge" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#5ee7ff" stopOpacity="0.15" />
+            <stop offset="50%" stopColor="#7ec8ff" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#4ea1ff" stopOpacity="0.2" />
+          </linearGradient>
+          <filter id="edgeBloom">
+            <feGaussianBlur stdDeviation="0.35" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <path
+          d="M8 18 L22 8 H78 L92 18 L94 72 L78 88 H22 L6 72 Z"
+          fill="none"
+          stroke="url(#techEdge)"
+          strokeWidth="0.45"
+          filter="url(#edgeBloom)"
+          opacity="0.9"
+        />
+        <path
+          d="M11 20 L24 11 H76 L89 20 L91 70 L76 85 H24 L9 70 Z"
+          fill="none"
+          stroke="#5ee7ff"
+          strokeWidth="0.15"
+          opacity="0.35"
+        />
+        <path d="M18 22 H26 M18 22 V30" stroke="#5ee7ff" strokeWidth="0.35" opacity="0.7" />
+        <path d="M82 22 H74 M82 22 V30" stroke="#5ee7ff" strokeWidth="0.35" opacity="0.7" />
+        <path d="M18 68 H26 M18 68 V60" stroke="#5ee7ff" strokeWidth="0.35" opacity="0.55" />
+        <path d="M82 68 H74 M82 68 V60" stroke="#5ee7ff" strokeWidth="0.35" opacity="0.55" />
+        <line x1="28" y1="48" x2="40" y2="48" stroke="#5ee7ff" strokeWidth="0.12" opacity="0.35" />
+        <line x1="60" y1="48" x2="72" y2="48" stroke="#5ee7ff" strokeWidth="0.12" opacity="0.35" />
+        <circle cx="50" cy="48" r="1.2" fill="none" stroke="#5ee7ff" strokeWidth="0.2" opacity="0.45" />
+      </svg>
 
-      <rect x="75.2" y="19.8" width="9" height="6.5" rx="0.4" fill="#1a222c" stroke="#5a6570" strokeWidth="0.2" />
-      <rect x="75.8" y="20.4" width="7.8" height="5.2" rx="0.2" fill="#121820" stroke="#2a3540" strokeWidth="0.15" />
-      <circle cx="79.7" cy="23" r="1.8" fill="none" stroke="#5ee7ff" strokeWidth="0.25" opacity="0.7">
-        <animateTransform attributeName="transform" type="rotate" from="0 79.7 23" to="360 79.7 23" dur="8s" repeatCount="indefinite" />
-      </circle>
-      <circle cx="79.7" cy="23" r="0.35" fill="#5ee7ff" opacity="0.8" />
-
-      {/* Bottom command console */}
-      <path d="M0 100 H100 V76 Q50 71 0 76 Z" fill="url(#consoleGrad)" />
-      <path d="M9 78 H91 L88 100 H12 Z" fill="#161b22" opacity="0.55" />
-      <path d="M0 76 H100 V78 H0 Z" fill="#6a7582" opacity="0.28" />
-
-      {/* Console deck plate */}
-      <rect x="12" y="80" width="76" height="16" rx="0.6" fill="#1c232c" stroke="#4a5560" strokeWidth="0.25" />
-      <rect x="13" y="81" width="74" height="0.35" fill="#6a7582" opacity="0.3" />
-
-      {/* Left mini screen */}
-      <rect x="14.5" y="82.2" width="14" height="9.5" rx="0.35" fill="#0a1014" stroke="#3a4450" strokeWidth="0.25" />
-      <rect x="15.1" y="82.8" width="12.8" height="7" rx="0.2" fill="url(#screenGlow)" />
-      <polyline
-        points="16,88 18,85.5 20,86.5 22,83.5 24,85 26.5,84"
-        fill="none"
-        stroke="#2ecc71"
-        strokeWidth="0.22"
-        opacity="0.85"
+      {/* Left tech wing */}
+      <div
+        className="absolute top-[14%] bottom-[22%] left-0 w-[min(18vw,7.5rem)]"
+        style={{
+          background: 'linear-gradient(105deg, rgba(6,12,24,0.95) 0%, rgba(10,20,40,0.82) 55%, transparent 100%)',
+          clipPath: 'polygon(0 0, 100% 8%, 78% 92%, 0 100%)',
+          boxShadow: 'inset -2px 0 12px rgba(94,231,255,0.15)',
+        }}
       >
-        <animate attributeName="opacity" values="0.5;1;0.5" dur="2.4s" repeatCount="indefinite" />
-      </polyline>
-      <text x="15.5" y="91" fill="#5a9a6a" fontSize="1.1" fontFamily="monospace">
-        NAV
-      </text>
+        <div className="flex h-full flex-col justify-center gap-2 py-6 pl-2 pr-4">
+          {[0.7, 0.45, 0.9, 0.55].map((h, i) => (
+            <div key={i} className="relative h-1.5 overflow-hidden rounded-sm bg-void-950/80 ring-1 ring-cyan-hud/30">
+              <div
+                className="absolute inset-y-0 left-0 bg-cyan-hud/80"
+                style={{
+                  width: `${h * 100}%`,
+                  animation: `cockpitPulse ${1.4 + i * 0.3}s ease-in-out infinite`,
+                }}
+              />
+            </div>
+          ))}
+          <div className="mt-2 grid grid-cols-2 gap-1">
+            {['#2ecc71', '#f0b429', '#4ea1ff', '#e67a2e'].map((c, i) => (
+              <div
+                key={i}
+                className="h-2 rounded-sm"
+                style={{ background: c, opacity: 0.75, animation: `cockpitBlink ${1.1 + i * 0.4}s infinite` }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
-      {/* Center telemetry bars */}
-      <rect x="31" y="82.5" width="18" height="10" rx="0.35" fill="#121820" stroke="#3a4450" strokeWidth="0.2" />
-      {[0, 1, 2, 3, 4].map((i) => (
-        <g key={`bar-${i}`}>
-          <rect x={32.2 + i * 3.2} y="83.5" width="2.4" height="7.5" rx="0.15" fill="#0a0e12" />
-          <rect
-            x={32.2 + i * 3.2}
-            y={83.5 + (5 - i) * 0.9}
-            width="2.4"
-            height={2.5 + i * 1.1}
-            rx="0.15"
-            fill={i < 2 ? '#2ecc71' : i < 4 ? '#f0b429' : '#e67a2e'}
-            opacity="0.85"
+      {/* Right tech wing */}
+      <div
+        className="absolute top-[14%] right-0 bottom-[22%] w-[min(18vw,7.5rem)]"
+        style={{
+          background: 'linear-gradient(255deg, rgba(6,12,24,0.95) 0%, rgba(10,20,40,0.82) 55%, transparent 100%)',
+          clipPath: 'polygon(0 8%, 100% 0, 100% 100%, 22% 92%)',
+          boxShadow: 'inset 2px 0 12px rgba(94,231,255,0.15)',
+        }}
+      >
+        <div className="flex h-full flex-col items-end justify-center gap-3 py-8 pr-3 pl-5">
+          <div
+            className="relative h-14 w-14 rounded-full border border-cyan-hud/50"
+            style={{ boxShadow: '0 0 16px rgba(94,231,255,0.25), inset 0 0 10px rgba(94,231,255,0.15)' }}
           >
-            <animate
-              attributeName="height"
-              values={`${2.5 + i * 1.1};${3.5 + i * 1.1};${2.5 + i * 1.1}`}
-              dur={`${1.4 + i * 0.25}s`}
-              repeatCount="indefinite"
+            <div
+              className="absolute inset-2 rounded-full border border-dashed border-cyan-hud/40"
+              style={{ animation: 'cockpitSpin 10s linear infinite' }}
             />
-          </rect>
-        </g>
-      ))}
+            <div className="absolute inset-[35%] rounded-full bg-cyan-hud/70" />
+          </div>
+          <div className="w-full space-y-1 font-mono text-[9px] tracking-wider text-cyan-hud/70">
+            <div className="flex justify-between gap-1">
+              <span>VEL</span>
+              <span className="text-cyan-hud">0.87c</span>
+            </div>
+            <div className="flex justify-between gap-1">
+              <span>HDG</span>
+              <span className="text-cyan-hud">142°</span>
+            </div>
+            <div className="h-0.5 overflow-hidden rounded bg-void-950">
+              <div className="h-full w-2/3 bg-star/80" style={{ animation: 'cockpitPulse 2s infinite' }} />
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Central hologram / status lamp */}
-      <circle
-        cx="55.5"
-        cy="87.5"
-        r={hologramActive ? 3.2 : 2.2}
-        fill={hologramActive ? '#5ee7ff' : '#2a4058'}
-        opacity={hologramActive ? 0.95 : 0.55}
-        filter="url(#softGlow)"
+      {/* Top canopy rail */}
+      <div
+        className="absolute top-0 right-0 left-0 h-[11%]"
+        style={{
+          background: 'linear-gradient(180deg, rgba(8,14,28,0.95) 0%, rgba(12,22,44,0.75) 60%, transparent 100%)',
+          clipPath: 'polygon(0 0, 100% 0, 88% 100%, 12% 100%)',
+        }}
       >
-        {hologramActive && (
-          <>
-            <animate attributeName="r" values="2.6;3.6;2.6" dur="1.1s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.55;1;0.55" dur="1.1s" repeatCount="indefinite" />
-          </>
-        )}
-      </circle>
-      <circle cx="55.5" cy="87.5" r="1.1" fill="#0a1018" opacity="0.45" />
+        <div className="flex h-full items-end justify-center gap-6 pb-1">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-1 w-1 rounded-full"
+              style={{
+                background: i === 4 ? '#5ee7ff' : '#4ea1ff',
+                opacity: 0.4 + (i % 3) * 0.2,
+                boxShadow: i === 4 ? '0 0 8px #5ee7ff' : undefined,
+                animation: `cockpitBlink ${1.6 + (i % 4) * 0.25}s infinite`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
 
-      {/* Toggle switches */}
-      {[62, 66, 70, 74].map((x, i) => (
-        <g key={`sw-${x}`}>
-          <rect x={x} y="83" width="3.2" height="5.5" rx="0.25" fill="#0e1318" stroke="#4a5560" strokeWidth="0.15" />
-          <rect
-            x={x + 0.45}
-            y={i % 2 === 0 ? 83.4 : 85.8}
-            width="2.3"
-            height="2.2"
-            rx="0.2"
-            fill={i % 2 === 0 ? '#e67a2e' : '#4a5560'}
+      {/* Perspective command console */}
+      <div
+        className="absolute right-0 bottom-0 left-0 h-[26%]"
+        style={{
+          background: 'linear-gradient(180deg, transparent 0%, rgba(6,12,26,0.4) 12%, rgba(8,14,28,0.92) 35%, #060c18 100%)',
+        }}
+      >
+        <div
+          className="absolute right-[6%] bottom-[8%] left-[6%] top-[18%]"
+          style={{
+            background: 'linear-gradient(180deg, rgba(20,36,64,0.9) 0%, rgba(8,14,28,0.98) 100%)',
+            clipPath: 'polygon(6% 0, 94% 0, 100% 100%, 0 100%)',
+            boxShadow: '0 -8px 28px rgba(94,231,255,0.12), inset 0 1px 0 rgba(94,231,255,0.25)',
+            borderTop: '1px solid rgba(94,231,255,0.35)',
+          }}
+        >
+          <div className="flex h-full items-stretch gap-2 px-3 py-2 sm:gap-3 sm:px-5 sm:py-2.5">
+            <div className="flex min-w-0 flex-1 flex-col rounded-sm bg-black/50 p-1.5 ring-1 ring-cyan-hud/25">
+              <div className="mb-1 font-mono text-[8px] tracking-widest text-cyan-hud/60">NAV CORE</div>
+              <svg className="h-full w-full flex-1" viewBox="0 0 100 28" preserveAspectRatio="none">
+                <polyline
+                  points="0,20 10,14 20,18 30,8 40,16 50,6 60,14 70,10 80,16 90,12 100,18"
+                  fill="none"
+                  stroke="#2ecc71"
+                  strokeWidth="1.2"
+                  opacity="0.85"
+                >
+                  <animate attributeName="opacity" values="0.45;1;0.45" dur="2s" repeatCount="indefinite" />
+                </polyline>
+              </svg>
+            </div>
+
+            <div className="flex min-w-0 flex-[1.2] items-end justify-center gap-1 rounded-sm bg-black/50 px-2 py-1.5 ring-1 ring-cyan-hud/25 sm:gap-1.5">
+              {[40, 65, 85, 55, 70, 95, 50].map((h, i) => (
+                <div key={i} className="flex h-full w-2 flex-col justify-end sm:w-2.5">
+                  <div
+                    className="w-full rounded-sm"
+                    style={{
+                      height: `${h}%`,
+                      background:
+                        h > 80
+                          ? 'linear-gradient(#5ee7ff,#4ea1ff)'
+                          : h > 55
+                            ? 'linear-gradient(#2ecc71,#1a7a3a)'
+                            : 'linear-gradient(#f0b429,#e67a2e)',
+                      boxShadow: '0 0 6px rgba(94,231,255,0.35)',
+                      animation: `cockpitPulse ${1.2 + i * 0.15}s ease-in-out infinite`,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="relative flex w-14 shrink-0 items-center justify-center sm:w-16">
+              <div
+                className={`absolute h-10 w-10 rounded-full sm:h-12 sm:w-12 ${hologramActive ? 'bg-cyan-hud/30' : 'bg-star/10'}`}
+                style={{
+                  boxShadow: hologramActive
+                    ? '0 0 28px rgba(94,231,255,0.65), inset 0 0 12px rgba(94,231,255,0.5)'
+                    : '0 0 10px rgba(78,161,255,0.25)',
+                  animation: hologramActive ? 'cockpitPulse 1s ease-in-out infinite' : undefined,
+                }}
+              />
+              <div
+                className={`relative h-4 w-4 rounded-full sm:h-5 sm:w-5 ${hologramActive ? 'bg-cyan-hud' : 'bg-star-dim'}`}
+                style={{ boxShadow: hologramActive ? '0 0 14px #5ee7ff' : undefined }}
+              />
+            </div>
+
+            <div className="hidden min-w-0 flex-1 grid-cols-4 gap-1 rounded-sm bg-black/50 p-1.5 ring-1 ring-cyan-hud/25 sm:grid">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="rounded-sm ring-1 ring-cyan-hud/20"
+                  style={{
+                    background:
+                      i % 3 === 0 ? 'rgba(230,122,46,0.85)' : i % 2 === 0 ? 'rgba(94,231,255,0.45)' : 'rgba(40,60,90,0.8)',
+                    animation: i % 3 === 0 ? `cockpitBlink ${1.8 + i * 0.1}s infinite` : undefined,
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 rounded-sm bg-black/50 p-1.5 ring-1 ring-cyan-hud/25">
+              <div className="font-mono text-[8px] tracking-widest text-cyan-hud/60">CMD LINK</div>
+              <div className="flex gap-1">
+                {['#2ecc71', '#2ecc71', '#5ee7ff', '#f0b429', '#4ea1ff', '#e67a2e'].map((c, i) => (
+                  <div
+                    key={i}
+                    className="h-2 flex-1 rounded-sm"
+                    style={{ background: c, animation: `cockpitBlink ${1.2 + i * 0.2}s infinite` }}
+                  />
+                ))}
+              </div>
+              <div className="h-1 overflow-hidden rounded-sm bg-void-950">
+                <div className="h-full w-[72%] bg-gradient-to-r from-star to-cyan-hud" style={{ animation: 'cockpitPulse 2.2s infinite' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {hologramActive && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div
+            className="h-[min(38vh,16rem)] w-[min(38vh,16rem)] rounded-full border border-cyan-hud/30"
+            style={{
+              boxShadow: '0 0 40px rgba(94,231,255,0.2), inset 0 0 30px rgba(94,231,255,0.08)',
+              animation: 'cockpitSpin 18s linear infinite',
+            }}
           />
-        </g>
-      ))}
-
-      {/* Right status LEDs + small screen */}
-      <rect x="79" y="82.2" width="14" height="9.5" rx="0.35" fill="#0a1014" stroke="#3a4450" strokeWidth="0.25" />
-      <rect x="79.6" y="82.8" width="12.8" height="5.5" rx="0.2" fill="#101820" />
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <circle key={`led-${i}`} cx={81.2 + i * 2} cy="85.5" r="0.55" fill={['#2ecc71', '#2ecc71', '#f0b429', '#4ea1ff', '#e67a2e', '#5ee7ff'][i]}>
-          <animate attributeName="opacity" values="0.35;1;0.35" dur={`${1.1 + i * 0.2}s`} repeatCount="indefinite" />
-        </circle>
-      ))}
-      <text x="80.2" y="90.5" fill="#7a8694" fontSize="1.05" fontFamily="monospace">
-        CMD DECK
-      </text>
-
-      {/* Bottom rivets on console lip */}
-      {[14, 26, 38, 50, 62, 74, 86].map((x) => (
-        <circle key={`br-${x}`} cx={x} cy="79.2" r="0.4" fill="#1a1e24" stroke="#6a7582" strokeWidth="0.12" />
-      ))}
-    </svg>
+          <div
+            className="absolute h-[min(28vh,11rem)] w-[min(28vh,11rem)] rounded-full border border-dashed border-cyan-hud/40"
+            style={{ animation: 'cockpitSpin 12s linear infinite reverse' }}
+          />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -346,7 +410,7 @@ export function LaunchSpaceCanvas({
   return (
     <div className={`absolute inset-0 h-full w-full overflow-hidden ${className}`}>
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden />
-      {cockpit ? <RealisticCockpit hologramActive={hologramActive} /> : null}
+      {cockpit ? <TechCockpit hologramActive={hologramActive} /> : null}
     </div>
   )
 }
