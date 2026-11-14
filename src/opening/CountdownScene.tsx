@@ -191,7 +191,7 @@ function WarpStarsCanvas({ progress, warp }: { progress: number; warp: number })
 }
 
 const FLASH_DURATION_S = 2.8
-const TICK_MS = 1000
+const TICK_MS = 550
 
 const GO_COLOR = '#ffffff'
 const GO_GLOW = '0 0 42px rgba(255, 255, 255, 0.85)'

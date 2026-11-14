@@ -28,8 +28,8 @@ export function TypewriterHud({
   footer,
 }: TypewriterHudProps) {
   const isMatrix = variant === 'matrix'
-  const effectiveCharMs = isMatrix ? Math.max(18, charMs - 6) : charMs
-  const scrambleSteps = isMatrix ? 3 : 0
+  const effectiveCharMs = isMatrix ? Math.max(8, charMs) : charMs
+  const scrambleSteps = isMatrix ? (charMs <= 12 ? 1 : 2) : 0
 
   const [lineIdx, setLineIdx] = useState(0)
   const [charIdx, setCharIdx] = useState(0)

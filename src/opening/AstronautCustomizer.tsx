@@ -14,6 +14,7 @@ import {
 } from '../data/openingData'
 import { CapiDialog } from './CapiDialog'
 import { LaunchSpaceCanvas } from './LaunchSpaceCanvas'
+import { McButton } from './McButton'
 
 interface AstronautCustomizerProps {
   initial?: Partial<AstronautProfile>
@@ -158,13 +159,9 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
               ))}
             </OptionRow>
 
-            <button
-              type="button"
-              className="pixel-btn min-h-12 w-full rounded-xl bg-star font-pixel text-lg font-bold text-void-950"
-              onClick={() => setConfirmed(true)}
-            >
+            <McButton className="min-h-12 w-full px-4 font-pixel text-lg font-bold" onClick={() => setConfirmed(true)}>
               Confirmar Astronauta
-            </button>
+            </McButton>
           </div>
         </div>
       </div>

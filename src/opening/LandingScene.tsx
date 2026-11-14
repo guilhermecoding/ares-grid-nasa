@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { CAPI_LANDING_LINES, LANDING_HUD_LINES } from '../data/openingData'
 import { CapiDialog } from './CapiDialog'
 import { MarsApproachCanvas } from './MarsApproachCanvas'
+import { McButton } from './McButton'
 import { TypewriterHud } from './TypewriterHud'
 
 interface LandingSceneProps {
@@ -52,13 +53,9 @@ export function LandingScene({ onStartMission }: LandingSceneProps) {
 
         {capiDone && (
           <div className="absolute inset-x-0 bottom-6 z-30 flex justify-center px-4">
-            <button
-              type="button"
-              className="pixel-btn min-h-14 w-full max-w-md rounded-xl bg-star px-4 font-pixel text-lg font-bold text-void-950 sm:text-xl"
-              onClick={onStartMission}
-            >
+            <McButton className="min-h-14 w-full max-w-md px-4 font-pixel text-lg font-bold sm:text-xl" onClick={onStartMission}>
               INICIAR MISSÃO 01: ENERGIA SOLAR
-            </button>
+            </McButton>
           </div>
         )}
       </div>

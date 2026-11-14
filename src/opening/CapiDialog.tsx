@@ -1,6 +1,8 @@
+import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { MEDIA } from '../constants/mediaAssets'
 import { soundEngine } from '../services/soundEngine'
+import { McButton } from './McButton'
 
 const CHAR_MS = 28
 
@@ -50,6 +52,7 @@ export function CapiDialog({
   const [idx, setIdx] = useState(0)
   const [charIdx, setCharIdx] = useState(0)
   const [imgFailed, setImgFailed] = useState(false)
+  const [entered, setEntered] = useState(false)
 
   const line = lines[Math.min(idx, lines.length - 1)] ?? ''
   const isLast = idx >= lines.length - 1
@@ -57,13 +60,13 @@ export function CapiDialog({
   const visible = line.slice(0, charIdx)
 
   useEffect(() => {
-    if (charIdx >= line.length) return
+    if (!entered || charIdx >= line.length) return
     const id = window.setTimeout(() => {
       setCharIdx((c) => c + 1)
       soundEngine.typeTick()
     }, CHAR_MS)
     return () => clearTimeout(id)
-  }, [charIdx, line])
+  }, [entered, charIdx, line])
 
   const advance = () => {
     if (!typingDone) {
@@ -87,7 +90,13 @@ export function CapiDialog({
       : continueLabel
 
   return (
-    <div className="pointer-events-auto absolute right-3 bottom-3 z-20 flex max-w-[min(100%,440px)] items-end gap-3 sm:right-5 sm:bottom-5">
+    <motion.div
+      className="pointer-events-auto absolute right-3 bottom-3 z-20 flex max-w-[min(100%,440px)] items-end gap-3 sm:right-5 sm:bottom-5"
+      initial={{ opacity: 0, y: 36, scale: 0.94 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.55, ease: [0.22, 0.08, 0.25, 1] }}
+      onAnimationComplete={() => setEntered(true)}
+    >
       <div className="relative min-w-0 flex-1 bg-[#0a1628]/95 px-4 pt-3 pb-3 shadow-[0_0_28px_rgba(94,231,255,0.35)]">
         <div className="pointer-events-none absolute -inset-1 bg-cyan-hud/10 blur-md" aria-hidden />
         <HudFrame />
@@ -95,17 +104,22 @@ export function CapiDialog({
           <p className="mb-1 font-pixel text-xs tracking-wide text-cyan-hud uppercase">Capi</p>
           <p className="min-h-[2.75rem] font-pixel text-sm leading-snug text-void-100 sm:min-h-[3rem] sm:text-base" aria-live="polite">
             {visible}
-            {!typingDone && <span className="ml-0.5 inline-block w-2 animate-pulse bg-cyan-hud">▌</span>}
+            {entered && !typingDone && <span className="ml-0.5 inline-block w-2 animate-pulse bg-cyan-hud">▌</span>}
           </p>
           <div className="mt-3 flex justify-end">
-            <button type="button" className="mc-btn min-h-12 min-w-[140px] px-5 font-pixel text-lg font-bold" onClick={advance}>
+            <McButton className="min-h-12 min-w-[140px] px-5 font-pixel text-lg font-bold" onClick={advance}>
               {buttonLabel}
-            </button>
+            </McButton>
           </div>
         </div>
       </div>
 
-      <div className="relative shrink-0">
+      <motion.div
+        className="relative shrink-0"
+        initial={{ opacity: 0, scale: 0.7 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.15, duration: 0.45, ease: 'easeOut' }}
+      >
         <div className="absolute -inset-2 rounded-full bg-cyan-hud/25 blur-lg" aria-hidden />
         {!imgFailed ? (
           <img
@@ -120,7 +134,7 @@ export function CapiDialog({
             C
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

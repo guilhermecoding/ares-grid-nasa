@@ -121,4 +121,38 @@ export const soundEngine = {
     setTimeout(() => beep(784, 0.28, 'square', 0.16), 140)
     setTimeout(() => beep(1046, 0.35, 'sine', 0.12), 200)
   },
+  /** Soft power-up whoosh + HUD chime when entering the cockpit. */
+  cockpitEnter: () => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+
+    const whoosh = audio.createOscillator()
+    const g = audio.createGain()
+    whoosh.type = 'sine'
+    whoosh.frequency.setValueAtTime(180, audio.currentTime)
+    whoosh.frequency.exponentialRampToValueAtTime(720, audio.currentTime + 0.55)
+    g.gain.setValueAtTime(0.001, audio.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.12, audio.currentTime + 0.08)
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.7)
+    whoosh.connect(g)
+    g.connect(audio.destination)
+    whoosh.start()
+    whoosh.stop(audio.currentTime + 0.7)
+
+    const rumble = audio.createOscillator()
+    const rg = audio.createGain()
+    rumble.type = 'triangle'
+    rumble.frequency.value = 70
+    rg.gain.setValueAtTime(0.08, audio.currentTime)
+    rg.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.5)
+    rumble.connect(rg)
+    rg.connect(audio.destination)
+    rumble.start()
+    rumble.stop(audio.currentTime + 0.5)
+
+    setTimeout(() => beep(660, 0.08, 'sine', 0.07), 180)
+    setTimeout(() => beep(880, 0.1, 'sine', 0.08), 280)
+    setTimeout(() => beep(1175, 0.16, 'sine', 0.09), 400)
+  },
 }
