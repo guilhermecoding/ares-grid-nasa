@@ -193,8 +193,8 @@ function WarpStarsCanvas({ progress, warp }: { progress: number; warp: number })
 const FLASH_DURATION_S = 2.8
 const TICK_MS = 1000
 
-const GO_COLOR = '#e67a2e'
-const GO_GLOW = '0 0 42px rgba(230, 122, 46, 0.85)'
+const GO_COLOR = '#ffffff'
+const GO_GLOW = '0 0 42px rgba(255, 255, 255, 0.85)'
 
 export function CountdownScene({ onComplete }: CountdownSceneProps) {
   const [count, setCount] = useState<number | null>(null)
@@ -219,7 +219,7 @@ export function CountdownScene({ onComplete }: CountdownSceneProps) {
               window.setTimeout(() => {
                 if (cancelled) return
                 setPhase('go')
-                soundEngine.success()
+                soundEngine.goStart()
               }, TICK_MS),
             )
           }

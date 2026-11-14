@@ -94,4 +94,29 @@ export const soundEngine = {
       setTimeout(() => beep(55, 0.4, 'sawtooth', 0.12), 90)
     }
   },
+  /** Punchy “GO!!!” start / liftoff sting. */
+  goStart: () => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+
+    // Rising whoosh
+    const osc = audio.createOscillator()
+    const g = audio.createGain()
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(80, audio.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(520, audio.currentTime + 0.28)
+    g.gain.setValueAtTime(0.16, audio.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.35)
+    osc.connect(g)
+    g.connect(audio.destination)
+    osc.start()
+    osc.stop(audio.currentTime + 0.35)
+
+    // Bright start chord
+    beep(523, 0.18, 'square', 0.14)
+    setTimeout(() => beep(659, 0.2, 'square', 0.15), 70)
+    setTimeout(() => beep(784, 0.28, 'square', 0.16), 140)
+    setTimeout(() => beep(1046, 0.35, 'sine', 0.12), 200)
+  },
 }
