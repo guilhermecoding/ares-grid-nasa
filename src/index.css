@@ -123,6 +123,40 @@
     box-shadow: 0 1px 0 #07040f;
   }
 
+  /* Minecraft-style chunky orange block button */
+  .mc-btn {
+    position: relative;
+    border: 0;
+    border-radius: 0;
+    image-rendering: pixelated;
+    color: #fff8f0;
+    background: #e67a2e;
+    text-shadow: 2px 2px 0 #7a2e08;
+    box-shadow:
+      inset 0 4px 0 #ffb45c,
+      inset 0 -5px 0 #b34e14,
+      inset 5px 0 0 #f0923a,
+      inset -5px 0 0 #c45618,
+      0 6px 0 #6b2e0a,
+      0 8px 0 rgba(0, 0, 0, 0.35);
+    transition: transform 0.06s steps(2), box-shadow 0.06s steps(2);
+  }
+
+  .mc-btn:hover:not(:disabled) {
+    background: #f08638;
+  }
+
+  .mc-btn:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow:
+      inset 0 3px 0 #ffb45c,
+      inset 0 -3px 0 #b34e14,
+      inset 4px 0 0 #f0923a,
+      inset -4px 0 0 #c45618,
+      0 2px 0 #6b2e0a,
+      0 3px 0 rgba(0, 0, 0, 0.3);
+  }
+
   .crater-tile {
     background:
       radial-gradient(circle at 30% 35%, rgba(90, 61, 40, 0.45) 0 18%, transparent 19%),

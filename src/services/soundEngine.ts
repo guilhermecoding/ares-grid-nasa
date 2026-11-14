@@ -60,4 +60,63 @@ export const soundEngine = {
   },
   fail: () => beep(150, 0.35, 'sawtooth', 0.05),
   click: () => beep(640, 0.04, 'square', 0.025),
+  /** Rising engine rumble for final countdown seconds (3,2,1,0). */
+  ignition: (count: number) => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+    const osc = audio.createOscillator()
+    const g = audio.createGain()
+    const intensity = Math.max(0, 3 - count) / 3
+    osc.type = 'sawtooth'
+    osc.frequency.value = 55 + intensity * 40
+    g.gain.value = 0.06 + intensity * 0.1
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.55)
+    osc.connect(g)
+    g.connect(audio.destination)
+    osc.start()
+    osc.stop(audio.currentTime + 0.55)
+  },
+  /** Dedicated launch-pad countdown beep; intensifies as n approaches 0. */
+  countdownTick: (n: number) => {
+    const urgency = Math.max(0, Math.min(1, (10 - n) / 10))
+    const freq = 700 + urgency * 340
+    const dur = n === 0 ? 0.32 : 0.1 + urgency * 0.05
+    const gain = 0.1 + urgency * 0.1
+    beep(freq, dur, 'square', gain)
+    beep(freq * 1.5, dur * 0.6, 'sine', gain * 0.55)
+    beep(freq * 0.5, dur * 0.4, 'triangle', gain * 0.35)
+    if (n <= 3) {
+      soundEngine.ignition(n)
+    }
+    if (n === 0) {
+      beep(90, 0.5, 'sawtooth', 0.14)
+      setTimeout(() => beep(55, 0.4, 'sawtooth', 0.12), 90)
+    }
+  },
+  /** Punchy “GO!!!” start / liftoff sting. */
+  goStart: () => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+
+    // Rising whoosh
+    const osc = audio.createOscillator()
+    const g = audio.createGain()
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(80, audio.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(520, audio.currentTime + 0.28)
+    g.gain.setValueAtTime(0.16, audio.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.35)
+    osc.connect(g)
+    g.connect(audio.destination)
+    osc.start()
+    osc.stop(audio.currentTime + 0.35)
+
+    // Bright start chord
+    beep(523, 0.18, 'square', 0.14)
+    setTimeout(() => beep(659, 0.2, 'square', 0.15), 70)
+    setTimeout(() => beep(784, 0.28, 'square', 0.16), 140)
+    setTimeout(() => beep(1046, 0.35, 'sine', 0.12), 200)
+  },
 }
