@@ -168,7 +168,7 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
         </div>
 
         <div
-          className="relative mt-3 aspect-[16/7] min-h-64 w-full touch-none overflow-hidden border-4 border-[#8a4a1c] bg-[linear-gradient(180deg,#6a2c16,#3b140c)] select-none"
+          className="relative mt-3 h-[clamp(15rem,46dvh,26rem)] w-full touch-none overflow-hidden border-4 border-[#8a4a1c] bg-[linear-gradient(180deg,#6a2c16,#3b140c)] select-none"
           style={{ touchAction: 'none' }}
           role="application"
           aria-label="Campo de corrida até os abrigos"
@@ -187,10 +187,13 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
           {ROCKS.map((rock) => (
             <span
               key={`${rock.x}-${rock.y}`}
-              className="absolute aspect-square w-[11%] -translate-x-1/2 -translate-y-1/2 rounded-[38%] border-4 border-[#2a0f0c] bg-[linear-gradient(145deg,#b0623a,#6b3018_60%,#4a1f10)] shadow-[4px_6px_0_rgba(0,0,0,0.35)]"
+              className="absolute h-[19%] w-[15%] -translate-x-1/2 -translate-y-1/2 drop-shadow-[4px_6px_0_rgba(0,0,0,0.4)]"
               style={{ left: `${rock.x}%`, top: `${rock.y}%` }}
               aria-hidden
-            />
+            >
+              <span className="absolute inset-0 bg-[#2a0f0c] [clip-path:polygon(16%_6%,58%_0,92%_18%,100%_62%,80%_96%,32%_100%,4%_78%,0_32%)]" />
+              <span className="absolute inset-[5px] bg-[linear-gradient(150deg,#c9774a,#8a4424_45%,#4a1f10)] [clip-path:polygon(16%_6%,58%_0,92%_18%,100%_62%,80%_96%,32%_100%,4%_78%,0_32%)]" />
+            </span>
           ))}
 
           {SHELTERS.map((door, index) => {
@@ -205,7 +208,7 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
                 style={{ top: `${1.5 + index * 33}%` }}
               >
                 <Icon className="size-6 text-[#f4fff4] md:size-8" aria-hidden />
-                <span className="font-pixel text-[8px] leading-tight text-[#f4fff4] uppercase sm:text-[10px]">{door.title}</span>
+                <span className="font-pixel text-[9px] leading-tight text-[#f4fff4] uppercase sm:text-xs">{door.title}</span>
               </div>
             )
           })}

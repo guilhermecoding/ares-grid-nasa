@@ -77,7 +77,7 @@ export function InspectionStep({ inspected, integrity, onInspect, onDone }: Prop
                   {ok ? null : <span className="gk-ping pointer-events-none absolute -inset-1 rounded-full border-2 border-energy" aria-hidden />}
                 </button>
                 <span
-                  className={`pointer-events-none absolute top-7 left-0 -translate-x-1/2 border-2 border-[#04080f] px-1.5 py-0.5 font-pixel text-[8px] whitespace-nowrap uppercase sm:text-[10px] ${
+                  className={`pointer-events-none absolute top-7 left-0 hidden -translate-x-1/2 border-2 sm:block border-[#04080f] px-1.5 py-0.5 font-pixel text-[8px] whitespace-nowrap uppercase sm:text-[10px] ${
                     ok ? 'bg-life text-[#04140a]' : 'bg-[#04080f]/85 text-[#f4fff4]'
                   }`}
                   aria-hidden

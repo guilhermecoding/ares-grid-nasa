@@ -13,4 +13,4 @@ export const TRAY_BEDS: Record<PlantGroupId, { points: string; cx: number; cy: n
 export const TRAY_ORDER: readonly PlantGroupId[] = ['fruit', 'veggie', 'flower', 'grain']
 
 /** Plant size for each growth stage: seedling, sprout, full plant. */
-export const GROWTH_SCALE = [0.28, 0.62, 1] as const
+export const GROWTH_SCALE = [0.36, 0.64, 1] as const

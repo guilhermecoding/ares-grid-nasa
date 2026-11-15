@@ -58,8 +58,9 @@ export function ShieldMonitor({ radiation, checked, onCheck, onLeave }: Props) {
             </Tag>
           </div>
           {/* Water */}
-          <div className="gk-glow-breathe absolute inset-x-0 top-[56%] flex h-[14%] items-center justify-center border-b-4 border-[#0b2a4a] bg-[linear-gradient(180deg,#38bdf8,#1d6fb8)]">
-            <Tag tone="water">
+          <div className="absolute inset-x-0 top-[56%] flex h-[14%] items-center justify-center border-b-4 border-[#0b2a4a] bg-[linear-gradient(180deg,#38bdf8,#1d6fb8)]">
+            <span className="gk-glow-breathe absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.35),transparent_70%)]" aria-hidden />
+            <Tag tone="water" className="relative">
               <Droplets className="size-3" aria-hidden /> Água · hidrogênio
             </Tag>
           </div>

@@ -144,7 +144,7 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
                 <span
                   key={group}
                   className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: `${bed.cx}%`, top: `${bed.cy}%` }}
+                  style={{ left: `${bed.cx}%`, top: `${bed.cy - 8}%` }}
                 >
                   <span
                     className="flex items-center gap-1 border bg-[#04080f]/85 px-1.5 py-1 font-pixel text-[9px] leading-none whitespace-nowrap uppercase sm:text-[10px]"
