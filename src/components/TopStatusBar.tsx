@@ -41,7 +41,7 @@ export function TopStatusBar({
           <div className="h-full rounded-full bg-life" style={{ width: `${pct}%` }} />
         </div>
 
-        <div className="mt-2">
+        <div className="mt-2 overflow-x-auto">
           <ResourcePips stats={stats} />
         </div>
 

@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { ARCADIA_SITE } from '../data/arcadiaSiteData'
 import { OSDR_CROPS } from '../data/osdrCrops'
 import type { WeatherState } from '../types/game'
+import { ScrollHintArea } from './ScrollHintArea'
 
 interface Props {
   open: boolean
@@ -14,7 +15,11 @@ export function NasaDataModal({ open, weather, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-void-950/75 p-4" role="dialog" aria-modal>
-      <div className="glass-panel max-h-[90vh] w-full max-w-lg overflow-auto rounded-2xl p-5">
+      <ScrollHintArea
+        variant="dark"
+        frameClassName="w-full max-w-lg"
+        className="glass-panel max-h-[90vh] rounded-none p-5"
+      >
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <h2 className="font-pixel text-xl text-star">Ciência NASA</h2>
@@ -76,7 +81,7 @@ export function NasaDataModal({ open, weather, onClose }: Props) {
             </a>
           </div>
         </div>
-      </div>
+      </ScrollHintArea>
     </div>
   )
 }

@@ -74,7 +74,7 @@ export interface WorldState {
   levelUpTitle: string | null
 }
 
-export type ScreenId = 'home' | 'world'
+export type ScreenId = 'home' | 'world' | 'mission'
 
 export const GRID_SIZE = 4
 export const MAX_ENERGY = 100

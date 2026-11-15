@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { MEDIA } from '../constants/mediaAssets'
+import { soundEngine } from '../services/soundEngine'
 import { LaunchSpaceCanvas } from './LaunchSpaceCanvas'
+import { McButton } from './McButton'
 
 interface ReadyGateProps {
   openingCompleted: boolean
@@ -30,7 +32,7 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
           <div className="absolute inset-0 rounded-full bg-cyan-hud/20 blur-2xl" aria-hidden />
           {!imgFailed ? (
             <img
-              src={MEDIA.capi.neutral}
+              src={MEDIA.capi.emblem}
               alt="Capi, assistente virtual"
               className="relative h-36 w-36 object-contain drop-shadow-[0_0_20px_rgba(94,231,255,0.35)] sm:h-44 sm:w-44"
               onError={() => setImgFailed(true)}
@@ -54,25 +56,24 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
 
         {openingCompleted ? (
           <div className="mt-2 flex w-full flex-col items-center gap-3">
-            <button type="button" className="mc-btn min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onContinue}>
+            <McButton className="btn-bob min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onContinue}>
               CONTINUAR
-            </button>
+            </McButton>
             <button
               type="button"
               className="min-h-12 w-full max-w-xs border-0 bg-transparent px-4 font-body text-sm text-void-300 underline-offset-2 hover:text-void-100 hover:underline"
-              onClick={onReplayIntro}
+              onClick={() => {
+                soundEngine.goStart()
+                onReplayIntro()
+              }}
             >
               Ver introdução
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            className="mc-btn mt-2 min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl"
-            onClick={onStartIntro}
-          >
+          <McButton className="btn-bob mt-2 min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onStartIntro}>
             INICIAR AVENTURA
-          </button>
+          </McButton>
         )}
       </div>
     </div>

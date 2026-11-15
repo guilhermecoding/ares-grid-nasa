@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   CAPI_INTRO_LINES,
   TAKEOFF_HUD_LINES,
@@ -12,10 +12,12 @@ import { CapiDialog } from './CapiDialog'
 import { CountdownScene } from './CountdownScene'
 import { LandingScene } from './LandingScene'
 import { LaunchSpaceCanvas } from './LaunchSpaceCanvas'
+import { McButton } from './McButton'
+import { PixelDialogBox } from './PixelDialogBox'
 import { ReadyGate } from './ReadyGate'
-import { TypewriterHud } from './TypewriterHud'
 
 const TAKEOFF_REVEAL_S = 1.8
+const CAPI_SCENE_REVEAL_S = 1.2
 
 export interface OpeningProfilePatch {
   playerName: string
@@ -45,6 +47,8 @@ export function OpeningFlow({
   const [hologram, setHologram] = useState(false)
   const [takeoffReady, setTakeoffReady] = useState(false)
   const [takeoffRevealed, setTakeoffRevealed] = useState(false)
+  const [takeoffDialogOpen, setTakeoffDialogOpen] = useState(false)
+  const [capiSceneReady, setCapiSceneReady] = useState(false)
   const [savedProfile, setSavedProfile] = useState<AstronautProfile | null>(null)
 
   const finishToWorld = useCallback(
@@ -63,35 +67,24 @@ export function OpeningFlow({
     [savedProfile, playerName, initialProfile, onSaveProfile, onEnterWorld],
   )
 
-  const skip = () => {
-    soundEngine.click()
-    finishToWorld()
-  }
-
   const startIntro = () => {
     void unlockAudio()
     setMuted(false)
-    soundEngine.click()
     setHologram(false)
     setTakeoffReady(false)
     setTakeoffRevealed(false)
+    setTakeoffDialogOpen(false)
+    setCapiSceneReady(false)
     setPhase('scene1_countdown')
   }
 
-  const showSkip = phase !== 'ready_gate' && phase !== 'start_mission_1'
+  useEffect(() => {
+    if (phase !== 'scene2_takeoff') return
+    soundEngine.cockpitEnter()
+  }, [phase])
 
   return (
     <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-void-950" style={{ touchAction: 'manipulation' }}>
-      {showSkip && (
-        <button
-          type="button"
-          className="absolute top-3 right-3 z-50 min-h-12 rounded-lg border border-void-500/50 bg-void-900/70 px-3 text-sm text-void-300 backdrop-blur-sm hover:text-void-100"
-          onClick={skip}
-        >
-          Pular Introdução
-        </button>
-      )}
-
       {phase === 'ready_gate' && (
         <ReadyGate
           openingCompleted={openingCompleted}
@@ -99,7 +92,6 @@ export function OpeningFlow({
           onStartIntro={startIntro}
           onContinue={() => {
             void unlockAudio()
-            soundEngine.click()
             onEnterWorld()
           }}
           onReplayIntro={startIntro}
@@ -112,48 +104,59 @@ export function OpeningFlow({
 
       {phase === 'scene2_takeoff' && (
         <div className="relative h-full w-full">
-          <LaunchSpaceCanvas warp={0.85} hologramActive={hologram} />
-          <div className="relative z-10 flex h-full flex-col items-center justify-center p-4">
-            {takeoffRevealed && (
-              <>
-                <TypewriterHud
-                  className="w-full max-w-lg"
-                  lines={TAKEOFF_HUD_LINES}
-                  onComplete={() => {
-                    setHologram(true)
-                    setTakeoffReady(true)
-                  }}
-                />
-                {takeoffReady && (
-                  <button
-                    type="button"
-                    className="pixel-btn mt-6 min-h-12 rounded-xl bg-star px-6 font-pixel text-lg font-bold text-void-950"
-                    onClick={() => {
-                      soundEngine.click()
-                      setPhase('scene3_capi_intro')
-                    }}
-                  >
+          <LaunchSpaceCanvas warp={0.85} hologramActive={hologram} paused={takeoffRevealed} />
+          {takeoffRevealed && (
+            <PixelDialogBox
+              open={takeoffDialogOpen}
+              lines={TAKEOFF_HUD_LINES}
+              title="SYS // DECOLAGEM"
+              onTypingComplete={() => {
+                setHologram(true)
+                setTakeoffReady(true)
+              }}
+              onClosed={() => {
+                setCapiSceneReady(false)
+                setPhase('scene3_capi_intro')
+              }}
+              footer={
+                takeoffReady ? (
+                  <McButton className="min-h-12 px-6 font-pixel text-lg font-bold" onClick={() => setTakeoffDialogOpen(false)}>
                     Continuar
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-          {/* Continues the countdown white flash into the cockpit */}
+                  </McButton>
+                ) : null
+              }
+            />
+          )}
           <motion.div
             className="pointer-events-none absolute inset-0 z-30 bg-white"
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
             transition={{ duration: TAKEOFF_REVEAL_S, ease: [0.22, 0.08, 0.25, 1] }}
-            onAnimationComplete={() => setTakeoffRevealed(true)}
+            onAnimationComplete={() => {
+              setTakeoffRevealed(true)
+              setTakeoffDialogOpen(true)
+            }}
           />
         </div>
       )}
 
       {phase === 'scene3_capi_intro' && (
         <div className="relative h-full w-full">
-          <LaunchSpaceCanvas warp={0.4} hologramActive />
-          <CapiDialog lines={CAPI_INTRO_LINES} onComplete={() => setPhase('scene3_1_customizer')} />
+          <LaunchSpaceCanvas warp={0.4} hologramActive={capiSceneReady} paused={capiSceneReady} />
+          {capiSceneReady && (
+            <CapiDialog lines={CAPI_INTRO_LINES} onComplete={() => setPhase('scene3_1_customizer')} />
+          )}
+          <motion.div
+            className="pointer-events-none absolute inset-0 z-30"
+            style={{
+              background:
+                'radial-gradient(ellipse at 70% 80%, rgba(94,231,255,0.35), transparent 45%), #050a14',
+            }}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: CAPI_SCENE_REVEAL_S, ease: [0.22, 0.08, 0.25, 1] }}
+            onAnimationComplete={() => setCapiSceneReady(true)}
+          />
         </div>
       )}
 
@@ -162,7 +165,6 @@ export function OpeningFlow({
           initial={{ name: playerName !== 'Robô Jr.' ? playerName : '', ...initialProfile }}
           onConfirm={(profile) => {
             setSavedProfile(profile)
-            soundEngine.success()
             setPhase('scene4_landing')
           }}
         />
@@ -171,7 +173,6 @@ export function OpeningFlow({
       {phase === 'scene4_landing' && (
         <LandingScene
           onStartMission={() => {
-            soundEngine.success()
             setPhase('start_mission_1')
             finishToWorld(savedProfile ?? undefined)
           }}

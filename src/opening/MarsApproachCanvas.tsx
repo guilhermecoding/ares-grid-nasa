@@ -3,17 +3,33 @@ import { useEffect, useRef } from 'react'
 interface MarsApproachCanvasProps {
   /** 0 = far approach, 1 = landed / surface */
   progress?: number
+  /** Freeze rAF while dialogs are open */
+  paused?: boolean
   className?: string
 }
 
-export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproachCanvasProps) {
+export function MarsApproachCanvas({ progress = 0, paused = false, className = '' }: MarsApproachCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const progressRef = useRef(progress)
+  const pausedRef = useRef(paused)
   const rafRef = useRef(0)
+  const drawRef = useRef<((now: number) => void) | null>(null)
 
   useEffect(() => {
     progressRef.current = progress
   }, [progress])
+
+  useEffect(() => {
+    pausedRef.current = paused
+    if (paused) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
+      return
+    }
+    if (drawRef.current && rafRef.current === 0) {
+      rafRef.current = requestAnimationFrame((t) => drawRef.current?.(t))
+    }
+  }, [paused])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -23,6 +39,7 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
 
     let w = 0
     let h = 0
+    let alive = true
     const stars: { x: number; y: number; s: number }[] = []
 
     const resize = () => {
@@ -48,14 +65,21 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
     const t0 = performance.now()
 
     const draw = (now: number) => {
+      if (!alive) return
+      if (pausedRef.current) {
+        rafRef.current = 0
+        return
+      }
+
       const t = (now - t0) / 1000
       const p = Math.min(1, Math.max(0, progressRef.current))
-      ctx.fillStyle = '#0a0614'
+
+      ctx.fillStyle = '#05030c'
       ctx.fillRect(0, 0, w, h)
 
       for (const st of stars) {
-        const a = 0.3 + Math.sin(t * 2 + st.x) * 0.2
-        ctx.fillStyle = `rgba(220,230,255,${a * (1 - p * 0.7)})`
+        const a = 0.35 + 0.45 * (0.5 + 0.5 * Math.sin(t * 1.4 + st.x))
+        ctx.fillStyle = `rgba(220,230,255,${a * (1 - p * 0.5)})`
         ctx.fillRect(st.x, st.y, st.s, st.s)
       }
 
@@ -63,7 +87,6 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
       const baseY = h * (0.55 - p * 0.12)
       const radius = w * (0.12 + p * 0.95)
 
-      // Mars disk
       const mars = ctx.createRadialGradient(cx - radius * 0.2, baseY - radius * 0.25, radius * 0.1, cx, baseY, radius)
       mars.addColorStop(0, '#d4895a')
       mars.addColorStop(0.35, '#b85a32')
@@ -74,7 +97,6 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
       ctx.arc(cx, baseY, radius, 0, Math.PI * 2)
       ctx.fill()
 
-      // Dark maria patches
       ctx.fillStyle = 'rgba(70,30,18,0.35)'
       ctx.beginPath()
       ctx.ellipse(cx - radius * 0.25, baseY - radius * 0.1, radius * 0.28, radius * 0.16, -0.3, 0, Math.PI * 2)
@@ -83,14 +105,12 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
       ctx.ellipse(cx + radius * 0.2, baseY + radius * 0.15, radius * 0.22, radius * 0.12, 0.4, 0, Math.PI * 2)
       ctx.fill()
 
-      // Atmosphere rim
       ctx.strokeStyle = `rgba(255,160,100,${0.25 + p * 0.2})`
       ctx.lineWidth = 2 + p * 3
       ctx.beginPath()
       ctx.arc(cx, baseY, radius * 1.02, 0, Math.PI * 2)
       ctx.stroke()
 
-      // Surface reveal near end
       if (p > 0.55) {
         const surfaceAlpha = (p - 0.55) / 0.45
         const groundY = h * (0.55 + (1 - surfaceAlpha) * 0.35)
@@ -101,7 +121,6 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
         ctx.fillStyle = ground
         ctx.fillRect(0, groundY, w, h - groundY)
 
-        // Rock silhouettes
         ctx.fillStyle = `rgba(40,20,12,${0.7 * surfaceAlpha})`
         const rocks = [
           [0.1, 0.08, 0.06],
@@ -119,7 +138,6 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
           ctx.fill()
         }
 
-        // Dust haze
         ctx.fillStyle = `rgba(200,120,70,${0.12 * surfaceAlpha})`
         ctx.fillRect(0, groundY - 20, w, 40)
       }
@@ -127,12 +145,25 @@ export function MarsApproachCanvas({ progress = 0, className = '' }: MarsApproac
       rafRef.current = requestAnimationFrame(draw)
     }
 
-    rafRef.current = requestAnimationFrame(draw)
+    drawRef.current = draw
+    if (!pausedRef.current) {
+      rafRef.current = requestAnimationFrame(draw)
+    }
     return () => {
+      alive = false
+      drawRef.current = null
       cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
       window.removeEventListener('resize', onResize)
     }
   }, [])
 
-  return <canvas ref={canvasRef} className={`absolute inset-0 h-full w-full ${className}`} aria-hidden />
+  return (
+    <canvas
+      ref={canvasRef}
+      className={`absolute inset-0 h-full w-full transition-[filter] duration-300 ${className}`}
+      style={paused ? { filter: 'grayscale(0.85) brightness(0.65)' } : undefined}
+      aria-hidden
+    />
+  )
 }
