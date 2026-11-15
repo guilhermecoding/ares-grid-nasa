@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
+import { ScrollHintArea } from '../../components/ScrollHintArea'
 import { MISSION1_META } from '../../data/mission1Data'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
@@ -106,7 +107,11 @@ export function LogbookModal({ siteLabel, tilt, stormChoice, onDone }: Props) {
 
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-void-950/70 p-3">
-      <div className="scroll-game max-h-[min(92dvh,42rem)] w-full max-w-lg border-4 border-[#1a1c3a] bg-[#f4fff4] p-4 text-[#1a1c3a] shadow-[0_0_0_3px_#30346d]">
+      <ScrollHintArea
+        variant="light"
+        frameClassName="w-full max-w-lg border-4 border-[#1a1c3a] bg-[#f4fff4] text-[#1a1c3a] shadow-[0_0_0_3px_#30346d]"
+        className="max-h-[min(92dvh,42rem)] p-4"
+      >
         <p className="font-pixel text-sm tracking-wide uppercase">Diário de Bordo — Missão 1</p>
         <p className="mt-1 font-body text-sm text-[#1a1c3a]/80">Checklist da missão cumprida</p>
 
@@ -186,7 +191,7 @@ export function LogbookModal({ siteLabel, tilt, stormChoice, onDone }: Props) {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </ScrollHintArea>
     </div>
   )
 }

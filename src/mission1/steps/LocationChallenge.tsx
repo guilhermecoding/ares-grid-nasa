@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { ScrollHintArea } from '../../components/ScrollHintArea'
 import { MEDIA } from '../../constants/mediaAssets'
 import { INSTALL_SITES, type SiteId } from '../../data/mission1Data'
 import { McButton } from '../../opening/McButton'
@@ -209,60 +210,66 @@ export function LocationChallenge({ onConfirm }: Props) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-              className="scroll-game-dark absolute z-40 w-[min(17.5rem,calc(100%-1.25rem))] max-h-[min(22rem,calc(100%-4.5rem))] rounded-none border-2 border-cyan-hud/55 bg-[#0a1628]/96 p-3 shadow-[0_12px_28px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:w-[min(19rem,calc(100%-1.5rem))] sm:p-3.5"
+              className="absolute z-40 w-[min(17.5rem,calc(100%-1.25rem))] max-h-[min(22rem,calc(100%-4.5rem))] rounded-none border-2 border-cyan-hud/55 bg-[#0a1628]/96 shadow-[0_12px_28px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:w-[min(19rem,calc(100%-1.5rem))]"
               style={{
                 left: panelPos?.left ?? 12,
                 top: panelPos?.top ?? 72,
                 visibility: panelPos ? 'visible' : 'hidden',
               }}
             >
-              <div className="mb-2 flex items-start justify-between gap-2 border-b border-cyan-hud/25 pb-2">
-                <div className="min-w-0">
-                  <p className="font-pixel text-xs text-cyan-hud sm:text-sm">Ponto {site.id}</p>
-                  <p className="truncate text-sm font-semibold text-[#f4fff4] sm:text-base">{site.name}</p>
+              <ScrollHintArea
+                variant="dark"
+                frameClassName="max-h-[min(22rem,calc(100%-4.5rem))]"
+                className="max-h-[min(22rem,calc(100%-4.5rem))] p-3 sm:p-3.5"
+              >
+                <div className="mb-2 flex items-start justify-between gap-2 border-b border-cyan-hud/25 pb-2">
+                  <div className="min-w-0">
+                    <p className="font-pixel text-xs text-cyan-hud sm:text-sm">Ponto {site.id}</p>
+                    <p className="truncate text-sm font-semibold text-[#f4fff4] sm:text-base">{site.name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded border border-void-400/40 px-2 py-1 text-xs text-void-200 hover:bg-void-800/80"
+                    onClick={() => setSelected(null)}
+                    aria-label="Fechar detalhes"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="shrink-0 rounded border border-void-400/40 px-2 py-1 text-xs text-void-200 hover:bg-void-800/80"
-                  onClick={() => setSelected(null)}
-                  aria-label="Fechar detalhes"
-                >
-                  ✕
-                </button>
-              </div>
 
-              <div className="grid gap-2.5">
-                <div>
-                  <p className="mb-0.5 text-[11px] font-bold tracking-wide text-life">Prós</p>
-                  <ul className="space-y-0.5 text-sm leading-snug text-void-100">
-                    {site.pros.map((p) => (
-                      <li key={p} className="flex gap-1.5">
-                        <span className="mt-0.5 text-life" aria-hidden>
-                          +
-                        </span>
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="grid gap-2.5">
+                  <div>
+                    <p className="mb-0.5 text-[11px] font-bold tracking-wide text-life">Prós</p>
+                    <ul className="space-y-0.5 text-sm leading-snug text-void-100">
+                      {site.pros.map((p) => (
+                        <li key={p} className="flex gap-1.5">
+                          <span className="mt-0.5 text-life" aria-hidden>
+                            +
+                          </span>
+                          <span>{p}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="mb-0.5 text-[11px] font-bold tracking-wide text-danger">Contras</p>
+                    <ul className="space-y-0.5 text-sm leading-snug text-void-100">
+                      {site.cons.map((c) => (
+                        <li key={c} className="flex gap-1.5">
+                          <span className="mt-0.5 text-danger" aria-hidden>
+                            −
+                          </span>
+                          <span>{c}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <p className="mb-0.5 text-[11px] font-bold tracking-wide text-danger">Contras</p>
-                  <ul className="space-y-0.5 text-sm leading-snug text-void-100">
-                    {site.cons.map((c) => (
-                      <li key={c} className="flex gap-1.5">
-                        <span className="mt-0.5 text-danger" aria-hidden>
-                          −
-                        </span>
-                        <span>{c}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
 
-              <McButton className="mt-3 min-h-11 w-full font-pixel text-base font-bold sm:min-h-12 sm:text-lg" onClick={tryConfirm}>
-                Confirmar local
-              </McButton>
+                <McButton className="mt-3 min-h-11 w-full font-pixel text-base font-bold sm:min-h-12 sm:text-lg" onClick={tryConfirm}>
+                  Confirmar local
+                </McButton>
+              </ScrollHintArea>
 
               {panelPos && (
                 <span

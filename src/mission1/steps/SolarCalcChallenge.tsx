@@ -9,6 +9,7 @@ import {
   type SeasonId,
   type SiteId,
 } from '../../data/mission1Data'
+import { ScrollHintArea } from '../../components/ScrollHintArea'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
 import { EfficiencyGauge } from '../EfficiencyGauge'
@@ -79,7 +80,11 @@ export function SolarCalcChallenge({ site, onConfirm, onSeasonChange }: Props) {
         </div>
 
         {/* Side panel */}
-        <div className="scroll-game-dark flex max-h-[48%] min-h-0 flex-col gap-2 rounded-none border-2 border-cyan-hud/40 bg-[#0a1628]/92 p-3 md:max-h-none md:w-[min(100%,22rem)] md:shrink-0">
+        <ScrollHintArea
+          variant="dark"
+          frameClassName="max-h-[48%] min-h-0 md:max-h-none md:w-[min(100%,22rem)] md:shrink-0"
+          className="flex max-h-[48%] min-h-0 flex-col gap-2 rounded-none border-2 border-cyan-hud/40 bg-[#0a1628]/92 p-3 md:max-h-none"
+        >
           <p className="font-pixel text-sm text-cyan-hud">Desafio 1.2 — Cálculo solar</p>
           <p className="text-xs text-void-200">
             <SciTerm term="Arcadia Planitia" /> · Lat {MISSION1_META.lat} · Lon {MISSION1_META.lon}
@@ -131,7 +136,7 @@ export function SolarCalcChallenge({ site, onConfirm, onSeasonChange }: Props) {
               </McButton>
             </>
           )}
-        </div>
+        </ScrollHintArea>
       </div>
 
       {/* Bottom controls — outside side panel */}
