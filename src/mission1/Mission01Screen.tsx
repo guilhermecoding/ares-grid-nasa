@@ -16,7 +16,14 @@ import {
   type SeasonId,
   type SiteId,
 } from '../data/mission1Data'
-import { DEFAULT_BASE_STATS, loadProgress, updateProgress, type Mission1PanelSave } from '../services/progressStore'
+import {
+  DEFAULT_BASE_STATS,
+  clearMissionRun,
+  loadProgress,
+  saveMissionRun,
+  updateProgress,
+  type Mission1PanelSave,
+} from '../services/progressStore'
 import type { BaseStats } from '../types/game'
 import { MarsBackground } from './MarsBackground'
 import { GameOverOverlay } from './steps/GameOverOverlay'
@@ -95,17 +102,20 @@ export default function Mission01Screen({
   stats = DEFAULT_STATS,
 }: Props) {
   const savedPanel = useMemo(() => loadProgress().mission1Panel, [])
+  const savedRun = useMemo(() => loadProgress().missionRuns.m1, [])
   const hasSavedPanel = !!savedPanel
+  const resumedLate =
+    savedRun?.step === 'step3_panel_test' || savedRun?.step === 'step4_logbook' || savedRun?.step === 'step5_transmission'
 
-  const [step, setStep] = useState<Mission1Step>(() => (hasSavedPanel ? 'replay_intro' : 'intro'))
-  const [site, setSite] = useState<SiteId>(() => savedPanel?.site ?? 'B')
-  const [season, setSeason] = useState<SeasonId>(() => savedPanel?.season ?? 'summer_n')
-  const [tilt, setTilt] = useState(() => savedPanel?.tilt ?? 30)
-  const [azimuth, setAzimuth] = useState(() => savedPanel?.azimuth ?? 0)
-  const [efficiency, setEfficiency] = useState(() => savedPanel?.efficiency ?? 0)
-  const [panelInstalled, setPanelInstalled] = useState(() => hasSavedPanel)
+  const [step, setStep] = useState<Mission1Step>(() => savedRun?.step ?? (hasSavedPanel ? 'replay_intro' : 'intro'))
+  const [site, setSite] = useState<SiteId>(() => savedRun?.site ?? savedPanel?.site ?? 'B')
+  const [season, setSeason] = useState<SeasonId>(() => savedRun?.season ?? savedPanel?.season ?? 'summer_n')
+  const [tilt, setTilt] = useState(() => savedRun?.tilt ?? savedPanel?.tilt ?? 30)
+  const [azimuth, setAzimuth] = useState(() => savedRun?.azimuth ?? savedPanel?.azimuth ?? 0)
+  const [efficiency, setEfficiency] = useState(() => savedRun?.efficiency ?? savedPanel?.efficiency ?? 0)
+  const [panelInstalled, setPanelInstalled] = useState(() => hasSavedPanel || resumedLate)
   const [panelTest, setPanelTest] = useState<PanelTestChoice | null>(
-    () => savedPanel?.panelTest ?? (hasSavedPanel ? 'clean' : null),
+    () => savedRun?.panelTest ?? savedPanel?.panelTest ?? (hasSavedPanel ? 'clean' : null),
   )
   const [firstInstalledAt, setFirstInstalledAt] = useState(
     () => savedPanel?.firstInstalledAt ?? Date.now(),
@@ -151,6 +161,7 @@ export default function Mission01Screen({
   const handleGameOverExit = useCallback(() => {
     const progress = loadProgress()
     const missionCleared = progress.level >= 2
+    clearMissionRun('m1')
     if (!missionCleared) {
       const reset = { ...DEFAULT_BASE_STATS }
       updateProgress({ mission1Panel: null, baseStats: reset })
@@ -164,6 +175,7 @@ export default function Mission01Screen({
     if (panelInstalled && efficiency > 0) {
       persistPanel(buildPanelSave())
     }
+    clearMissionRun('m1')
     onComplete(hudStats)
   }, [buildPanelSave, efficiency, hudStats, onComplete, panelInstalled])
 
@@ -187,6 +199,11 @@ export default function Mission01Screen({
     })
     setCleanSuccessOpen(true)
   }, [buildPanelSave, efficiency])
+
+  useEffect(() => {
+    if (step === 'replay_intro' || step === 'replay_idle') return
+    saveMissionRun('m1', { step, site, season, tilt, azimuth, efficiency, panelTest })
+  }, [azimuth, efficiency, panelTest, season, site, step, tilt])
 
   const beginExposure = useCallback(() => {
     outdoorElapsedMs.current = 0

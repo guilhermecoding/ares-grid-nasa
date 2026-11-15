@@ -1,27 +1,32 @@
 import { motion, useAnimationControls } from 'framer-motion'
 import { useState } from 'react'
+import { MEDIA } from '../../../constants/mediaAssets'
 import { PROCESS_STEPS, type ProcessStepId } from '../../../data/mission3Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
+import { CapiBeat } from '../CapiBeat'
 import { Mission3Stage } from '../Mission3Stage'
 import { SciTermM3 } from '../SciTermM3'
 
 interface Props {
   energy: number
   waterL: number
+  initialDone?: number
   onSpend: (n: number) => void
+  onProgress: (done: number) => void
+  onEnergyShort: () => void
   onContinue: () => void
 }
 
 const BENCH_ORDER: readonly ProcessStepId[] = ['melt', 'identify', 'treat', 'separate', 'quality', 'filter']
 
 const MODULE_ICON: Record<ProcessStepId, string> = {
-  identify: '🔍',
-  separate: '⛏️',
-  melt: '🔥',
-  filter: '🧪',
-  treat: '⚗️',
-  quality: '📋',
+  identify: MEDIA.mission3.processIdentify,
+  separate: MEDIA.mission3.processSeparate,
+  melt: MEDIA.mission3.processMelt,
+  filter: MEDIA.mission3.processFilter,
+  treat: MEDIA.mission3.processTreat,
+  quality: MEDIA.mission3.processQuality,
 }
 
 const WATER_TINT = ['#7a5236', '#8a6a4c', '#6fa0b8', '#7cc6e0', '#a6e6f7', '#cdf5ff', '#e6fbff'] as const
@@ -29,10 +34,12 @@ const WATER_TINT = ['#7a5236', '#8a6a4c', '#6fa0b8', '#7cc6e0', '#a6e6f7', '#cdf
 function BenchModule({
   id,
   done,
+  next,
   onTap,
 }: {
   id: ProcessStepId
   done: boolean
+  next: boolean
   onTap: (id: ProcessStepId, shake: () => void) => void
 }) {
   const controls = useAnimationControls()
@@ -40,33 +47,36 @@ function BenchModule({
   return (
     <motion.button
       type="button"
-      animate={controls}
       disabled={done}
       whileTap={done ? undefined : { scale: 0.96 }}
       onClick={() => onTap(id, () => void controls.start({ x: [0, -8, 8, -6, 6, 0], transition: { duration: 0.35 } }))}
-      className={`flex min-h-28 flex-col items-start gap-1 rounded border-2 p-3 text-left ${
-        done ? 'border-life bg-life/10' : 'border-cyan-hud/30 bg-[#0a1628]/92 hover:border-cyan-hud'
+      animate={next ? { scale: [1, 1.03, 1] } : { scale: 1 }}
+      transition={next ? { duration: 1, repeat: Infinity } : { duration: 0.2 }}
+      className={`flex min-h-36 flex-col items-start gap-2 rounded border-4 p-3 text-left ${
+        done ? 'border-life bg-life/10' : next ? 'border-energy bg-[#0a1628]/92 shadow-[0_0_18px_rgba(250,204,21,0.28)]' : 'border-cyan-hud/30 bg-[#0a1628]/92'
       }`}
       style={{ touchAction: 'manipulation' }}
     >
       <span className="flex w-full items-center justify-between gap-2">
-        <span className="text-2xl" aria-hidden>
-          {MODULE_ICON[id]}
-        </span>
-        <span className={`font-pixel text-[10px] ${done ? 'text-life' : 'text-energy'}`}>
-          {done ? '✓ ATIVO' : `−${step.energyCost}% ⚡`}
+        <img src={MODULE_ICON[id]} alt="" className="size-12 object-contain" draggable={false} />
+        <span className={`font-pixel text-sm ${done ? 'text-life' : 'text-energy'}`}>
+          {done ? '✓ ATIVO' : `−${step.energyCost}% energia`}
         </span>
       </span>
-      <span className="text-sm font-semibold text-[#f4fff4] md:text-base">{step.title}</span>
-      <span className="text-xs text-void-100/75">{step.detail}</span>
+      <span className="text-base font-semibold text-[#f4fff4]">{step.title}</span>
+      <span className="text-sm text-void-100/80">{step.detail}</span>
+      {next ? <span className="font-pixel text-base text-energy">TOQUE NESTE · −{step.energyCost}% energia</span> : null}
     </motion.button>
   )
 }
 
 /** Desafio 3.5 — six-module lab pipeline in scientific order. */
-export function IceProcessingStep({ energy, waterL, onSpend, onContinue }: Props) {
-  const [doneCount, setDoneCount] = useState(0)
-  const [tip, setTip] = useState('Ative os módulos da bancada na ordem certa. Comece identificando o material.')
+export function IceProcessingStep({ energy, waterL, initialDone = 0, onSpend, onProgress, onEnergyShort, onContinue }: Props) {
+  const [doneCount, setDoneCount] = useState(initialDone)
+  const [beat, setBeat] = useState<{ id: string; lines: readonly string[] } | null>(
+    initialDone > 0 ? null : { id: 'm3-lab-intro', lines: ['Ative os módulos na ordem. O card que pulsa é o próximo.', 'Comece identificando o material congelado.'] },
+  )
+  const [wrongCount, setWrongCount] = useState(0)
   const allDone = doneCount >= PROCESS_STEPS.length
   const spent = PROCESS_STEPS.slice(0, doneCount).reduce((sum, s) => sum + s.energyCost, 0)
 
@@ -76,23 +86,30 @@ export function IceProcessingStep({ energy, waterL, onSpend, onContinue }: Props
     if (id !== expected.id) {
       soundEngine.fail()
       shake()
-      setTip(`Ainda não! A próxima etapa é: ${expected.title.toLowerCase()}.`)
+      const n = wrongCount + 1
+      setWrongCount(n)
+      setBeat({
+        id: `m3-lab-wrong-${n}`,
+        lines: [`Ainda não! A próxima etapa é: ${expected.title.toLowerCase()}.`],
+      })
       return
     }
     if (energy < expected.energyCost) {
       soundEngine.fail()
-      setTip(`Energia insuficiente: este módulo precisa de ${expected.energyCost}%.`)
+      onEnergyShort()
       return
     }
     onSpend(expected.energyCost)
     soundEngine.harvest()
     const next = doneCount + 1
     setDoneCount(next)
-    setTip(
-      next >= PROCESS_STEPS.length
-        ? 'Água limpa e transparente! Mas transparente é seguro? Vamos testar.'
-        : `${expected.title} ✓. Próximo módulo!`,
-    )
+    onProgress(next)
+    if (next >= PROCESS_STEPS.length) {
+      setBeat({
+        id: 'm3-lab-done',
+        lines: ['Água limpa e transparente!', 'Mas transparente é seguro? Vamos testar a potabilidade.'],
+      })
+    }
   }
 
   return (
@@ -106,12 +123,12 @@ export function IceProcessingStep({ energy, waterL, onSpend, onContinue }: Props
       }
       energy={energy}
       waterL={waterL}
-      capiTip={tip}
+      overlay={beat ? <CapiBeat id={beat.id} lines={beat.lines} onDone={() => setBeat(null)} /> : null}
     >
       <section className="mx-auto w-full max-w-6xl rounded border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:p-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-pixel text-[10px] text-cyan-hud">PIPELINE · {doneCount}/{PROCESS_STEPS.length}</p>
-          <p className="font-pixel text-[10px] text-energy">Energia usada: {spent}%</p>
+            <p className="font-pixel text-sm text-cyan-hud">PIPELINE · {doneCount}/{PROCESS_STEPS.length}</p>
+            <p className="font-pixel text-sm text-energy">Energia usada: {spent}%</p>
         </div>
         <ol className="mt-2 grid grid-cols-6 gap-1.5">
           {PROCESS_STEPS.map((s, i) => (
@@ -122,10 +139,11 @@ export function IceProcessingStep({ energy, waterL, onSpend, onContinue }: Props
               }`}
               title={s.title}
             >
-              <span className="text-lg" aria-hidden>
-                {i < doneCount ? MODULE_ICON[s.id] : '·'}
-              </span>
-              <span className="font-pixel text-[8px] text-void-100/70">{i + 1}</span>
+              {i < doneCount ? (
+                <img src={MODULE_ICON[s.id]} alt="" className="size-8 object-contain" draggable={false} />
+              ) : (
+                <span className="font-pixel text-sm text-void-100/70">{i + 1}</span>
+              )}
             </li>
           ))}
         </ol>
@@ -137,7 +155,7 @@ export function IceProcessingStep({ energy, waterL, onSpend, onContinue }: Props
               transition={{ duration: 0.5 }}
             />
           </div>
-          <p className="text-sm text-void-100/85">
+          <p className="text-base text-void-100/90">
             {allDone ? 'Amostra pronta para o teste de qualidade.' : 'Gelo com regolito na entrada do laboratório.'}
           </p>
         </div>
@@ -145,7 +163,13 @@ export function IceProcessingStep({ energy, waterL, onSpend, onContinue }: Props
 
       <div className="mx-auto grid w-full max-w-6xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {BENCH_ORDER.map((id) => (
-          <BenchModule key={id} id={id} done={PROCESS_STEPS.findIndex((s) => s.id === id) < doneCount} onTap={tap} />
+          <BenchModule
+            key={id}
+            id={id}
+            done={PROCESS_STEPS.findIndex((s) => s.id === id) < doneCount}
+            next={PROCESS_STEPS[doneCount]?.id === id}
+            onTap={tap}
+          />
         ))}
       </div>
 

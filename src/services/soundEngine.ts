@@ -26,6 +26,10 @@ export async function unlockAudio(): Promise<void> {
   if (audio.state === 'suspended') await audio.resume()
 }
 
+type DrillTone = 'soft' | 'rock' | 'ice'
+
+let drillStopFn: (() => void) | null = null
+
 function beep(freq: number, duration: number, type: OscillatorType = 'square', gain = 0.04): void {
   if (muted) return
   const audio = getCtx()
@@ -296,6 +300,50 @@ export const soundEngine = {
     setTimeout(() => beep(659, 0.55, 'sine', 0.08), 1120)
     setTimeout(() => beep(784, 0.7, 'sine', 0.09), 1140)
     setTimeout(() => beep(1046, 0.85, 'sine', 0.07), 1300)
+  },
+  /** Short chime when the drill enters a new soil layer. */
+  layerPing: () => {
+    beep(520, 0.08, 'square', 0.05)
+    setTimeout(() => beep(780, 0.12, 'sine', 0.045), 70)
+  },
+  /** Looping drill rumble. Call again to change the layer tone. */
+  drillStart: (tone: DrillTone = 'soft') => {
+    soundEngine.drillStop()
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+    const buffer = audio.createBuffer(1, audio.sampleRate, audio.sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let i = 0; i < data.length; i += 1) data[i] = Math.random() * 2 - 1
+    const noise = audio.createBufferSource()
+    noise.buffer = buffer
+    noise.loop = true
+    const filter = audio.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.frequency.value = tone === 'rock' ? 160 : tone === 'ice' ? 880 : 420
+    filter.Q.value = tone === 'rock' ? 0.55 : 1.2
+    const gain = audio.createGain()
+    gain.gain.value = tone === 'rock' ? 0.07 : 0.04
+    const osc = audio.createOscillator()
+    osc.type = 'sawtooth'
+    osc.frequency.value = tone === 'rock' ? 46 : tone === 'ice' ? 150 : 72
+    const oscGain = audio.createGain()
+    oscGain.gain.value = tone === 'rock' ? 0.05 : 0.03
+    noise.connect(filter)
+    filter.connect(gain)
+    gain.connect(audio.destination)
+    osc.connect(oscGain)
+    oscGain.connect(audio.destination)
+    noise.start()
+    osc.start()
+    drillStopFn = () => {
+      noise.stop()
+      osc.stop()
+    }
+  },
+  drillStop: () => {
+    drillStopFn?.()
+    drillStopFn = null
   },
   /** CRT / pixel-dialog power-off. */
   dialogClose: () => {

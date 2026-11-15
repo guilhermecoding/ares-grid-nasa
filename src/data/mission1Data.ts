@@ -62,6 +62,8 @@ export const REPLAY_INTRO_HIGHLIGHT_WORDS = ['painel solar'] as const
 export const PANEL_CLEAN_COOLDOWN_MS = 5 * 60_000
 export const PANEL_CLEAN_EFFICIENCY_GAIN = 4
 export const PANEL_CLEAN_ENERGY_GAIN = 10
+/** While base energy is at or below this, cleaning ignores the cooldown. */
+export const PANEL_CLEAN_EMERGENCY_MAX = 40
 export const PANEL_CLEAN_EFFICIENCY_CAP = 98
 
 export function isOutdoorMission1Step(step: Mission1Step): boolean {

@@ -1,19 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FullscreenButton } from '../FullscreenButton'
 import { StatusIndicators } from '../StatusIndicators'
 import {
+  DRILL_ENERGY_PER_LOG,
+  DRILL_LAYERS,
+  DRILL_LOG_DEPTHS_M,
   DRILL_TARGET_M,
   IDEAL_SITE,
+  PROCESS_STEPS,
   SITES,
   formatDepth,
   isCrossSectionStep,
   type Mission3Step,
+  type PotabilityId,
   type SiteId,
 } from '../../data/mission3Data'
 import { DrillingStep } from '../../missions/mission3-ice/DrillingStep'
 import { SampleCollectionStep } from '../../missions/mission3-ice/SampleCollectionStep'
+import { CapiBeat } from './CapiBeat'
+import { clearMissionRun, loadProgress, resumeWaterLiters, saveMissionRun } from '../../services/progressStore'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
-import { EnergyDepletedOverlay } from '../mission2/EnergyDepletedOverlay'
 import { ArcadiaExplorationBackground } from './ArcadiaExplorationBackground'
 import { CapiBridgeM3 } from './CapiBridgeM3'
 import { Mission3Logbook } from './Mission3Logbook'
@@ -39,14 +45,24 @@ function clamp(n: number) {
 
 /** Mission 03 orchestrator — Arcadia ice exploration. */
 export default function Mission3View({ onComplete, onExit, onReady, stats = DEFAULT_STATS }: Props) {
-  const [step, setStep] = useState<Mission3Step>('intro')
-  const [phase, setPhase] = useState<'play' | 'logbook' | 'outro'>('play')
-  const [energy, setEnergy] = useState(() => clamp(Math.max(stats.energy, 32)))
-  const [waterL, setWaterL] = useState(() => (clamp(stats.water) / 100) * MAX_WATER_RESERVE_L)
+  const savedRun = useMemo(() => loadProgress().missionRuns.m3, [])
+  const drillDepthRef = useRef(savedRun?.drillDepth ?? 0)
+  const finishingRef = useRef(false)
+  const [step, setStep] = useState<Mission3Step>(() => savedRun?.step ?? 'intro')
+  const [phase, setPhase] = useState<'play' | 'logbook' | 'outro'>(() => savedRun?.phase ?? 'play')
+  const [energy, setEnergy] = useState(() => clamp(savedRun ? stats.energy : Math.max(stats.energy, 32)))
+  const [waterL, setWaterL] = useState(() =>
+    savedRun ? resumeWaterLiters(savedRun.waterL, savedRun.waterPct, stats.water) : (clamp(stats.water) / 100) * MAX_WATER_RESERVE_L,
+  )
   const [wellbeing] = useState(() => clamp(stats.wellbeing))
-  const [site, setSite] = useState<SiteId>(IDEAL_SITE)
-  const [drillProgress, setDrillProgress] = useState(0)
+  const [site, setSite] = useState<SiteId>(() => savedRun?.site ?? IDEAL_SITE)
+  const [drillProgress, setDrillProgress] = useState(() => (savedRun?.drillDepth ?? 0) / DRILL_LAYERS[DRILL_LAYERS.length - 1]!.to)
+  const [drillLogged, setDrillLogged] = useState(() => savedRun?.drillLogged ?? 0)
+  const [processDone, setProcessDone] = useState(() => savedRun?.processDone ?? 0)
+  const [potabilityTreated, setPotabilityTreated] = useState(() => savedRun?.potabilityTreated ?? false)
+  const [potabilityAnalyzed, setPotabilityAnalyzed] = useState<PotabilityId[]>(() => savedRun?.potabilityAnalyzed ?? [])
   const [bridge, setBridge] = useState<{ lines: string[]; next: Mission3Step } | null>(null)
+  const [energyShort, setEnergyShort] = useState(false)
 
   const hudStats: BaseStats = useMemo(
     () => ({ energy, water: clamp((waterL / MAX_WATER_RESERVE_L) * 100), wellbeing }),
@@ -55,8 +71,20 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
 
   const siteInfo = SITES.find((s) => s.id === site) ?? SITES.find((s) => s.id === IDEAL_SITE)!
 
+  const nextProcessCost = PROCESS_STEPS[processDone]?.energyCost ?? 0
   const energySoftLocked =
-    !bridge && energy <= 0 && step !== 'intro' && step !== 'step3_logbook_and_ship' && step !== 'step3_1_methodology'
+    !bridge &&
+    phase === 'play' &&
+    step !== 'intro' &&
+    step !== 'step3_1_methodology' &&
+    step !== 'step3_4_sample_collection' &&
+    step !== 'step3_logbook_and_ship' &&
+    (energy <= 0 ||
+      energyShort ||
+      (step === 'step3_3_drilling' && drillLogged < DRILL_LOG_DEPTHS_M.length && energy < DRILL_ENERGY_PER_LOG) ||
+      (step === 'step3_5_ice_processing' && processDone < PROCESS_STEPS.length && energy < nextProcessCost))
+
+  const reportShort = useCallback(() => setEnergyShort(true), [])
 
   useEffect(() => {
     let cancelled = false
@@ -79,6 +107,56 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
     setWaterL((w) => w + Math.max(0, liters))
   }, [])
 
+  useEffect(() => {
+    if (finishingRef.current) return
+    const waterPct = clamp((waterL / MAX_WATER_RESERVE_L) * 100)
+    saveMissionRun(
+      'm3',
+      {
+        step,
+        phase,
+        waterL,
+        waterPct,
+        site,
+        drillDepth: drillDepthRef.current,
+        drillLogged,
+        processDone,
+        potabilityTreated,
+        potabilityAnalyzed,
+      },
+      { energy, water: waterPct },
+    )
+  }, [drillLogged, energy, phase, potabilityAnalyzed, potabilityTreated, processDone, site, step, waterL])
+
+  const finish = () => {
+    finishingRef.current = true
+    clearMissionRun('m3')
+    onComplete(hudStats)
+  }
+
+  const leave = () => {
+    if (!finishingRef.current) {
+      const waterPct = clamp((waterL / MAX_WATER_RESERVE_L) * 100)
+      saveMissionRun(
+        'm3',
+        {
+          step,
+          phase,
+          waterL,
+          waterPct,
+          site,
+          drillDepth: drillDepthRef.current,
+          drillLogged,
+          processDone,
+          potabilityTreated,
+          potabilityAnalyzed,
+        },
+        { energy, water: waterPct },
+      )
+    }
+    onExit(hudStats)
+  }
+
   const bgMode = isCrossSectionStep(step) ? 'cross_section' : 'surface'
   const play = phase === 'play' && !bridge
 
@@ -93,7 +171,7 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
         <button
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
-          onClick={() => onExit(hudStats)}
+          onClick={leave}
           aria-label="Sair da missão"
           title="Sair"
           style={{ touchAction: 'manipulation' }}
@@ -139,6 +217,8 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
           waterL={waterL}
           onSpend={spendEnergy}
           onConfirm={(chosen) => {
+            drillDepthRef.current = 0
+            setDrillLogged(0)
             setSite(chosen)
             setDrillProgress(0)
             setStep('step3_3_drilling')
@@ -151,7 +231,13 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
           siteName={siteInfo.name}
           energy={energy}
           waterL={waterL}
+          initialDepth={savedRun?.step === 'step3_3_drilling' ? savedRun.drillDepth : 0}
+          initialLogged={savedRun?.step === 'step3_3_drilling' ? savedRun.drillLogged : 0}
           onDepthChange={setDrillProgress}
+          onSample={(depth, logged) => {
+            drillDepthRef.current = depth
+            setDrillLogged(logged)
+          }}
           onSpend={spendEnergy}
           onExtract={() => setStep('step3_4_sample_collection')}
         />
@@ -175,7 +261,10 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
         <IceProcessingStep
           energy={energy}
           waterL={waterL}
+          initialDone={processDone}
           onSpend={spendEnergy}
+          onProgress={setProcessDone}
+          onEnergyShort={reportShort}
           onContinue={() => setStep('step3_6_potability_test')}
         />
       )}
@@ -184,8 +273,15 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
         <PotabilityStep
           energy={energy}
           waterL={waterL}
+          initialTreated={potabilityTreated}
+          initialAnalyzed={potabilityAnalyzed}
           onSpend={spendEnergy}
           onApprove={addWater}
+          onProgress={(treated, analyzed) => {
+            setPotabilityTreated(treated)
+            setPotabilityAnalyzed(analyzed)
+          }}
+          onEnergyShort={reportShort}
           onContinue={() => {
             setStep('step3_logbook_and_ship')
             setPhase('logbook')
@@ -214,9 +310,19 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
         />
       )}
 
-      {phase === 'outro' && <Mission3Outro stats={hudStats} waterL={waterL} onDone={() => onComplete(hudStats)} />}
+      {phase === 'outro' && <Mission3Outro stats={hudStats} waterL={waterL} onDone={finish} />}
 
-      {energySoftLocked && <EnergyDepletedOverlay onExit={() => onExit(hudStats)} />}
+      {energySoftLocked && (
+        <CapiBeat
+          id="m3-energy-low"
+          lines={[
+            'A energia da base está baixa!',
+            'Volte para a Missão 01 e limpe o painel solar para recarregar. A gente continua daqui.',
+          ]}
+          label="Ir para a Missão 01"
+          onDone={leave}
+        />
+      )}
     </div>
   )
 }

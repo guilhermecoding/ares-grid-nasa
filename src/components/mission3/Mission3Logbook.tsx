@@ -156,7 +156,8 @@ export function Mission3Logbook({ siteName, depthLabel, onDone }: Props) {
             disabled={!eventOk || !chipsOk}
             onClick={() => setPhoto(true)}
           >
-            📷 Capturar Foto Científica
+            <img src={MEDIA.mission3.camera} alt="" className="mr-2 inline size-8 object-contain align-middle" draggable={false} />
+            Capturar Foto Científica
           </McButton>
         ) : null}
 

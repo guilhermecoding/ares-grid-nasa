@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { CapiBeat } from '../../components/mission3/CapiBeat'
 import { Mission3Stage } from '../../components/mission3/Mission3Stage'
 import { SciTermM3 } from '../../components/mission3/SciTermM3'
 import {
@@ -21,8 +22,12 @@ interface Props {
   siteName: string
   energy: number
   waterL: number
+  initialDepth?: number
+  initialLogged?: number
   /** 0–1 share of the background cross-section depth. */
   onDepthChange: (fraction: number) => void
+  /** Latest depth in metres and how many log checkpoints are done. */
+  onSample: (depth: number, logged: number) => void
   onSpend: (n: number) => void
   onExtract: () => void
 }
@@ -45,20 +50,38 @@ function heatColor(heat: number) {
 }
 
 /** Desafio 3.3 — hold-to-drill with heat management. */
-export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend, onExtract }: Props) {
-  const [sim, setSim] = useState<Sim>(START)
+export function DrillingStep({
+  siteName,
+  energy,
+  waterL,
+  initialDepth = 0,
+  initialLogged = 0,
+  onDepthChange,
+  onSample,
+  onSpend,
+  onExtract,
+}: Props) {
+  const [sim, setSim] = useState<Sim>(() => ({ ...START, depth: initialDepth, logged: initialLogged }))
   const [holding, setHolding] = useState(false)
   const [locked, setLocked] = useState(false)
-  const simRef = useRef<Sim>(START)
+  const [introOpen, setIntroOpen] = useState(initialDepth <= 0)
+  const [overheatOpen, setOverheatOpen] = useState(false)
+  const simRef = useRef(sim)
   const holdingRef = useRef(false)
-  const callbacksRef = useRef({ onDepthChange, onSpend })
+  const callbacksRef = useRef({ onDepthChange, onSample, onSpend })
+  const layerRef = useRef(drillLayerAt(initialDepth).id)
 
   const done = sim.depth >= DRILL_TARGET_M
   const noEnergy = energy <= 0
 
   useEffect(() => {
-    callbacksRef.current = { onDepthChange, onSpend }
-  }, [onDepthChange, onSpend])
+    callbacksRef.current = { onDepthChange, onSample, onSpend }
+  }, [onDepthChange, onSample, onSpend])
+
+  useEffect(() => {
+    callbacksRef.current.onDepthChange(simRef.current.depth / COLUMN_DEPTH_M)
+    callbacksRef.current.onSample(simRef.current.depth, simRef.current.logged)
+  }, [])
 
   useEffect(() => {
     holdingRef.current = holding
@@ -67,7 +90,6 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
   useEffect(() => {
     let raf = 0
     let last = 0
-    let noiseAcc = 0
     const tick = (now: number) => {
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0
       last = now
@@ -81,10 +103,9 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
         const layer = drillLayerAt(next.depth)
         next.depth = Math.min(DRILL_TARGET_M, next.depth + layer.speed * dt)
         next.heat = Math.min(100, next.heat + layer.heat * dt)
-        noiseAcc += dt
-        if (noiseAcc > 0.22) {
-          noiseAcc = 0
-          soundEngine.step()
+        if (layer.id !== layerRef.current) {
+          layerRef.current = layer.id
+          soundEngine.layerPing()
         }
         if (next.heat >= 100) {
           next.lockedUntil = now + DRILL_OVERHEAT_LOCK_MS
@@ -92,6 +113,7 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
           holdingRef.current = false
           setHolding(false)
           setLocked(true)
+          setOverheatOpen(true)
           soundEngine.fail()
           callbacksRef.current.onSpend(DRILL_OVERHEAT_ENERGY)
         }
@@ -118,7 +140,10 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
       if (next.depth !== prev.depth || next.heat !== prev.heat || next.lockedUntil !== prev.lockedUntil) {
         simRef.current = next
         setSim(next)
-        if (next.depth !== prev.depth) callbacksRef.current.onDepthChange(next.depth / COLUMN_DEPTH_M)
+        if (next.depth !== prev.depth) {
+          callbacksRef.current.onDepthChange(next.depth / COLUMN_DEPTH_M)
+          callbacksRef.current.onSample(next.depth, next.logged)
+        }
       }
       raf = requestAnimationFrame(tick)
     }
@@ -126,7 +151,8 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  const canHold = !done && !locked && !noEnergy
+  const dialogOpen = introOpen || overheatOpen
+  const canHold = !done && !locked && !noEnergy && !dialogOpen
   const startHold = () => {
     if (!canHold) return
     holdingRef.current = true
@@ -138,13 +164,16 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
   }
 
   const layer = drillLayerAt(sim.depth)
-  const capiTip = done
-    ? null
-    : locked
-      ? CAPI_DRILL.overheat
-      : layer.id === 'rock' && sim.depth > layer.from
-        ? CAPI_DRILL.rock
-        : CAPI_DRILL.start
+  const tone = layer.id === 'rock' ? 'rock' : layer.id === 'ice' || layer.id === 'frozen' ? 'ice' : 'soft'
+  useEffect(() => {
+    if (!holding) {
+      soundEngine.drillStop()
+      return
+    }
+    soundEngine.drillStart(tone)
+    return () => soundEngine.drillStop()
+  }, [holding, tone])
+
   const depthPct = (sim.depth / COLUMN_DEPTH_M) * 100
   const hot = heatColor(sim.heat)
 
@@ -159,7 +188,13 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
       }
       energy={energy}
       waterL={waterL}
-      capiTip={capiTip}
+      overlay={
+        introOpen ? (
+          <CapiBeat id="m3-drill-start" lines={[CAPI_DRILL.start, CAPI_DRILL.rock]} onDone={() => setIntroOpen(false)} />
+        ) : overheatOpen ? (
+          <CapiBeat id={`m3-drill-hot-${sim.overheats}`} lines={[CAPI_DRILL.overheat]} label="Vou pulsar" onDone={() => setOverheatOpen(false)} />
+        ) : null
+      }
     >
       <div className="mx-auto grid w-full max-w-6xl gap-3 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-4">
         <section
@@ -179,7 +214,15 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
                     : `repeating-linear-gradient(135deg, ${l.color} 0 10px, color-mix(in srgb, ${l.color} 82%, black) 10px 14px)`,
               }}
             >
-              <span className="absolute top-0.5 left-1 font-pixel text-[8px] text-[#f4fff4]/85 drop-shadow">{l.label}</span>
+              <motion.span
+                className={`absolute top-1 left-1 font-pixel drop-shadow ${
+                  layer.id === l.id ? 'z-[1] text-sm text-cyan-hud md:text-base' : 'text-xs text-[#f4fff4]/80'
+                }`}
+                animate={layer.id === l.id && holding ? { scale: [1, 1.18, 1], x: [0, 2, 0] } : { scale: layer.id === l.id ? 1.08 : 1 }}
+                transition={layer.id === l.id && holding ? { duration: 0.35, repeat: Infinity } : { type: 'spring', stiffness: 420, damping: 14 }}
+              >
+                {l.label}
+              </motion.span>
             </div>
           ))}
           <div
@@ -304,8 +347,8 @@ export function DrillingStep({ siteName, energy, waterL, onDepthChange, onSpend,
               } ${!canHold ? 'opacity-60' : ''}`}
               style={{ touchAction: 'none' }}
               onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId)
                 startHold()
+                if (e.isTrusted) e.currentTarget.setPointerCapture(e.pointerId)
               }}
               onPointerUp={stopHold}
               onPointerCancel={stopHold}

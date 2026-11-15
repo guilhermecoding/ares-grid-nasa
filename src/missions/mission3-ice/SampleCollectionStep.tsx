@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useRef, useState } from 'react'
 import { DustScrubCanvas } from '../../components/DustScrubCanvas'
+import { CapiBeat } from '../../components/mission3/CapiBeat'
 import { Mission3Stage } from '../../components/mission3/Mission3Stage'
 import { SciTermM3 } from '../../components/mission3/SciTermM3'
 import {
@@ -60,6 +61,7 @@ function IceCore({ sparkle }: { sparkle: boolean }) {
 /** Desafio 3.4 — scrub the regolith crust, then seal the ice core cryogenically. */
 export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: Props) {
   const [phase, setPhase] = useState<Phase>('scrub')
+  const [beat, setBeat] = useState<keyof typeof CAPI_SAMPLE | null>('scrub')
   const [cleanPct, setCleanPct] = useState(0)
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null)
   const [selected, setSelected] = useState(false)
@@ -72,6 +74,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
   const handleClean = useCallback(() => {
     setCleanPct(100)
     setPhase('store')
+    setBeat('drag')
     soundEngine.harvest()
   }, [])
 
@@ -89,10 +92,9 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
     setSelected(false)
     setHoverTarget(false)
     setPhase('sealed')
+    setBeat('sealed')
     soundEngine.success()
   }
-
-  const capiTip = phase === 'scrub' ? CAPI_SAMPLE.scrub : phase === 'store' ? CAPI_SAMPLE.drag : CAPI_SAMPLE.sealed
 
   return (
     <Mission3Stage
@@ -106,15 +108,23 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
       }
       energy={energy}
       waterL={waterL}
-      capiTip={capiTip}
+      overlay={
+        beat ? (
+          <CapiBeat
+            id={`m3-sample-${beat}`}
+            lines={[CAPI_SAMPLE[beat]]}
+            onDone={() => setBeat(null)}
+          />
+        ) : null
+      }
     >
       <div className="mx-auto grid w-full max-w-6xl gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,17rem)] md:gap-4">
         <section
           className={`rounded border-2 bg-[#0a1628]/92 p-3 md:p-4 ${phase === 'scrub' ? 'border-cyan-hud/30' : 'border-life'}`}
         >
           <div className="flex items-center justify-between gap-2">
-            <p className="font-pixel text-xs text-cyan-hud md:text-sm">1 · Remover a crosta de regolito</p>
-            <span className={`font-pixel text-xs ${cleanPct >= 100 ? 'text-life' : 'text-energy'}`}>{cleanPct}%</span>
+            <p className="font-pixel text-sm text-cyan-hud md:text-base">1 · Esfregue aqui</p>
+            <span className={`font-pixel text-sm ${cleanPct >= 100 ? 'text-life' : 'text-energy'}`}>{cleanPct}%</span>
           </div>
           <div
             className="mt-2 h-3 border-2 border-black/50 bg-void-900"
@@ -199,7 +209,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
         <section
           className={`flex flex-col rounded border-2 bg-[#0a1628]/92 p-3 md:p-4 ${phase === 'sealed' ? 'border-life' : 'border-cyan-hud/30'}`}
         >
-          <p className="font-pixel text-xs text-cyan-hud md:text-sm">2 · Recipiente térmico</p>
+          <p className="font-pixel text-sm text-cyan-hud md:text-base">2 · Arraste até aqui</p>
           <button
             ref={containerRef}
             type="button"
@@ -229,7 +239,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
                   <div className="h-full w-full rounded-[999px] border-2 border-[#0e3a52] bg-gradient-to-r from-[#bdf0ff] via-[#7fd4f2] to-[#3d9cc4]" />
                 </motion.div>
               ) : (
-                <span className="mb-6 px-2 font-pixel text-[10px] text-void-100/70">
+                <span className="mb-6 px-2 text-center text-sm text-void-100/80">
                   {phase === 'store' ? 'Solte aqui' : 'Aguardando amostra'}
                 </span>
               )}
@@ -256,7 +266,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
           <p className={`mt-3 text-center font-pixel text-lg ${phase === 'sealed' ? 'text-cyan-hud' : 'text-void-100/50'}`}>
             {phase === 'sealed' ? `${CRYO_SEAL_C} °C` : '-- °C'}
           </p>
-          <p className="text-center text-xs text-void-100/75">
+          <p className="text-center text-sm text-void-100/80">
             {phase === 'sealed' ? 'Selo criogênico ativado' : 'Selo criogênico desligado'}
           </p>
         </section>
@@ -271,21 +281,21 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
           <p className="font-pixel text-xs text-life md:text-sm">AMOSTRA REGISTRADA</p>
           <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-[9px] text-cyan-hud">LOCAL</dt>
+              <dt className="font-pixel text-xs text-cyan-hud">LOCAL</dt>
               <dd className="text-[#f4fff4]">{siteName}</dd>
             </div>
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-[9px] text-cyan-hud">COORDENADAS</dt>
+              <dt className="font-pixel text-xs text-cyan-hud">COORDENADAS</dt>
               <dd className="text-[#f4fff4]">
                 {MISSION3_META.lat} · {MISSION3_META.lon}
               </dd>
             </div>
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-[9px] text-cyan-hud">PROFUNDIDADE</dt>
+              <dt className="font-pixel text-xs text-cyan-hud">PROFUNDIDADE</dt>
               <dd className="text-[#f4fff4]">{formatDepth(DRILL_TARGET_M)}</dd>
             </div>
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-[9px] text-cyan-hud">DESTINO</dt>
+              <dt className="font-pixel text-xs text-cyan-hud">DESTINO</dt>
               <dd className="text-[#f4fff4]">Fração A → base · Fração B → Terra</dd>
             </div>
           </dl>

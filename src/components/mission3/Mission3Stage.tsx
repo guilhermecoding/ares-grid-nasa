@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import { MISSION3_META } from '../../data/mission3Data'
 import { ScrollHintArea } from '../ScrollHintArea'
-import { CapiHint } from './CapiHint'
 
 interface Props {
   title: string
@@ -11,12 +10,10 @@ interface Props {
   children: ReactNode
   /** Centered dialog drawn over the whole stage (outside the scroll area). */
   overlay?: ReactNode
-  /** Live Capi tip in the lower-right hologram. */
-  capiTip?: string | null
 }
 
 /** Shared challenge frame — same dark HUD language as Missões 01 e 02. */
-export function Mission3Stage({ title, subtitle, energy, waterL, children, overlay, capiTip }: Props) {
+export function Mission3Stage({ title, subtitle, energy, waterL, children, overlay }: Props) {
   return (
     <div
       className={`absolute inset-0 flex min-h-0 flex-col ${overlay ? 'z-[60]' : 'z-20'}`}
@@ -25,10 +22,10 @@ export function Mission3Stage({ title, subtitle, energy, waterL, children, overl
       <ScrollHintArea
         variant="dark"
         frameClassName="h-full min-h-0 flex-1"
-        className="flex h-full flex-col gap-3 px-3 pt-16 pb-32 sm:px-4 md:gap-4 md:px-6"
+        className="flex h-full flex-col gap-3 px-3 pt-16 pb-8 sm:px-4 md:gap-4 md:px-6"
       >
         <div className="mx-auto w-full max-w-6xl">
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-pixel text-[10px] text-cyan-hud md:text-xs">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-pixel text-xs text-cyan-hud md:text-sm">
             <span>
               {MISSION3_META.solLabel} | {MISSION3_META.location}
             </span>
@@ -43,8 +40,7 @@ export function Mission3Stage({ title, subtitle, energy, waterL, children, overl
         </div>
         {children}
       </ScrollHintArea>
-      <CapiHint text={overlay ? null : (capiTip ?? null)} />
-      {overlay}
+      {overlay ? <div className="absolute inset-0 z-[70]">{overlay}</div> : null}
     </div>
   )
 }
