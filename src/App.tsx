@@ -15,6 +15,7 @@ import type { BaseStats, ScreenId, WorldState } from './types/game'
 
 const Mission01Screen = lazy(() => import('./mission1/Mission01Screen'))
 const Mission2View = lazy(() => import('./components/mission2/Mission2View'))
+const Mission3View = lazy(() => import('./components/mission3/Mission3View'))
 
 type GateState = {
   missionId: number
@@ -93,16 +94,21 @@ export default function App() {
 
       const alreadyCleared = w.level > missionId
       const nextLevel = completed ? Math.max(w.level, missionId + 1) : w.level
-      const xpGain = completed && !alreadyCleared ? (missionId === 2 ? 50 : 40) : 0
+      const xpGain =
+        completed && !alreadyCleared ? (missionId === 3 ? 60 : missionId === 2 ? 50 : 40) : 0
       const nextXp = w.xp + xpGain
       const message = completed
-        ? missionId === 2
+        ? missionId === 3
           ? alreadyCleared
-            ? 'Missão 2 refeita — indicadores atualizados!'
-            : 'Missão 2 concluída! O mistério do gelo aguarda.'
-          : alreadyCleared
-            ? 'Missão 1 refeita — indicadores atualizados!'
-            : 'Missão 1 concluída! Nova ilha no mapa.'
+            ? 'Missão 3 refeita — água e indicadores atualizados!'
+            : 'Missão 3 concluída! A primeira estufa aguarda.'
+          : missionId === 2
+            ? alreadyCleared
+              ? 'Missão 2 refeita — indicadores atualizados!'
+              : 'Missão 2 concluída! O mistério do gelo aguarda.'
+            : alreadyCleared
+              ? 'Missão 1 refeita — indicadores atualizados!'
+              : 'Missão 1 concluída! Nova ilha no mapa.'
         : w.message
 
       const next = { ...w, level: nextLevel, xp: nextXp, message, stats: nextStats }
@@ -271,6 +277,23 @@ export default function App() {
           <Mission2View
             stats={world?.stats}
             playerName={progress.playerName}
+            onComplete={(result) => leaveMission(true, result)}
+            onExit={(result) => leaveMission(false, result)}
+            onReady={() => setMissionReady(true)}
+          />
+        </Suspense>
+      )}
+
+      {screen === 'mission' && activeMission === 3 && (
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center bg-void-950 font-pixel text-cyan-hud">
+              Carregando missão…
+            </div>
+          }
+        >
+          <Mission3View
+            stats={world?.stats}
             onComplete={(result) => leaveMission(true, result)}
             onExit={(result) => leaveMission(false, result)}
             onReady={() => setMissionReady(true)}

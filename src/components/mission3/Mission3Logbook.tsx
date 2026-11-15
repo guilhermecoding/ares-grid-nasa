@@ -1,0 +1,198 @@
+import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useMemo, useState } from 'react'
+import { ScrollHintArea } from '../ScrollHintArea'
+import { DRILL_DEPTHS_M, NASA_CITATIONS, WATER_REWARD_L } from '../../data/mission3Data'
+import { McButton } from '../../opening/McButton'
+import { soundEngine } from '../../services/soundEngine'
+
+interface Props {
+  siteName: string
+  waterGained: boolean
+  onDone: () => void
+}
+
+interface ChecklistItem {
+  id: string
+  label: string
+  detail?: string
+}
+
+function GreenCheck({ delay = 0 }: { delay?: number }) {
+  return (
+    <motion.span
+      className="relative flex size-8 shrink-0 items-center justify-center rounded-sm border-2 border-[#1a5c3a] bg-[#1f8a52] sm:size-9"
+      initial={{ scale: 0.2, opacity: 0, rotate: -20 }}
+      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 18, delay }}
+      aria-hidden
+    >
+      <svg viewBox="0 0 24 24" className="size-5 text-[#e8ffe8] sm:size-6" fill="none" aria-hidden>
+        <motion.path
+          d="M5 12.5 L10 17.5 L19 6.5"
+          stroke="currentColor"
+          strokeWidth="3.2"
+          strokeLinecap="square"
+          strokeLinejoin="miter"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{ duration: 0.35, delay: delay + 0.12, ease: 'easeOut' }}
+        />
+      </svg>
+    </motion.span>
+  )
+}
+
+function EmptyBox() {
+  return (
+    <span
+      className="flex size-8 shrink-0 items-center justify-center rounded-sm border-2 border-[#30346d]/45 bg-[#f4fff4] sm:size-9"
+      aria-hidden
+    />
+  )
+}
+
+/** Animated mission checklist — mirrors Missão 02 logbook. */
+export function Mission3Logbook({ siteName, waterGained, onDone }: Props) {
+  const [revealed, setRevealed] = useState(0)
+  const [photo, setPhoto] = useState(false)
+  const [allDone, setAllDone] = useState(false)
+
+  const items = useMemo<ChecklistItem[]>(
+    () => [
+      {
+        id: 'method',
+        label: 'Protocolo científico seguido',
+        detail: 'Radar SHARAD → estudos NASA → perfuração',
+      },
+      {
+        id: 'site',
+        label: 'Setor de exploração escolhido',
+        detail: siteName,
+      },
+      {
+        id: 'drill',
+        label: 'Perfurações exploratórias',
+        detail: DRILL_DEPTHS_M.map((d) => `${d} m`).join(' · '),
+      },
+      {
+        id: 'process',
+        label: 'Processamento de gelo → água',
+        detail: 'Bancada completa + teste de potabilidade',
+      },
+      {
+        id: 'water',
+        label: 'Água potável na base',
+        detail: waterGained ? `+${WATER_REWARD_L}L adicionados` : 'Aguardando registro',
+      },
+    ],
+    [siteName, waterGained],
+  )
+
+  useEffect(() => {
+    if (revealed >= items.length) {
+      const id = window.setTimeout(() => setAllDone(true), 280)
+      return () => clearTimeout(id)
+    }
+    const id = window.setTimeout(() => {
+      setRevealed((n) => n + 1)
+      soundEngine.success()
+    }, revealed === 0 ? 450 : 520)
+    return () => clearTimeout(id)
+  }, [revealed, items.length])
+
+  return (
+    <div className="absolute inset-0 z-40 flex items-center justify-center bg-void-950/70 p-3">
+      <ScrollHintArea
+        variant="light"
+        frameClassName="w-full max-w-lg border-4 border-[#1a1c3a] bg-[#f4fff4] text-[#1a1c3a] shadow-[0_0_0_3px_#30346d]"
+        className="max-h-[min(92dvh,42rem)] p-4"
+      >
+        <p className="font-pixel text-sm tracking-wide uppercase">Diário de Bordo — Missão 3</p>
+        <p className="mt-1 font-body text-sm text-[#1a1c3a]/80">O Mistério do Gelo de Marte</p>
+
+        <ul className="mt-4 space-y-2.5" aria-label="Objetivos cumpridos">
+          {items.map((item, index) => {
+            const checked = index < revealed
+            return (
+              <motion.li
+                key={item.id}
+                layout
+                className={`flex items-start gap-3 rounded-md border-2 px-2.5 py-2.5 sm:px-3 ${
+                  checked
+                    ? 'border-[#1f8a52]/55 bg-[#e5f8ec]'
+                    : 'border-[#30346d]/25 bg-[#f4fff4]'
+                }`}
+                initial={false}
+                animate={{
+                  backgroundColor: checked ? '#e5f8ec' : '#f4fff4',
+                  borderColor: checked ? 'rgba(31,138,82,0.55)' : 'rgba(48,52,109,0.25)',
+                }}
+                transition={{ duration: 0.25 }}
+              >
+                {checked ? <GreenCheck delay={0} /> : <EmptyBox />}
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <p
+                    className={`font-pixel text-xs leading-snug sm:text-sm ${
+                      checked ? 'text-[#145c35]' : 'text-[#30346d]/70'
+                    }`}
+                  >
+                    {item.label}
+                  </p>
+                  {item.detail ? (
+                    <p className="mt-0.5 font-body text-xs text-[#1a1c3a]/70 sm:text-sm">{item.detail}</p>
+                  ) : null}
+                </div>
+              </motion.li>
+            )
+          })}
+        </ul>
+
+        <AnimatePresence>
+          {allDone && (
+            <motion.div
+              className="mt-4 space-y-3"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35 }}
+            >
+              <p className="font-pixel text-xs text-[#30346d] sm:text-sm">Fontes NASA</p>
+              <p className="font-body text-xs leading-snug text-[#1a1c3a]/75">{NASA_CITATIONS.iceCores}</p>
+              <p className="font-body text-xs leading-snug text-[#1a1c3a]/75">{NASA_CITATIONS.sharad}</p>
+
+              <p className="font-pixel text-xs text-[#30346d] sm:text-sm">Foto científica</p>
+              <div className="relative overflow-hidden border-2 border-[#30346d] bg-gradient-to-b from-[#c47848] to-[#3a2010] p-4">
+                <div className="mx-auto flex h-16 w-28 items-center justify-center border-2 border-cyan-hud bg-[#1a2840]">
+                  <span className="font-pixel text-[10px] text-cyan-hud">ARCADIA</span>
+                </div>
+                {photo && (
+                  <motion.p
+                    className="mt-2 font-mono text-[10px] text-[#f4fff4]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    NASA · Arcadia Planitia · Sol 03 · gelo no subsolo
+                  </motion.p>
+                )}
+              </div>
+              {!photo ? (
+                <McButton
+                  className="min-h-12 w-full font-pixel font-bold"
+                  onClick={() => {
+                    setPhoto(true)
+                    soundEngine.success()
+                  }}
+                >
+                  Capturar Foto Científica
+                </McButton>
+              ) : (
+                <McButton className="min-h-12 w-full font-pixel font-bold" onClick={onDone}>
+                  Enviar transmissão
+                </McButton>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </ScrollHintArea>
+    </div>
+  )
+}

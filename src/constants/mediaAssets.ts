@@ -47,4 +47,11 @@ export const MEDIA = {
     hygiene: '/assets/mission2/hygiene.svg',
     bunk: '/assets/mission2/bunk.svg',
   },
+  /** Mission 03 — ice exploration (SVG fallbacks under public/assets/mission3). */
+  mission3: {
+    drill: '/assets/mission3/drill.svg',
+    sample: '/assets/mission3/sample.svg',
+    lab: '/assets/mission3/lab.svg',
+    radar: '/assets/mission3/radar.svg',
+  },
 } as const
