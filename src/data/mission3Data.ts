@@ -11,28 +11,19 @@ export type Mission3Step =
   | 'step3_logbook_and_ship'
 
 export type SiteId = 'alpha' | 'beta' | 'gamma'
-export type MapLayerId =
-  | 'surface'
-  | 'radar'
-  | 'studies'
-  | 'terrain'
-  | 'ice'
+export type MapLayerId = 'surface' | 'radar' | 'studies' | 'terrain' | 'ice'
 
-export type ProcessStepId =
-  | 'identify'
-  | 'separate'
-  | 'melt'
-  | 'filter'
-  | 'treat'
-  | 'quality'
+export type ProcessStepId = 'identify' | 'separate' | 'melt' | 'filter' | 'treat' | 'quality'
 
-export type PotabilityId =
-  | 'ph'
-  | 'conductivity'
-  | 'chemicals'
-  | 'metals'
-  | 'microbes'
-  | 'treatment'
+export type PotabilityId = 'ph' | 'conductivity' | 'chemicals' | 'metals' | 'microbes' | 'treatment'
+
+export const MISSION3_META = {
+  solLabel: 'Sol 03',
+  location: 'Arcadia Planitia',
+  lat: '40.0° N',
+  lon: '180.0° W',
+  nextMission: 'AVANÇAR PARA A MISSÃO 04: A PRIMEIRA ESTUFA DE MARTE',
+} as const
 
 /** Official citations shown in panels / logbook. */
 export const NASA_CITATIONS = {
@@ -43,33 +34,26 @@ export const NASA_CITATIONS = {
 } as const
 
 export const WATER_REWARD_L = 50
-export const DRILL_ENERGY_COST = 5
 export const WRONG_SITE_ENERGY_COST = 8
 export const PROCESS_STEP_ENERGY = 4
 export const RETREAT_ENERGY_COST = 6
 export const IDEAL_SITE: SiteId = 'beta'
 
-export const DRILL_DEPTHS_M = [0.5, 1.2, 1.8] as const
-
 export const SCI_TERMS_M3: Record<string, string> = {
   'Radar SHARAD': 'Radar do satélite MRO que “enxerga” gelo escondido sob o solo.',
   Subsolo: 'Camadas de terra e gelo abaixo da superfície de Marte.',
   Amostra: 'Pedacinho de gelo/solo guardado para estudar na base.',
-  'Condutividade Elétrica': 'Mede quanto sal tem na água — sal demais não é boa para beber.',
+  'Condutividade Elétrica': 'Mede quanto sal tem na água. Sal demais deixa a água imprópria para beber.',
   Potabilidade: 'Quer dizer: a água está segura para beber?',
   Regolito: 'Poeira e cascalho soltos na superfície de Marte.',
   Percloratos: 'Sais do solo marciano que precisam ser limpos da água.',
+  'Ice Core': 'Cilindro de gelo tirado do subsolo pela broca.',
+  Criogênico: 'Bem gelado, para a amostra não derreter nem mudar.',
 }
 
 export const INTRO_PARTS_M3 = [
-  [
-    'Arcadia Planitia esconde gelo sob a poeira!',
-    'Mas cientistas não furam o chão sem dados.',
-  ],
-  [
-    'Vamos ouvir o radar, ler estudos da NASA',
-    'e só então fazer pequenas perfurações.',
-  ],
+  ['Arcadia Planitia esconde gelo sob a poeira!', 'Mas cientistas não furam o chão sem dados.'],
+  ['Vamos ouvir o radar, ler estudos da NASA', 'e só então fazer pequenas perfurações.'],
 ] as const
 
 export const INTRO_HIGHLIGHT_WORDS_M3 = ['radar', 'NASA', 'perfurações'] as const
@@ -77,21 +61,18 @@ export const INTRO_HIGHLIGHT_WORDS_M3 = ['radar', 'NASA', 'perfurações'] as co
 export const METHODOLOGY_STEPS = [
   {
     id: 'radar',
-    title: 'Análise de Radar (SHARAD / MRO)',
-    detail:
-      'Ondas de radar da órbita refletem diferente quando encontram gelo no subsolo.',
+    title: 'Análise de Dados de Radar (SHARAD / MRO)',
+    detail: 'Ondas de radar enviadas da órbita refletem de forma diferente quando encontram gelo abaixo do solo.',
   },
   {
     id: 'studies',
     title: 'Estudo Prévio da NASA',
-    detail:
-      'Consultamos mapas e descobertas antigas para não arriscar equipamentos à toa.',
+    detail: 'Consultar mapas geológicos e descobertas anteriores para não repetir pesquisas nem arriscar equipamentos.',
   },
   {
     id: 'explore',
-    title: 'Perfurações Exploratórias',
-    detail:
-      'Furinhos de teste confirmam se o que o radar mostrou existe de verdade.',
+    title: 'Pequenas Perfurações Exploratórias',
+    detail: 'Validar no local se o que o radar mostrou realmente existe no subsolo.',
   },
 ] as const
 
@@ -103,15 +84,19 @@ export const MAP_LAYERS: { id: MapLayerId; label: string }[] = [
   { id: 'ice', label: 'Áreas de Possíveis Depósitos de Gelo' },
 ]
 
+/** Layers the player must inspect before confirming a site. */
+export const REQUIRED_MAP_LAYERS: readonly MapLayerId[] = ['radar', 'studies', 'terrain', 'ice']
+
 export interface SiteInfo {
   id: SiteId
   name: string
   short: string
   ideal: boolean
-  radar: 'forte' | 'moderado' | 'fraco'
-  terrain: 'estavel' | 'instavel' | 'plano'
+  radar: 'Forte' | 'Moderado' | 'Sem sinal'
+  studies: string
+  terrain: 'Plano e estável' | 'Instável' | 'Plano'
   iceHint: boolean
-  rejectReason: string
+  rejectReason: readonly string[]
   color: string
   leftPct: number
   topPct: number
@@ -123,11 +108,14 @@ export const SITES: SiteInfo[] = [
     name: 'Setor Alfa',
     short: 'Encosta Rochosa',
     ideal: false,
-    radar: 'moderado',
-    terrain: 'instavel',
+    radar: 'Moderado',
+    studies: 'Poucos dados',
+    terrain: 'Instável',
     iceHint: true,
-    rejectReason:
-      'O radar mostra algo, mas o terreno é instável — a broca pode quebrar na encosta!',
+    rejectReason: [
+      'O radar mostra um sinal moderado, mas a encosta é instável.',
+      'A perfuradora pode tombar e quebrar a broca. Escolha um terreno seguro!',
+    ],
     color: '#f97316',
     leftPct: 22,
     topPct: 58,
@@ -137,105 +125,150 @@ export const SITES: SiteInfo[] = [
     name: 'Setor Beta',
     short: 'Planície Estável Norte',
     ideal: true,
-    radar: 'forte',
-    terrain: 'estavel',
+    radar: 'Forte',
+    studies: 'Gelo confirmado',
+    terrain: 'Plano e estável',
     iceHint: true,
-    rejectReason: '',
+    rejectReason: [],
     color: '#38bdf8',
     leftPct: 52,
-    topPct: 42,
+    topPct: 38,
   },
   {
     id: 'gamma',
     name: 'Setor Gama',
     short: 'Cratera Rasa',
     ideal: false,
-    radar: 'fraco',
-    terrain: 'plano',
+    radar: 'Sem sinal',
+    studies: 'Sem gelo',
+    terrain: 'Plano',
     iceHint: false,
-    rejectReason:
-      'Terreno plano, mas sem indícios de gelo no radar nem nos estudos anteriores.',
+    rejectReason: [
+      'O terreno é plano, mas o radar e os estudos anteriores não mostram gelo.',
+      'Perfurar aqui gastaria energia à toa. Procure o sinal de gelo!',
+    ],
     color: '#a78bfa',
-    leftPct: 72,
-    topPct: 62,
+    leftPct: 76,
+    topPct: 64,
   },
 ]
 
-export const SAMPLE_STEPS = [
-  {
-    id: 'separate',
-    title: 'Separar o material',
-    detail: 'Tire o gelo com cuidado — sem misturar poeira da superfície.',
-  },
-  {
-    id: 'register',
-    title: 'Registrar coordenadas',
-    detail: 'Anote onde e a que profundidade a amostra foi tirada.',
-  },
-  {
-    id: 'store',
-    title: 'Armazenar no recipiente térmico',
-    detail: 'Uma parte para a base, outra preservada para a Terra.',
-  },
+export const BETA_CONFIRM_LINES = [
+  'Setor Beta confirmado: forte reflexão no SHARAD, gelo nos estudos e chão plano!',
+  'Hora da pequena perfuração exploratória.',
 ] as const
 
-export const PROCESS_STEPS: {
-  id: ProcessStepId
-  title: string
-  detail: string
-  energyCost: number
-}[] = [
-  {
-    id: 'identify',
-    title: 'Identificar o material congelado',
-    detail: 'Confirme que é gelo misturado ao solo.',
-    energyCost: PROCESS_STEP_ENERGY,
-  },
-  {
-    id: 'separate',
-    title: 'Separar partículas grossas',
-    detail: 'Retire pedrinhas e regolito maior.',
-    energyCost: PROCESS_STEP_ENERGY,
-  },
-  {
-    id: 'melt',
-    title: 'Derreter o gelo',
-    detail: 'Câmara controlada — gasta energia da base.',
-    energyCost: PROCESS_STEP_ENERGY + 2,
-  },
-  {
-    id: 'filter',
-    title: 'Filtrar partículas',
-    detail: 'Remova o que ainda flutua na água.',
-    energyCost: PROCESS_STEP_ENERGY,
-  },
-  {
-    id: 'treat',
-    title: 'Tratar contaminantes',
-    detail: 'Limpe sais e percloratos químicos.',
-    energyCost: PROCESS_STEP_ENERGY + 1,
-  },
-  {
-    id: 'quality',
-    title: 'Encaminhar para verificação',
-    detail: 'Mande a amostra para o teste de potabilidade.',
-    energyCost: 2,
-  },
+/* ───────────── Desafio 3.3 — perfuração ───────────── */
+
+export const DRILL_TARGET_M = 2.2
+
+export interface DrillLayer {
+  id: 'dust' | 'regolith' | 'rock' | 'frozen' | 'ice'
+  label: string
+  from: number
+  to: number
+  color: string
+  /** Metres per second while the button is held. */
+  speed: number
+  /** Heat gained per second while drilling (% of the bar). */
+  heat: number
+}
+
+export const DRILL_LAYERS: readonly DrillLayer[] = [
+  { id: 'dust', label: 'Poeira superficial', from: 0, to: 0.2, color: '#c47848', speed: 0.34, heat: 14 },
+  { id: 'regolith', label: 'Regolito com cascalho', from: 0.2, to: 0.8, color: '#8a4a28', speed: 0.26, heat: 22 },
+  { id: 'rock', label: 'Camada Rochosa Densa', from: 0.8, to: 1.5, color: '#5a3424', speed: 0.13, heat: 62 },
+  { id: 'frozen', label: 'Solo congelado', from: 1.5, to: 2.0, color: '#6f8fa6', speed: 0.2, heat: 30 },
+  { id: 'ice', label: 'Depósito de Gelo Subterrâneo', from: 2.0, to: 2.6, color: '#9fe3ff', speed: 0.18, heat: 26 },
+] as const
+
+/** Heat lost per second while the button is released. */
+export const DRILL_COOL_RATE = 48
+export const DRILL_OVERHEAT_LOCK_MS = 2500
+/** Depths written to the log on the way down. */
+export const DRILL_LOG_DEPTHS_M = [0.5, 1.2, 1.8, DRILL_TARGET_M] as const
+export const DRILL_ENERGY_PER_LOG = 2
+export const DRILL_OVERHEAT_ENERGY = 2
+
+export function drillLayerAt(depth: number): DrillLayer {
+  return DRILL_LAYERS.find((layer) => depth < layer.to) ?? DRILL_LAYERS[DRILL_LAYERS.length - 1]!
+}
+
+export function formatDepth(depth: number): string {
+  return `${depth.toFixed(1).replace('.', ',')} m`
+}
+
+export const CAPI_DRILL = {
+  start: 'Segure o botão para a broca descer. Fique de olho na temperatura!',
+  rock: 'Camada rochosa! O atrito esquenta a broca. Solte por 1 ou 2 segundos para esfriar.',
+  overheat: 'Superaqueceu! Pulse o botão em vez de segurar direto. A broca destrava já já.',
+  done: [
+    'Gelo encontrado a 2,2 m! A pequena perfuração confirma a hipótese aqui neste ponto.',
+    'Sozinha, ela não mostra o tamanho total do depósito. Para isso a NASA junta radar e mais furos.',
+  ],
+} as const
+
+/* ───────────── Desafio 3.4 — coleta ───────────── */
+
+export const SCRUB_CLEAN_GOAL = 0.9
+export const CRYO_SEAL_C = -73
+
+export const CAPI_SAMPLE = {
+  scrub: 'Esfregue a crosta de regolito até os cristais de gelo aparecerem.',
+  drag: 'Limpinho! Agora arraste o cilindro para o recipiente térmico.',
+  sealed: 'Selo criogênico ativo a −73 °C. Uma parte vai para a base, outra fica guardada para a Terra.',
+} as const
+
+/* ───────────── Desafio 3.5 — laboratório ───────────── */
+
+export const PROCESS_STEPS: { id: ProcessStepId; title: string; detail: string; energyCost: number }[] = [
+  { id: 'identify', title: 'Identificar o material congelado', detail: 'Confirmar que é gelo misturado ao solo.', energyCost: PROCESS_STEP_ENERGY },
+  { id: 'separate', title: 'Separar partículas grossas do solo', detail: 'Retirar pedrinhas e regolito maior.', energyCost: PROCESS_STEP_ENERGY },
+  { id: 'melt', title: 'Derreter o gelo em câmara controlada', detail: 'Câmara aquecida com energia da base.', energyCost: PROCESS_STEP_ENERGY + 2 },
+  { id: 'filter', title: 'Filtrar partículas em suspensão', detail: 'Remover o que ainda flutua na água.', energyCost: PROCESS_STEP_ENERGY },
+  { id: 'treat', title: 'Remover contaminantes químicos', detail: 'Tratamento contra sais e percloratos.', energyCost: PROCESS_STEP_ENERGY + 1 },
+  { id: 'quality', title: 'Encaminhar para verificação de qualidade', detail: 'Mandar a amostra ao teste de potabilidade.', energyCost: 2 },
 ]
+
+/* ───────────── Desafio 3.6 — potabilidade ───────────── */
 
 export const POTABILITY_INDICATORS: {
   id: PotabilityId
   label: string
-  /** First-pass fails this one until re-treatment. */
+  safe: string
+  unsafe?: string
+  /** First analysis fails this one until re-treatment. */
   failsInitially: boolean
 }[] = [
-  { id: 'ph', label: 'pH', failsInitially: false },
-  { id: 'conductivity', label: 'Condutividade e sais', failsInitially: true },
-  { id: 'chemicals', label: 'Contaminantes químicos', failsInitially: false },
-  { id: 'metals', label: 'Metais indesejados', failsInitially: false },
-  { id: 'microbes', label: 'Indicadores microbiológicos', failsInitially: false },
-  { id: 'treatment', label: 'Eficiência do tratamento', failsInitially: false },
+  { id: 'ph', label: 'pH', safe: '7,1 · neutro', failsInitially: false },
+  {
+    id: 'conductivity',
+    label: 'Condutividade elétrica e sais',
+    safe: '320 µS/cm · seguro',
+    unsafe: '2.400 µS/cm · sal demais',
+    failsInitially: true,
+  },
+  { id: 'chemicals', label: 'Contaminantes químicos', safe: 'Percloratos removidos', failsInitially: false },
+  { id: 'metals', label: 'Metais indesejados', safe: 'Abaixo do limite', failsInitially: false },
+  { id: 'microbes', label: 'Indicadores microbiológicos', safe: 'Nenhum detectado', failsInitially: false },
+  { id: 'treatment', label: 'Eficiência do tratamento', safe: '99%', failsInitially: false },
 ]
+
+export const CAPI_POTABILITY = {
+  fail: [
+    'A água parece transparente, mas tem sais do solo marciano escondidos!',
+    'Não dá para beber assim. Execute um novo tratamento e repita a análise.',
+  ],
+  pass: ['Todos os indicadores verdes: APROVADO PARA CONSUMO!', `+${WATER_REWARD_L} L de água potável para a base.`],
+} as const
+
+/* ───────────── Diário de bordo ───────────── */
+
+export const LOGBOOK_EVENTS_M3 = [
+  { id: 'right', label: 'Análise SHARAD, perfuração em Arcadia Planitia e extração de água', correct: true },
+  { id: 'storm', label: 'Limpeza dos painéis depois de uma tempestade', correct: false },
+  { id: 'meal', label: 'Preparo da refeição dos astronautas', correct: false },
+] as const
 
 export function isCrossSectionStep(step: Mission3Step): boolean {
   return step === 'step3_3_drilling' || step === 'step3_4_sample_collection'

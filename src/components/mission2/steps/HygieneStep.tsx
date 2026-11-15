@@ -1,4 +1,3 @@
-import { MEDIA } from '../../../constants/mediaAssets'
 import {
   HYGIENE_ACTIONS,
   HYGIENE_BONUS_CARD,
@@ -8,6 +7,7 @@ import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
 import { Mission2Stage } from '../Mission2Stage'
 import { SciTermM2 } from '../SciTermM2'
+import { HygieneBay } from './HygieneBay'
 
 type HygieneCardId = HygieneId | typeof HYGIENE_BONUS_CARD.id
 
@@ -38,6 +38,11 @@ export function HygieneStep({
   onContinue,
 }: Props) {
   const requiredDone = completedIds.length >= HYGIENE_ACTIONS.length
+
+  const canAfford = (id: HygieneId) => {
+    const action = HYGIENE_ACTIONS.find((item) => item.id === id)
+    return Boolean(action && action.energyCost <= energyPct && action.waterCostL <= waterL)
+  }
 
   const run = (
     id: HygieneCardId,
@@ -70,7 +75,7 @@ export function HygieneStep({
       title="Desafio 2.3 — Higiene pessoal"
       subtitle={
         <>
-          Toque em cada ação para reduzir a <SciTermM2 term="Contaminação" />. Risco agora:{' '}
+          Esfregue, lave e limpe a bancada para zerar a <SciTermM2 term="Contaminação" />. Risco agora:{' '}
           <strong className={contaminationRisk === 0 ? 'text-life' : 'text-danger'}>{contaminationRisk}%</strong>
         </>
       }
@@ -82,38 +87,23 @@ export function HygieneStep({
         />
       </div>
 
-      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-3 md:grid-cols-3">
-        {HYGIENE_ACTIONS.map((action) => {
-          const done = completedIds.includes(action.id)
-          const blocked = !done && (action.energyCost > energyPct || action.waterCostL > waterL)
-          return (
-            <div
-              key={action.id}
-              className={`flex flex-col border-2 bg-[#0a1628]/92 p-3 shadow-[0_8px_20px_rgba(0,0,0,0.35)] md:p-4 ${
-                done ? 'border-life' : 'border-cyan-hud/30'
-              } ${blocked ? 'opacity-50' : ''}`}
-            >
-              <img src={MEDIA.mission2.hygiene} alt="" className="size-14 object-contain" draggable={false} />
-              <p className="mt-2 font-pixel text-sm text-cyan-hud md:text-base">{action.title}</p>
-              <p className="mt-1 flex-1 text-sm leading-snug text-void-100">{action.detail}</p>
-              <p className="mt-2 text-sm text-energy">
-                −{action.waterCostL} L água
-                {action.energyCost > 0 ? ` · −${action.energyCost}% energia` : ''}
-              </p>
-              <McButton
-                className={`mt-3 min-h-12 w-full font-pixel text-base font-bold ${done ? 'mc-btn-green' : ''}`}
-                disabled={done || blocked}
-                aria-label={done ? `${action.title} feito` : action.title}
-                onClick={() =>
-                  run(action.id, action.energyCost, action.waterCostL, action.wellbeingGain, action.contaminationDrop, done)
-                }
-              >
-                {done ? 'Feito' : 'Fazer'}
-              </McButton>
-            </div>
-          )
-        })}
-      </div>
+      <HygieneBay
+        done={{
+          teeth: completedIds.includes('teeth'),
+          body: completedIds.includes('body'),
+          sensors: completedIds.includes('sensors'),
+        }}
+        blocked={{
+          teeth: !completedIds.includes('teeth') && !canAfford('teeth'),
+          body: !completedIds.includes('body') && !canAfford('body'),
+          sensors: !completedIds.includes('sensors') && !canAfford('sensors'),
+        }}
+        onDone={(id) => {
+          const action = HYGIENE_ACTIONS.find((item) => item.id === id)
+          if (!action) return
+          run(action.id, action.energyCost, action.waterCostL, action.wellbeingGain, action.contaminationDrop, completedIds.includes(id))
+        }}
+      />
 
       {requiredDone ? (
         <div className="mx-auto w-full max-w-6xl border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:max-w-md">

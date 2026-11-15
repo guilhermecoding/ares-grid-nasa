@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
+import { DRILL_LAYERS } from '../../data/mission3Data'
 
 type BgMode = 'surface' | 'cross_section'
 
 interface Props {
   mode?: BgMode
-  /** 0–1 drill progress into ice layer (cross_section only). */
+  /** 0–1 share of the full cross-section depth (cross_section only). */
   drillProgress?: number
   className?: string
 }
@@ -16,6 +17,11 @@ export function ArcadiaExplorationBackground({
   className = '',
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const drillProgressRef = useRef(drillProgress)
+
+  useEffect(() => {
+    drillProgressRef.current = drillProgress
+  }, [drillProgress])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -103,35 +109,27 @@ export function ArcadiaExplorationBackground({
 
       if (mode === 'cross_section') {
         const y0 = surfaceH
-        const layerH = (h - surfaceH) / 3
+        const maxDepth = DRILL_LAYERS[DRILL_LAYERS.length - 1]!.to
+        const pxPerM = (h - y0) / maxDepth
 
-        // Dust
-        ctx.fillStyle = '#a56a3d'
-        ctx.fillRect(0, y0, w, layerH)
-        // Regolith
-        ctx.fillStyle = '#6b4228'
-        ctx.fillRect(0, y0 + layerH, w, layerH)
-        // Ice
-        const iceGrad = ctx.createLinearGradient(0, y0 + layerH * 2, 0, h)
-        iceGrad.addColorStop(0, '#7ec8e8')
-        iceGrad.addColorStop(1, '#c8f0ff')
-        ctx.fillStyle = iceGrad
-        ctx.fillRect(0, y0 + layerH * 2, w, layerH)
-
-        ctx.fillStyle = 'rgba(255,255,255,0.15)'
-        for (let i = 0; i < 8; i++) {
-          ctx.fillRect(w * 0.1 + i * w * 0.1, y0 + layerH * 2.2, 4, layerH * 0.5)
+        ctx.font = '10px monospace'
+        for (const layer of DRILL_LAYERS) {
+          const top = y0 + layer.from * pxPerM
+          const height = (layer.to - layer.from) * pxPerM
+          ctx.fillStyle = layer.color
+          ctx.fillRect(0, top, w, height)
+          ctx.fillStyle = 'rgba(244,255,244,0.75)'
+          ctx.fillText(layer.label, 8, top + 13)
         }
 
-        // Labels
-        ctx.font = '10px monospace'
-        ctx.fillStyle = 'rgba(244,255,244,0.75)'
-        ctx.fillText('Poeira', 8, y0 + 14)
-        ctx.fillText('Regolito', 8, y0 + layerH + 14)
-        ctx.fillText('Gelo', 8, y0 + layerH * 2 + 14)
+        ctx.fillStyle = 'rgba(255,255,255,0.18)'
+        const iceTop = y0 + 2.0 * pxPerM
+        for (let i = 0; i < 8; i++) {
+          ctx.fillRect(w * 0.1 + i * w * 0.1, iceTop + 6, 4, (h - iceTop) * 0.5)
+        }
 
         // Drill bit
-        const progress = Math.max(0, Math.min(1, drillProgress))
+        const progress = Math.max(0, Math.min(1, drillProgressRef.current))
         const drillX = w * 0.5
         const drillTop = y0 - 8
         const drillY = drillTop + progress * (h - drillTop - 24)
@@ -158,7 +156,7 @@ export function ArcadiaExplorationBackground({
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, [mode, drillProgress])
+  }, [mode])
 
   return (
     <div className={`pointer-events-none absolute inset-0 z-0 overflow-hidden bg-[#8a3d22] ${className}`} aria-hidden>

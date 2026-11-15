@@ -4,91 +4,105 @@ import { MEDIA } from '../../../constants/mediaAssets'
 import { METHODOLOGY_STEPS, NASA_CITATIONS } from '../../../data/mission3Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
+import { Mission3Stage } from '../Mission3Stage'
 import { SciTermM3 } from '../SciTermM3'
 
 interface Props {
+  energy: number
+  waterL: number
   onContinue: () => void
 }
 
-/** Challenge 3.1 — unlock the 3 NASA investigation steps. */
-export function MethodologyStep({ onContinue }: Props) {
-  const [unlocked, setUnlocked] = useState<string[]>([])
+const ICONS = [MEDIA.mission3.radar, MEDIA.mission3.lab, MEDIA.mission3.drill] as const
 
-  const ready = unlocked.length >= METHODOLOGY_STEPS.length
+const TIPS = [
+  'Toque na primeira etapa: tudo começa pelo radar SHARAD lá da órbita.',
+  'Boa! Antes de ir a campo, a NASA confere o que já foi descoberto.',
+  'Só no fim a gente perfura — e só um pouquinho, para conferir.',
+  'Protocolo completo! Agora sim podemos abrir o mapa científico.',
+] as const
+
+/** Desafio 3.1 — unlock the three NASA investigation stages in order. */
+export function MethodologyStep({ energy, waterL, onContinue }: Props) {
+  const [unlocked, setUnlocked] = useState(0)
+  const allDone = unlocked >= METHODOLOGY_STEPS.length
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
-      <div className="pointer-events-none h-14 shrink-0 sm:h-16" />
-
-      <div className="mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col overflow-y-auto px-3 pb-28 sm:px-4">
-        <h2 className="font-pixel text-sm text-cyan-hud sm:text-base">As 3 etapas da investigação</h2>
-        <p className="mt-1 font-pixel text-[10px] leading-snug text-void-200 sm:text-xs">
-          Toque em cada etapa para entender o protocolo antes do mapa. Fonte:{' '}
-          <SciTermM3 term="Radar SHARAD">Radar SHARAD</SciTermM3>.
-        </p>
-
-        <div className="mt-4 space-y-2">
-          {METHODOLOGY_STEPS.map((step, i) => {
-            const done = unlocked.includes(step.id)
-            const canOpen = i === 0 || unlocked.includes(METHODOLOGY_STEPS[i - 1]!.id)
-            return (
-              <motion.button
-                key={step.id}
-                type="button"
-                whileTap={canOpen && !done ? { scale: 0.98 } : undefined}
-                disabled={!canOpen}
-                onClick={() => {
-                  if (!canOpen || done) return
-                  soundEngine.step()
-                  setUnlocked((u) => (u.includes(step.id) ? u : [...u, step.id]))
-                }}
-                className={`flex min-h-14 w-full items-start gap-3 rounded-lg border-2 p-3 text-left ${
-                  done
-                    ? 'border-[#1f8a52]/80 bg-[#0a1628]/9'
-                    : canOpen
-                      ? 'border-cyan-hud/50 bg-[#0a1628]/95'
-                      : 'border-void-600/40 bg-[#0a1628]/50 opacity-50'
-                }`}
-                style={{ touchAction: 'manipulation' }}
-              >
-                <span
-                  className={`flex size-10 shrink-0 items-center justify-center rounded-md font-pixel text-sm ${
-                    done ? 'bg-[#1f8a52] text-[#e8ffe8]' : 'bg-cyan-hud/20 text-cyan-hud'
-                  }`}
+    <Mission3Stage
+      title="Desafio 3.1 — As 3 Etapas da Investigação"
+      subtitle={
+        <>
+          Cientistas reúnem dados antes de perfurar o <SciTermM3 term="Subsolo">subsolo</SciTermM3>. Toque em cada
+          etapa na ordem certa.
+        </>
+      }
+      energy={energy}
+      waterL={waterL}
+      capiTip={TIPS[unlocked]}
+    >
+      <div className="mx-auto grid w-full max-w-6xl gap-3 md:grid-cols-3 md:gap-4">
+        {METHODOLOGY_STEPS.map((step, i) => {
+          const open = i < unlocked
+          const next = i === unlocked
+          return (
+            <motion.button
+              key={step.id}
+              type="button"
+              disabled={!next}
+              whileTap={next ? { scale: 0.97 } : undefined}
+              onClick={() => {
+                setUnlocked(i + 1)
+                if (i + 1 >= METHODOLOGY_STEPS.length) soundEngine.success()
+                else soundEngine.harvest()
+              }}
+              className={`relative flex min-h-48 flex-col items-start gap-2 rounded border-2 bg-[#0a1628]/92 p-3 text-left md:p-4 ${
+                open ? 'border-life' : next ? 'border-energy shadow-[0_0_18px_rgba(250,204,21,0.25)]' : 'border-cyan-hud/20 opacity-60'
+              }`}
+              style={{ touchAction: 'manipulation' }}
+            >
+              <div className="flex w-full items-center justify-between gap-2">
+                <span className="font-pixel text-xs text-cyan-hud">ETAPA {i + 1}</span>
+                <span className={`font-pixel text-[10px] ${open ? 'text-life' : next ? 'text-energy' : 'text-void-100/50'}`}>
+                  {open ? '✓ DESBLOQUEADA' : next ? 'TOQUE PARA ABRIR' : '🔒 BLOQUEADA'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <img
+                  src={ICONS[i]}
+                  alt=""
+                  className={`size-14 shrink-0 object-contain ${open ? '' : 'grayscale'}`}
+                  draggable={false}
+                />
+                <p className="font-pixel text-sm leading-snug text-[#f4fff4] md:text-base">{step.title}</p>
+              </div>
+              {open ? (
+                <motion.p
+                  className="text-sm text-void-100/90 md:text-base"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
                 >
-                  {done ? '✓' : i + 1}
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-pixel text-xs text-[#f4fff4] sm:text-sm">{step.title}</span>
-                  {done ? (
-                    <span className="mt-1 block font-pixel text-[10px] leading-snug text-void-200">
-                      {step.detail}
-                    </span>
-                  ) : (
-                    <span className="mt-1 block font-pixel text-[10px] text-void-400">Toque para revelar</span>
-                  )}
-                </span>
-              </motion.button>
-            )
-          })}
-        </div>
-
-        <p className="mt-3 font-pixel text-[9px] leading-snug text-void-300">{NASA_CITATIONS.sharad}</p>
-        <img src={MEDIA.mission3.radar} alt="" className="mt-2 size-12 object-contain opacity-80" draggable={false} />
+                  {step.detail}
+                </motion.p>
+              ) : null}
+            </motion.button>
+          )
+        })}
       </div>
 
-      <div className="absolute inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-end px-3 sm:px-4">
+      <section className="mx-auto w-full max-w-6xl rounded border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:p-4">
+        <p className="font-pixel text-[10px] text-cyan-hud">FONTES NASA</p>
+        <p className="mt-1 text-xs text-void-100/80 md:text-sm">{NASA_CITATIONS.iceCores}</p>
+        <p className="mt-1 text-xs text-void-100/80 md:text-sm">
+          {NASA_CITATIONS.sharad} <SciTermM3 term="Radar SHARAD">O que é o SHARAD?</SciTermM3>
+        </p>
         <McButton
-          className="min-h-12 min-w-[10rem] font-pixel text-lg font-bold disabled:opacity-40"
-          disabled={!ready}
-          onClick={() => {
-            soundEngine.harvest()
-            onContinue()
-          }}
+          className={`mt-3 min-h-12 px-5 font-pixel ${allDone ? 'mc-btn-green' : 'opacity-50'}`}
+          disabled={!allDone}
+          onClick={onContinue}
         >
-          Abrir mapa
+          Abrir mapa científico
         </McButton>
-      </div>
-    </div>
+      </section>
+    </Mission3Stage>
   )
 }

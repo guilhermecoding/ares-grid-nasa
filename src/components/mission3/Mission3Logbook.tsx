@@ -1,197 +1,176 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { ScrollHintArea } from '../ScrollHintArea'
-import { DRILL_DEPTHS_M, NASA_CITATIONS, WATER_REWARD_L } from '../../data/mission3Data'
+import { MEDIA } from '../../constants/mediaAssets'
+import { LOGBOOK_EVENTS_M3, MISSION3_META, NASA_CITATIONS } from '../../data/mission3Data'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
   siteName: string
-  waterGained: boolean
+  depthLabel: string
   onDone: () => void
 }
 
-interface ChecklistItem {
-  id: string
-  label: string
-  detail?: string
-}
-
-function GreenCheck({ delay = 0 }: { delay?: number }) {
-  return (
-    <motion.span
-      className="relative flex size-8 shrink-0 items-center justify-center rounded-sm border-2 border-[#1a5c3a] bg-[#1f8a52] sm:size-9"
-      initial={{ scale: 0.2, opacity: 0, rotate: -20 }}
-      animate={{ scale: 1, opacity: 1, rotate: 0 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 18, delay }}
-      aria-hidden
-    >
-      <svg viewBox="0 0 24 24" className="size-5 text-[#e8ffe8] sm:size-6" fill="none" aria-hidden>
-        <motion.path
-          d="M5 12.5 L10 17.5 L19 6.5"
-          stroke="currentColor"
-          strokeWidth="3.2"
-          strokeLinecap="square"
-          strokeLinejoin="miter"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 0.35, delay: delay + 0.12, ease: 'easeOut' }}
-        />
-      </svg>
-    </motion.span>
-  )
-}
-
-function EmptyBox() {
-  return (
-    <span
-      className="flex size-8 shrink-0 items-center justify-center rounded-sm border-2 border-[#30346d]/45 bg-[#f4fff4] sm:size-9"
-      aria-hidden
-    />
-  )
-}
-
-/** Animated mission checklist — mirrors Missão 02 logbook. */
-export function Mission3Logbook({ siteName, waterGained, onDone }: Props) {
-  const [revealed, setRevealed] = useState(0)
+/** Diário de Bordo — event, situation chips, stamped photo. */
+export function Mission3Logbook({ siteName, depthLabel, onDone }: Props) {
+  const [eventId, setEventId] = useState<string | null>(null)
+  const [wrongEvent, setWrongEvent] = useState<string | null>(null)
+  const [chips, setChips] = useState<Set<string>>(() => new Set())
   const [photo, setPhoto] = useState(false)
-  const [allDone, setAllDone] = useState(false)
 
-  const items = useMemo<ChecklistItem[]>(
-    () => [
-      {
-        id: 'method',
-        label: 'Protocolo científico seguido',
-        detail: 'Radar SHARAD → estudos NASA → perfuração',
-      },
-      {
-        id: 'site',
-        label: 'Setor de exploração escolhido',
-        detail: siteName,
-      },
-      {
-        id: 'drill',
-        label: 'Perfurações exploratórias',
-        detail: DRILL_DEPTHS_M.map((d) => `${d} m`).join(' · '),
-      },
-      {
-        id: 'process',
-        label: 'Processamento de gelo → água',
-        detail: 'Bancada completa + teste de potabilidade',
-      },
-      {
-        id: 'water',
-        label: 'Água potável na base',
-        detail: waterGained ? `+${WATER_REWARD_L}L adicionados` : 'Aguardando registro',
-      },
-    ],
-    [siteName, waterGained],
-  )
-
-  useEffect(() => {
-    if (revealed >= items.length) {
-      const id = window.setTimeout(() => setAllDone(true), 280)
-      return () => clearTimeout(id)
-    }
-    const id = window.setTimeout(() => {
-      setRevealed((n) => n + 1)
-      soundEngine.success()
-    }, revealed === 0 ? 450 : 520)
-    return () => clearTimeout(id)
-  }, [revealed, items.length])
+  const aspects = [
+    { id: 'terrain', label: `Terreno: ${siteName}, plano e estável` },
+    { id: 'depth', label: `Profundidade da amostra: ${depthLabel}` },
+    { id: 'water', label: 'Potabilidade: aprovada após novo tratamento' },
+  ]
+  const eventOk = eventId === 'right'
+  const chipsOk = chips.size === aspects.length
+  const ready = eventOk && chipsOk && photo
 
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-void-950/70 p-3">
       <ScrollHintArea
         variant="light"
-        frameClassName="w-full max-w-lg border-4 border-[#1a1c3a] bg-[#f4fff4] text-[#1a1c3a] shadow-[0_0_0_3px_#30346d]"
-        className="max-h-[min(92dvh,42rem)] p-4"
+        frameClassName="w-full max-w-xl border-4 border-[#1a1c3a] bg-[#f4fff4] text-[#1a1c3a] shadow-[0_0_0_3px_#30346d]"
+        className="max-h-[min(92dvh,46rem)] p-4"
       >
         <p className="font-pixel text-sm tracking-wide uppercase">Diário de Bordo — Missão 3</p>
-        <p className="mt-1 font-body text-sm text-[#1a1c3a]/80">O Mistério do Gelo de Marte</p>
+        <p className="mt-1 text-sm text-[#1a1c3a]/80">
+          {MISSION3_META.solLabel} · {MISSION3_META.location} · O Mistério do Gelo de Marte
+        </p>
 
-        <ul className="mt-4 space-y-2.5" aria-label="Objetivos cumpridos">
-          {items.map((item, index) => {
-            const checked = index < revealed
+        <p className="mt-4 font-pixel text-xs text-[#30346d]">1 · Evento de hoje</p>
+        <div className="mt-2 grid gap-2">
+          {LOGBOOK_EVENTS_M3.map((ev) => {
+            const chosen = eventId === ev.id
+            const wrong = wrongEvent === ev.id
             return (
-              <motion.li
-                key={item.id}
-                layout
-                className={`flex items-start gap-3 rounded-md border-2 px-2.5 py-2.5 sm:px-3 ${
-                  checked
-                    ? 'border-[#1f8a52]/55 bg-[#e5f8ec]'
-                    : 'border-[#30346d]/25 bg-[#f4fff4]'
-                }`}
-                initial={false}
-                animate={{
-                  backgroundColor: checked ? '#e5f8ec' : '#f4fff4',
-                  borderColor: checked ? 'rgba(31,138,82,0.55)' : 'rgba(48,52,109,0.25)',
+              <motion.button
+                key={ev.id}
+                type="button"
+                disabled={eventOk}
+                animate={wrong ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
+                transition={{ duration: 0.3 }}
+                onClick={() => {
+                  if (ev.correct) {
+                    setEventId(ev.id)
+                    setWrongEvent(null)
+                    soundEngine.success()
+                  } else {
+                    setWrongEvent(ev.id)
+                    soundEngine.fail()
+                  }
                 }}
-                transition={{ duration: 0.25 }}
+                className={`min-h-12 rounded border-2 px-3 py-2 text-left text-sm ${
+                  chosen
+                    ? 'border-[#1f8a52] bg-[#e5f8ec] font-semibold text-[#145c35]'
+                    : wrong
+                      ? 'border-[#c0304f] bg-[#ffe9ee] text-[#7a1c30]'
+                      : 'border-[#30346d]/35 bg-white'
+                }`}
+                style={{ touchAction: 'manipulation' }}
               >
-                {checked ? <GreenCheck delay={0} /> : <EmptyBox />}
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <p
-                    className={`font-pixel text-xs leading-snug sm:text-sm ${
-                      checked ? 'text-[#145c35]' : 'text-[#30346d]/70'
-                    }`}
-                  >
-                    {item.label}
-                  </p>
-                  {item.detail ? (
-                    <p className="mt-0.5 font-body text-xs text-[#1a1c3a]/70 sm:text-sm">{item.detail}</p>
-                  ) : null}
-                </div>
-              </motion.li>
+                {chosen ? '✓ ' : ''}
+                {ev.label}
+              </motion.button>
             )
           })}
-        </ul>
+        </div>
+        {wrongEvent && !eventOk ? (
+          <p className="mt-1 text-xs text-[#7a1c30]">Esse não foi o trabalho de hoje. Tente de novo!</p>
+        ) : null}
 
-        <AnimatePresence>
-          {allDone && (
-            <motion.div
-              className="mt-4 space-y-3"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35 }}
-            >
-              <p className="font-pixel text-xs text-[#30346d] sm:text-sm">Fontes NASA</p>
-              <p className="font-body text-xs leading-snug text-[#1a1c3a]/75">{NASA_CITATIONS.iceCores}</p>
-              <p className="font-body text-xs leading-snug text-[#1a1c3a]/75">{NASA_CITATIONS.sharad}</p>
+        <p className="mt-4 font-pixel text-xs text-[#30346d]">2 · Aspectos da situação</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {aspects.map((a) => {
+            const on = chips.has(a.id)
+            return (
+              <button
+                key={a.id}
+                type="button"
+                disabled={!eventOk}
+                aria-pressed={on}
+                onClick={() => {
+                  soundEngine.click()
+                  setChips((prev) => {
+                    const next = new Set(prev)
+                    if (next.has(a.id)) next.delete(a.id)
+                    else next.add(a.id)
+                    return next
+                  })
+                }}
+                className={`min-h-12 rounded-full border-2 px-3 py-2 text-sm ${
+                  on ? 'border-[#1f8a52] bg-[#1f8a52] text-white' : 'border-[#30346d]/40 bg-white'
+                } ${eventOk ? '' : 'opacity-50'}`}
+                style={{ touchAction: 'manipulation' }}
+              >
+                {on ? '✓ ' : '+ '}
+                {a.label}
+              </button>
+            )
+          })}
+        </div>
 
-              <p className="font-pixel text-xs text-[#30346d] sm:text-sm">Foto científica</p>
-              <div className="relative overflow-hidden border-2 border-[#30346d] bg-gradient-to-b from-[#c47848] to-[#3a2010] p-4">
-                <div className="mx-auto flex h-16 w-28 items-center justify-center border-2 border-cyan-hud bg-[#1a2840]">
-                  <span className="font-pixel text-[10px] text-cyan-hud">ARCADIA</span>
-                </div>
-                {photo && (
-                  <motion.p
-                    className="mt-2 font-mono text-[10px] text-[#f4fff4]"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    NASA · Arcadia Planitia · Sol 03 · gelo no subsolo
-                  </motion.p>
-                )}
-              </div>
-              {!photo ? (
-                <McButton
-                  className="min-h-12 w-full font-pixel font-bold"
-                  onClick={() => {
-                    setPhoto(true)
-                    soundEngine.success()
-                  }}
+        <p className="mt-4 font-pixel text-xs text-[#30346d]">3 · Fotografia científica</p>
+        <div className="relative mt-2 overflow-hidden border-2 border-[#30346d] bg-gradient-to-b from-[#0b2a3a] to-[#050b14] p-3">
+          <div className="flex items-center justify-center gap-4">
+            <img src={MEDIA.mission3.sample} alt="" className="size-20 object-contain" draggable={false} />
+            <img src={MEDIA.mission3.lab} alt="" className="size-20 object-contain" draggable={false} />
+          </div>
+          <AnimatePresence>
+            {photo ? (
+              <>
+                <motion.div
+                  key="flash"
+                  className="pointer-events-none absolute inset-0 bg-white"
+                  initial={{ opacity: 0.9 }}
+                  animate={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  aria-hidden
+                />
+                <motion.div
+                  key="stamp"
+                  className="absolute top-2 right-2 rotate-[-12deg] border-4 border-[#c0304f] px-2 py-0.5 font-pixel text-xs text-[#ff8aa0]"
+                  initial={{ scale: 2.2, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.2 }}
                 >
-                  Capturar Foto Científica
-                </McButton>
-              ) : (
-                <McButton className="min-h-12 w-full font-pixel font-bold" onClick={onDone}>
-                  Enviar transmissão
-                </McButton>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  NASA
+                </motion.div>
+                <motion.p
+                  key="caption"
+                  className="mt-2 text-center font-mono text-[10px] text-[#f4fff4]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {MISSION3_META.location} · {MISSION3_META.lat} · {MISSION3_META.lon} · ice core {depthLabel}
+                </motion.p>
+              </>
+            ) : null}
+          </AnimatePresence>
+        </div>
+        {!photo ? (
+          <McButton
+            className={`mt-2 min-h-12 w-full font-pixel ${eventOk && chipsOk ? '' : 'opacity-50'}`}
+            disabled={!eventOk || !chipsOk}
+            onClick={() => setPhoto(true)}
+          >
+            📷 Capturar Foto Científica
+          </McButton>
+        ) : null}
+
+        <p className="mt-4 font-pixel text-xs text-[#30346d]">Fontes NASA</p>
+        <p className="mt-1 text-xs leading-snug text-[#1a1c3a]/75">{NASA_CITATIONS.iceCores}</p>
+        <p className="mt-1 text-xs leading-snug text-[#1a1c3a]/75">{NASA_CITATIONS.sharad}</p>
+
+        <McButton
+          className={`mt-4 min-h-12 w-full font-pixel ${ready ? 'mc-btn-green' : 'opacity-50'}`}
+          disabled={!ready}
+          onClick={onDone}
+        >
+          Salvar e voltar à nave
+        </McButton>
       </ScrollHintArea>
     </div>
   )
