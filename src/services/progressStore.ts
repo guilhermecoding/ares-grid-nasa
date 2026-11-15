@@ -1,6 +1,16 @@
 import type { Mission1Step, PanelTestChoice, SeasonId, SiteId } from '../data/mission1Data'
 import type { ExerciseId, HygieneId, Mission2Step, NutritionCardId } from '../data/mission2Data'
 import type { Mission3Step, PotabilityId, SiteId as IceSiteId } from '../data/mission3Data'
+import type {
+  BlssLinkId,
+  CultivationMethodId,
+  GreenhouseModuleId,
+  Mission4Run,
+  Mission4Step,
+  PlantGroupId,
+  SpeciesId,
+} from '../data/mission4Data'
+import type { DustLatchId, InspectId, Mission5Run, Mission5Step, ShelterId } from '../data/mission5Data'
 import type { BackpackId, HelmetId, InsigniaId, SuitColorId } from '../data/openingData'
 import { MAX_WATER_RESERVE_L, type BaseStats, type ToolId } from '../types/game'
 
@@ -99,6 +109,8 @@ export interface MissionRuns {
   m1?: Mission1Run
   m2?: Mission2Run
   m3?: Mission3Run
+  m4?: Mission4Run
+  m5?: Mission5Run
 }
 
 const DEFAULT_PROGRESS: PlayerProgress = {
@@ -286,6 +298,33 @@ const EXERCISE_IDS = new Set<ExerciseId>(['treadmill', 'resistance', 'stretch', 
 const HYGIENE_IDS = new Set<HygieneId>(['teeth', 'body', 'sensors'])
 const NUTRITION_IDS = new Set<NutritionCardId>(['protein', 'veggie', 'carb', 'hydrate'])
 const POTABILITY_IDS = new Set<PotabilityId>(['ph', 'conductivity', 'chemicals', 'metals', 'microbes', 'treatment'])
+const M4_STEPS = new Set<Mission4Step>([
+  'intro',
+  'step4_1_build_greenhouse',
+  'step4_2_cultivation_method',
+  'step4_3_select_species',
+  'step4_4_growth_monitor',
+  'step4_5_bioregenerative',
+  'step4_logbook_and_sleep',
+])
+const M4_MODULES = new Set<GreenhouseModuleId>(['shell', 'led', 'air', 'temp', 'monitor'])
+const M4_METHODS = new Set<CultivationMethodId>(['hydro', 'aero', 'regolith'])
+const M4_GROUPS = new Set<PlantGroupId>(['veggie', 'fruit', 'grain', 'flower'])
+const M4_SPECIES = new Set<SpeciesId>(['lettuce', 'tomato', 'carrot', 'strawberry', 'wheat', 'zinnia'])
+const M4_BLSS = new Set<BlssLinkId>(['air', 'water', 'nutrient'])
+const M5_STEPS = new Set<Mission5Step>([
+  'intro',
+  'step5_1_dust_storm',
+  'step5_2_clean_panels',
+  'step5_3_solar_radiation',
+  'step5_4_post_storm_inspection',
+  'step5_logbook_and_sleep',
+  'scene6_earth_transmission',
+  'scene7_ending',
+])
+const M5_LATCHES = new Set<DustLatchId>(['alert', 'return', 'seal', 'battery'])
+const M5_SHELTERS = new Set<ShelterId>(['greenhouse', 'surface', 'shield'])
+const M5_INSPECT = new Set<InspectId>(['panels', 'habitat', 'greenhouse', 'antenna'])
 
 function strList<T extends string>(raw: unknown, allowed: Set<T>): T[] {
   if (!Array.isArray(raw)) return []
@@ -348,6 +387,68 @@ function parseMission3Run(raw: unknown): Mission3Run | undefined {
   }
 }
 
+function parseMission4Run(raw: unknown): Mission4Run | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const p = raw as Partial<Mission4Run>
+  if (!p.step || !M4_STEPS.has(p.step)) return undefined
+  if (typeof p.waterL !== 'number' || typeof p.waterPct !== 'number') return undefined
+  const phase = p.phase === 'logbook' || p.phase === 'night' ? p.phase : 'play'
+  const method = p.method && M4_METHODS.has(p.method) ? p.method : null
+  const growthStage: 0 | 1 | 2 = p.growthStage === 1 || p.growthStage === 2 ? p.growthStage : 0
+  const plants = Array.isArray(p.plants)
+    ? p.plants.filter(
+        (item): item is { group: PlantGroupId; species: SpeciesId } =>
+          !!item &&
+          typeof item === 'object' &&
+          M4_GROUPS.has((item as { group?: PlantGroupId }).group as PlantGroupId) &&
+          M4_SPECIES.has((item as { species?: SpeciesId }).species as SpeciesId),
+      )
+    : []
+  return {
+    step: p.step,
+    phase,
+    waterL: p.waterL,
+    waterPct: p.waterPct,
+    installed: strList(p.installed, M4_MODULES),
+    energyLinked: Boolean(p.energyLinked),
+    waterLinked: Boolean(p.waterLinked),
+    method,
+    plants,
+    growthStage,
+    misted: Boolean(p.misted),
+    lightOn: Boolean(p.lightOn),
+    tempOk: Boolean(p.tempOk),
+    harvested: strList(p.harvested, M4_SPECIES),
+    blss: strList(p.blss, M4_BLSS),
+    foodPct: typeof p.foodPct === 'number' ? p.foodPct : 20,
+    o2Pct: typeof p.o2Pct === 'number' ? p.o2Pct : 20,
+  }
+}
+
+function parseMission5Run(raw: unknown): Mission5Run | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const p = raw as Partial<Mission5Run>
+  if (!p.step || !M5_STEPS.has(p.step)) return undefined
+  if (typeof p.waterL !== 'number' || typeof p.waterPct !== 'number') return undefined
+  const phase =
+    p.phase === 'logbook' || p.phase === 'night' || p.phase === 'ending' ? p.phase : 'play'
+  const shelter = p.shelter && M5_SHELTERS.has(p.shelter) ? p.shelter : null
+  return {
+    step: p.step,
+    phase,
+    waterL: p.waterL,
+    waterPct: p.waterPct,
+    sealed: strList(p.sealed, M5_LATCHES),
+    windSafe: Boolean(p.windSafe),
+    panelsClean: Boolean(p.panelsClean),
+    shelter,
+    shielded: Boolean(p.shielded),
+    inspected: strList(p.inspected, M5_INSPECT),
+    radiation: typeof p.radiation === 'number' ? p.radiation : 0.4,
+    integrity: typeof p.integrity === 'number' ? p.integrity : 70,
+  }
+}
+
 function parseMissionRuns(raw: unknown): MissionRuns {
   if (!raw || typeof raw !== 'object') return {}
   const p = raw as Partial<MissionRuns>
@@ -355,6 +456,8 @@ function parseMissionRuns(raw: unknown): MissionRuns {
     m1: parseMission1Run(p.m1),
     m2: parseMission2Run(p.m2),
     m3: parseMission3Run(p.m3),
+    m4: parseMission4Run(p.m4),
+    m5: parseMission5Run(p.m5),
   }
 }
 

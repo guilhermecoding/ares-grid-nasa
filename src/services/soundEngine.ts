@@ -57,6 +57,11 @@ export const soundEngine = {
     beep(110, 0.35, 'sawtooth', 0.05)
     setTimeout(() => beep(90, 0.4, 'sawtooth', 0.045), 80)
   },
+  /** Two soft tones for the solar-radiation siren. Call it on a timer, not in a loop. */
+  siren: () => {
+    beep(660, 0.14, 'sine', 0.03)
+    setTimeout(() => beep(440, 0.14, 'sine', 0.028), 170)
+  },
   success: () => {
     beep(392, 0.1, 'square', 0.04)
     setTimeout(() => beep(523, 0.12, 'square', 0.04), 90)

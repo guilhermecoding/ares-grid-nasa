@@ -74,4 +74,20 @@ export const MEDIA = {
     waterDrop: '/assets/mission3/water-drop.svg',
     camera: '/assets/mission3/camera.svg',
   },
+  mission4: {
+    greenhouse: '/assets/mission4/greenhouse.svg',
+    cable: '/assets/mission4/cable.svg',
+    pipe: '/assets/mission4/pipe.svg',
+    mister: '/assets/mission4/mister.svg',
+    leaf: '/assets/mission4/leaf.svg',
+    berry: '/assets/mission4/berry.svg',
+    grain: '/assets/mission4/grain.svg',
+    flower: '/assets/mission4/flower.svg',
+  },
+  mission5: {
+    dust: '/assets/mission5/dust.svg',
+    hatch: '/assets/mission5/hatch.svg',
+    shelter: '/assets/mission5/shelter.svg',
+    antenna: '/assets/mission5/antenna.svg',
+  },
 } as const

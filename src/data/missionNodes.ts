@@ -13,7 +13,7 @@ export interface MissionNode {
 }
 
 /** Missions that currently have a dedicated playable screen. */
-export const PLAYABLE_MISSION_LEVELS = [1, 2, 3] as const
+export const PLAYABLE_MISSION_LEVELS = [1, 2, 3, 4, 5] as const
 
 export function isPlayableMission(level: number): boolean {
   return (PLAYABLE_MISSION_LEVELS as readonly number[]).includes(level)

@@ -20,10 +20,24 @@ interface Props {
   choices: Mission2Choices
   scores: Mission2Scores
   onDone: () => void
+  /** Extra diary line for later missions. Mission 2 keeps its own sentence when this is omitted. */
+  researchNote?: string
+  /** Extra health lines. Mission 2 keeps its three indicators when this is omitted. */
+  healthExtra?: readonly string[]
+  doneLabel?: string
 }
 
 /** Reusable holographic night panel — 7 steps with kid-friendly progress. */
-export function NightReportModal({ open, playerName, choices, scores, onDone }: Props) {
+export function NightReportModal({
+  open,
+  playerName,
+  choices,
+  scores,
+  onDone,
+  researchNote,
+  healthExtra,
+  doneLabel = 'Amanhecer',
+}: Props) {
   const [step, setStep] = useState(0)
   const [wasOpen, setWasOpen] = useState(open)
   if (open !== wasOpen) {
@@ -107,6 +121,9 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
                   <li>Saúde física: {scores.physicalHealth}%</li>
                   <li>Hidratação: {scores.hydration}%</li>
                   <li>FC repouso (simulada): {58 + Math.floor((100 - scores.physicalHealth) / 8)} bpm</li>
+                  {healthExtra?.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
                 </ul>
               )}
               {current.id === 'sleep' && (
@@ -128,8 +145,8 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
               )}
               {current.id === 'research' && (
                 <p className="mt-2 font-pixel text-[10px] leading-snug text-void-200 sm:text-xs">
-                  Diário científico: painéis solares (Missão 1) + rotina de saúde (Missão 2) organizados com fotos e
-                  observações da Capi.
+                  {researchNote ??
+                    'Diário científico: painéis solares (Missão 1) + rotina de saúde (Missão 2) organizados com fotos e observações da Capi.'}
                 </p>
               )}
               {current.id === 'storage' && (
@@ -165,7 +182,7 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
                 onDone()
               }}
             >
-              Amanhecer
+              {doneLabel}
             </McButton>
           </div>
         )}
