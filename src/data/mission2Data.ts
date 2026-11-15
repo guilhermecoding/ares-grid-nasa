@@ -318,6 +318,46 @@ export function nutritionBalance(foodIds: string[]): number {
   return 100
 }
 
+/** True when the current stage cannot be finished because energy is too low. */
+export function isMission2EnergySoftLocked(
+  step: Mission2Step,
+  energyPct: number,
+  exercises: readonly ExerciseId[],
+  nutritionCards: readonly NutritionCardId[],
+  hygieneDone: readonly HygieneId[],
+): boolean {
+  if (step === 'step2_1_exercise') {
+    const need = EXERCISE_REQUIRED_COUNT - exercises.length
+    if (need <= 0) return false
+    const affordable = EXERCISES.filter((e) => !exercises.includes(e.id) && e.energyCost <= energyPct)
+    return affordable.length < need
+  }
+
+  if (step === 'step2_2_nutrition') {
+    const done = new Set(nutritionCards)
+    if (done.size >= NUTRITION_REQUIRED_COUNT && done.has('hydrate')) return false
+    const remaining = NUTRITION_CARDS.filter((c) => !done.has(c.id) && c.energyCost <= energyPct)
+    const need = Math.max(0, NUTRITION_REQUIRED_COUNT - done.size)
+    if (need === 0) return !done.has('hydrate') && !remaining.some((c) => c.id === 'hydrate')
+    if (!done.has('hydrate')) {
+      const hydrateOk = remaining.some((c) => c.id === 'hydrate')
+      if (!hydrateOk) return true
+      const others = remaining.filter((c) => c.id !== 'hydrate')
+      return others.length < need - 1
+    }
+    return remaining.length < need
+  }
+
+  if (step === 'step2_3_hygiene') {
+    const need = HYGIENE_ACTIONS.length - hygieneDone.length
+    if (need <= 0) return false
+    const affordable = HYGIENE_ACTIONS.filter((a) => !hygieneDone.includes(a.id) && a.energyCost <= energyPct)
+    return affordable.length < need
+  }
+
+  return false
+}
+
 export function exerciseCosts(ids: ExerciseId[]): { energy: number; waterL: number } {
   return ids.reduce(
     (acc, id) => {

@@ -7,6 +7,7 @@ import {
   BRIDGE_TO_SLEEP,
   HYGIENE_BONUS_CARD,
   computeMission2Scores,
+  isMission2EnergySoftLocked,
   lightingForStep,
   roomAccentForStep,
   type ExerciseId,
@@ -18,6 +19,7 @@ import {
 } from '../../data/mission2Data'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { CapiBridgeDialog } from './CapiBridgeDialog'
+import { EnergyDepletedOverlay } from './EnergyDepletedOverlay'
 import { HabitatInteriorBackground } from './HabitatInteriorBackground'
 import { NightReportModal } from './NightReportModal'
 import { ExerciseStep } from './steps/ExerciseStep'
@@ -101,6 +103,10 @@ export default function Mission2View({
 
   const lighting = lightingForStep(step)
   const room = roomAccentForStep(step)
+
+  const energySoftLocked =
+    !bridge &&
+    isMission2EnergySoftLocked(step, baseEnergy, exercises, nutritionCards, hygieneDone)
 
   useEffect(() => {
     let cancelled = false
@@ -321,6 +327,8 @@ export default function Mission2View({
           onAdvance={() => onComplete(hudStats)}
         />
       )}
+
+      {energySoftLocked && <EnergyDepletedOverlay onExit={onExit} />}
     </div>
   )
 }
