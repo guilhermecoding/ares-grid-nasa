@@ -23,6 +23,8 @@ export function RiskWarningHud({ onContinue }: Props) {
       open={open}
       lines={[...lines]}
       title="Capi"
+      dialogId={`m1-risk-${part}`}
+      onSkip={() => setOpen(false)}
       characterSrc={MEDIA.capi.duvida}
       characterAlt="Capi"
       highlightWords={part === 1 ? RISK_HIGHLIGHT_WORDS : undefined}

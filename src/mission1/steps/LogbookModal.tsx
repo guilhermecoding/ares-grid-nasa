@@ -1,14 +1,14 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { ScrollHintArea } from '../../components/ScrollHintArea'
-import { MISSION1_META } from '../../data/mission1Data'
+import { MISSION1_META, type PanelTestChoice } from '../../data/mission1Data'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
   siteLabel: string
   tilt: number
-  stormChoice: 'save' | 'max' | null
+  panelTest: PanelTestChoice | null
   onDone: () => void
 }
 
@@ -57,7 +57,7 @@ function EmptyBox() {
   )
 }
 
-export function LogbookModal({ siteLabel, tilt, stormChoice, onDone }: Props) {
+export function LogbookModal({ siteLabel, tilt, panelTest, onDone }: Props) {
   const [revealed, setRevealed] = useState(0)
   const [photo, setPhoto] = useState(false)
   const [allDone, setAllDone] = useState(false)
@@ -75,9 +75,12 @@ export function LogbookModal({ siteLabel, tilt, stormChoice, onDone }: Props) {
         detail: `Inclinação ${tilt}°`,
       },
       {
-        id: 'storm',
-        label: 'Tempestade de poeira enfrentada',
-        detail: stormChoice === 'save' ? 'Economizou energia' : 'Manteve potência máxima',
+        id: 'panel',
+        label: 'Condição do painel testada',
+        detail:
+          panelTest === 'dust'
+            ? 'Poeira cobriu as células — eficiência caiu'
+            : 'Limpeza removeu a poeira',
       },
       {
         id: 'power',
@@ -90,7 +93,7 @@ export function LogbookModal({ siteLabel, tilt, stormChoice, onDone }: Props) {
         detail: 'Evento da Missão 1 documentado',
       },
     ],
-    [siteLabel, tilt, stormChoice],
+    [siteLabel, tilt, panelTest],
   )
 
   useEffect(() => {

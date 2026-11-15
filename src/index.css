@@ -342,6 +342,33 @@
       0 3px 0 rgba(0, 0, 0, 0.3);
   }
 
+  .mc-btn.mc-btn-purple {
+    color: #f6f0ff;
+    background: #6d3ad4;
+    text-shadow: 2px 2px 0 #2a1254;
+    box-shadow:
+      inset 0 4px 0 #c4a0ff,
+      inset 0 -5px 0 #3b1d78,
+      inset 5px 0 0 #8b5cf6,
+      inset -5px 0 0 #4c1d95,
+      0 6px 0 #2a1254,
+      0 8px 0 rgba(0, 0, 0, 0.35);
+  }
+
+  .mc-btn.mc-btn-purple:hover:not(:disabled) {
+    background: #7c4ae0;
+  }
+
+  .mc-btn.mc-btn-purple:active:not(:disabled) {
+    box-shadow:
+      inset 0 3px 0 #c4a0ff,
+      inset 0 -3px 0 #3b1d78,
+      inset 4px 0 0 #8b5cf6,
+      inset -4px 0 0 #4c1d95,
+      0 2px 0 #2a1254,
+      0 3px 0 rgba(0, 0, 0, 0.3);
+  }
+
   .crater-tile {
     background:
       radial-gradient(circle at 30% 35%, rgba(90, 61, 40, 0.45) 0 18%, transparent 19%),

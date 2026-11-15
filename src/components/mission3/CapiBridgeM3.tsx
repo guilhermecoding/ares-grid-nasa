@@ -7,10 +7,11 @@ interface Props {
   lines: string[]
   highlightWords?: readonly string[]
   onDone: () => void
+  dialogId?: string
 }
 
 /** Short Capí bridge between Mission 03 stages. */
-export function CapiBridgeM3({ lines, highlightWords, onDone }: Props) {
+export function CapiBridgeM3({ lines, highlightWords, onDone, dialogId }: Props) {
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
 
@@ -19,6 +20,8 @@ export function CapiBridgeM3({ lines, highlightWords, onDone }: Props) {
       open={open}
       lines={[...lines]}
       title="Capi"
+      dialogId={dialogId ?? `capi:${lines[0] ?? ''}`}
+      onSkip={() => setOpen(false)}
       characterSrc={MEDIA.capi.neutral}
       characterAlt="Capi"
       highlightWords={highlightWords ? [...highlightWords] : undefined}

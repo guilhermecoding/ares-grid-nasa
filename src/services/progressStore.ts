@@ -1,4 +1,4 @@
-import type { SeasonId, SiteId } from '../data/mission1Data'
+import type { PanelTestChoice, SeasonId, SiteId } from '../data/mission1Data'
 import type { BackpackId, HelmetId, InsigniaId, SuitColorId } from '../data/openingData'
 import type { BaseStats, ToolId } from '../types/game'
 
@@ -18,7 +18,8 @@ export interface Mission1PanelSave {
   tilt: number
   azimuth: number
   efficiency: number
-  stormChoice: 'save' | 'max' | null
+  /** clean = limpeza, dust = envelhecimento com poeira. Legacy saves used save/max. */
+  panelTest: PanelTestChoice | null
   /** Epoch ms of first successful panel install (starts clean cooldown). */
   firstInstalledAt: number
   /** Epoch ms of last panel clean; null if never cleaned. */
@@ -44,6 +45,8 @@ export interface PlayerProgress {
   baseStats: BaseStats
   /** Last confirmed solar panel configuration (Missão 01). */
   mission1Panel: Mission1PanelSave | null
+  /** Dialog ids the player has already finished, across every mission. */
+  seenDialogIds: string[]
 }
 
 const DEFAULT_PROGRESS: PlayerProgress = {
@@ -63,6 +66,7 @@ const DEFAULT_PROGRESS: PlayerProgress = {
   insignia: 'ares',
   baseStats: { ...DEFAULT_BASE_STATS },
   mission1Panel: null,
+  seenDialogIds: [],
 }
 
 function canUseStorage(): boolean {
@@ -86,12 +90,16 @@ export function loadProgress(): PlayerProgress {
     }
     const parsedPanel = parseMission1Panel(parsed.mission1Panel)
     const mission1Panel = parsedPanel?.panel ?? null
+    const seenDialogIds = Array.isArray(parsed.seenDialogIds)
+      ? parsed.seenDialogIds.filter((id): id is string => typeof id === 'string')
+      : []
     const progress: PlayerProgress = {
       ...DEFAULT_PROGRESS,
       ...parsed,
       unlockedTools: parsed.unlockedTools ?? DEFAULT_PROGRESS.unlockedTools,
       baseStats,
       mission1Panel,
+      seenDialogIds,
     }
     // Persist firstInstalledAt once for legacy panel saves.
     if (parsedPanel?.migrated && mission1Panel) {
@@ -114,18 +122,33 @@ export function updateProgress(patch: Partial<PlayerProgress>): PlayerProgress {
   return next
 }
 
+export function hasSeenDialog(id: string): boolean {
+  return loadProgress().seenDialogIds.includes(id)
+}
+
+export function markDialogSeen(id: string): void {
+  const current = loadProgress()
+  if (current.seenDialogIds.includes(id)) return
+  updateProgress({ seenDialogIds: [...current.seenDialogIds, id] })
+}
+
 function parseMission1Panel(raw: unknown): { panel: Mission1PanelSave; migrated: boolean } | null {
   if (!raw || typeof raw !== 'object') return null
   const p = raw as Partial<Mission1PanelSave>
   const site: SiteId | null = p.site === 'A' || p.site === 'B' || p.site === 'C' ? p.site : null
   const season: SeasonId | null =
-    p.season === 'summer_n' || p.season === 'winter_n' ? p.season : null
+    p.season === 'summer_n' || p.season === 'equinox_n' || p.season === 'winter_n' ? p.season : null
   if (!site || !season) return null
   if (typeof p.tilt !== 'number' || typeof p.azimuth !== 'number' || typeof p.efficiency !== 'number') {
     return null
   }
-  const storm: 'save' | 'max' | null =
-    p.stormChoice === 'save' || p.stormChoice === 'max' ? p.stormChoice : null
+  const rawTest = p.panelTest ?? legacyStormChoice(p)
+  const panelTest: PanelTestChoice | null =
+    rawTest === 'clean' || rawTest === 'save'
+      ? 'clean'
+      : rawTest === 'dust' || rawTest === 'max'
+        ? 'dust'
+        : null
   const hadInstallStamp = typeof p.firstInstalledAt === 'number' && p.firstInstalledAt > 0
   const firstInstalledAt = hadInstallStamp ? p.firstInstalledAt! : Date.now()
   const lastCleanedAt =
@@ -137,10 +160,22 @@ function parseMission1Panel(raw: unknown): { panel: Mission1PanelSave; migrated:
       tilt: p.tilt,
       azimuth: p.azimuth,
       efficiency: p.efficiency,
-      stormChoice: storm,
+      panelTest,
       firstInstalledAt,
       lastCleanedAt,
     },
-    migrated: !hadInstallStamp,
+    migrated: !hadInstallStamp || hadLegacyPanelTest(raw),
   }
+}
+
+function legacyStormChoice(raw: Partial<Mission1PanelSave> & { stormChoice?: unknown }): unknown {
+  return raw.panelTest ?? raw.stormChoice
+}
+
+function hadLegacyPanelTest(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false
+  const legacy = raw as { panelTest?: unknown; stormChoice?: unknown }
+  return (
+    legacy.panelTest == null && (legacy.stormChoice === 'save' || legacy.stormChoice === 'max')
+  )
 }

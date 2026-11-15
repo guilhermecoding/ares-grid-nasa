@@ -25,7 +25,6 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
   const [hintId, setHintId] = useState<string | null>(null)
   const [hintText, setHintText] = useState('')
   const [replayLevel, setReplayLevel] = useState<number | null>(null)
-  const [replayReady, setReplayReady] = useState(false)
   const hintTimer = useRef(0)
 
   useEffect(() => {
@@ -63,7 +62,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
       )}
 
       <svg
-        className="pointer-events-none absolute inset-0 z-[2] h-full w-full opacity-50"
+        className="pointer-events-none absolute inset-0 z-[2] h-full w-full"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden
@@ -75,6 +74,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
           strokeWidth="0.6"
           strokeDasharray="1.8 1.6"
           strokeLinecap="round"
+          opacity="0.5"
         />
       </svg>
 
@@ -109,7 +109,6 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
                     showHint(node.id, node.soonHint)
                     return
                   }
-                  setReplayReady(false)
                   setReplayLevel(node.level)
                   return
                 }
@@ -208,36 +207,23 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
         lines={['Ops, parece que você já passou por aqui.', 'Quer entrar de novo?']}
-        onTypingComplete={() => setReplayReady(true)}
-        onClosed={() => {
-          setReplayLevel(null)
-          setReplayReady(false)
-        }}
+        onClosed={() => setReplayLevel(null)}
         footer={
-          replayReady ? (
-            <div className="flex flex-wrap justify-center gap-2">
-              <McButton
-                className="min-h-12 px-4 font-pixel"
-                onClick={() => {
-                  setReplayReady(false)
-                  setReplayLevel(null)
-                }}
-              >
-                Cancelar
-              </McButton>
-              <McButton
-                className="mc-btn-green min-h-12 px-4 font-pixel font-bold"
-                onClick={() => {
-                  const level = replayLevel
-                  setReplayReady(false)
-                  setReplayLevel(null)
-                  if (level !== null) onEnterMission(level)
-                }}
-              >
-                Quero
-              </McButton>
-            </div>
-          ) : null
+          <div className="flex flex-wrap justify-center gap-2">
+            <McButton className="min-h-12 px-4 font-pixel" onClick={() => setReplayLevel(null)}>
+              Cancelar
+            </McButton>
+            <McButton
+              className="mc-btn-green min-h-12 px-4 font-pixel font-bold"
+              onClick={() => {
+                const level = replayLevel
+                setReplayLevel(null)
+                if (level !== null) onEnterMission(level)
+              }}
+            >
+              Quero
+            </McButton>
+          </div>
         }
       />
     </div>

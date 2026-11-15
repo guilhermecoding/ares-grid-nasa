@@ -9,6 +9,7 @@ interface Props {
   highlightWords?: readonly string[]
   buttonLabel?: string
   onDone: () => void
+  dialogId?: string
 }
 
 /** One short Capi bridge between mission stages. */
@@ -18,6 +19,7 @@ export function CapiBridgeDialog({
   highlightWords,
   buttonLabel = 'Continuar',
   onDone,
+  dialogId,
 }: Props) {
   const [ready, setReady] = useState(false)
   const [boxOpen, setBoxOpen] = useState(true)
@@ -30,6 +32,8 @@ export function CapiBridgeDialog({
       open={boxOpen}
       lines={[...lines]}
       title="Capi"
+      dialogId={dialogId ?? `capi:${lines[0] ?? ''}`}
+      onSkip={() => setBoxOpen(false)}
       characterSrc={MEDIA.capi.neutral}
       characterAlt="Capi"
       highlightWords={highlightWords}

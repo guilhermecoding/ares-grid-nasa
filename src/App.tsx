@@ -1,12 +1,14 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { ConfettiBurst } from './components/ConfettiBurst'
-import { DialogBox } from './components/DialogBox'
 import { MissionGateTransition } from './components/MissionGateTransition'
 import { NasaDataModal } from './components/NasaDataModal'
 import { WorldScreen } from './components/WorldScreen'
 import { applyWeatherBundle, createWorldState } from './engine/worldEngine'
 import { getMissionNode } from './data/missionNodes'
+import { MEDIA } from './constants/mediaAssets'
+import { McButton } from './opening/McButton'
 import { OpeningFlow } from './opening/OpeningFlow'
+import { PixelDialogBox } from './opening/PixelDialogBox'
 import { fetchDonkiBundle } from './services/donkiService'
 import { loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
 import { setMuted, soundEngine, unlockAudio } from './services/soundEngine'
@@ -49,6 +51,8 @@ export default function App() {
   const [nasaOpen, setNasaOpen] = useState(false)
   const [tutorialStep, setTutorialStep] = useState(0)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [tutorialBoxOpen, setTutorialBoxOpen] = useState(true)
+  const [tutorialReady, setTutorialReady] = useState(false)
   const [activeMission, setActiveMission] = useState<number | null>(null)
   const [gate, setGate] = useState<GateState | null>(null)
   const [missionReady, setMissionReady] = useState(false)
@@ -140,6 +144,8 @@ export default function App() {
     setScreen('world')
     if (!p.tutorialDone) {
       setTutorialStep(0)
+      setTutorialReady(false)
+      setTutorialBoxOpen(true)
       setTutorialOpen(true)
     }
   }, [bundle])
@@ -314,18 +320,41 @@ export default function App() {
 
       {celebrate && <ConfettiBurst />}
 
-      <DialogBox
-        open={tutorialOpen}
-        title={TUTORIAL_STEPS[tutorialStep]!.title}
-        body={TUTORIAL_STEPS[tutorialStep]!.body}
-        primaryLabel={tutorialStep < TUTORIAL_STEPS.length - 1 ? 'Próximo' : 'Vamos lá!'}
-        secondaryLabel="Pular"
-        onSecondary={finishTutorial}
-        onPrimary={() => {
-          if (tutorialStep < TUTORIAL_STEPS.length - 1) setTutorialStep((s) => s + 1)
-          else finishTutorial()
-        }}
-      />
+      {tutorialOpen && (
+        <div className="fixed inset-0 z-[80]">
+          <PixelDialogBox
+            key={`map-intro-${tutorialStep}`}
+            open={tutorialBoxOpen}
+            position="center"
+            title="Capi"
+            lines={[TUTORIAL_STEPS[tutorialStep]!.title, TUTORIAL_STEPS[tutorialStep]!.body]}
+            dialogId={`map-intro-${tutorialStep}`}
+            onSkip={() => setTutorialBoxOpen(false)}
+            characterSrc={MEDIA.capi.neutral}
+            characterAlt="Capi"
+            onTypingComplete={() => setTutorialReady(true)}
+            onClosed={() => {
+              if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+                setTutorialReady(false)
+                setTutorialStep((step) => step + 1)
+                setTutorialBoxOpen(true)
+                return
+              }
+              finishTutorial()
+            }}
+            footer={
+              tutorialReady ? (
+                <McButton
+                  className="min-h-12 px-6 font-pixel text-lg font-bold"
+                  onClick={() => setTutorialBoxOpen(false)}
+                >
+                  {tutorialStep < TUTORIAL_STEPS.length - 1 ? 'Próximo' : 'Vamos lá!'}
+                </McButton>
+              ) : null
+            }
+          />
+        </div>
+      )}
     </div>
   )
 }

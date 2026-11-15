@@ -7,7 +7,7 @@ export type Mission1Step =
   | 'risk_warning'
   | 'step1_location'
   | 'step2_solar_calc'
-  | 'step3_storm_test'
+  | 'step3_panel_test'
   | 'step4_logbook'
   | 'step5_transmission'
 
@@ -65,8 +65,46 @@ export const PANEL_CLEAN_ENERGY_GAIN = 10
 export const PANEL_CLEAN_EFFICIENCY_CAP = 98
 
 export function isOutdoorMission1Step(step: Mission1Step): boolean {
-  return step === 'step1_location' || step === 'step2_solar_calc' || step === 'step3_storm_test'
+  return step === 'step1_location' || step === 'step2_solar_calc' || step === 'step3_panel_test'
 }
+
+/** Outcome of the panel-condition test that replaced the dust-storm screen. */
+export type PanelTestChoice = 'clean' | 'dust'
+
+/** Shown efficiency while dust covers the cells (about a 65% drop). */
+export const PANEL_TEST_DUST_EFFICIENCY_FACTOR = 0.35
+/** Energy left in the base after the dusty test. */
+export const PANEL_TEST_DUST_ENERGY_FACTOR = 0.55
+export const PANEL_TEST_DUST_WATER_COST = 6
+export const PANEL_TEST_CLEAN_WATER_COST = 3
+
+export const DUST_DROP_PARTS = [
+  ['Percebeu que a eficiência da placa solar caiu depois da tempestade?', 'Você imagina por quê?'] as const,
+  [
+    'A poeira fina cobre as células do painel.',
+    'Ela bloqueia a luz do Sol, e o painel gera menos eletricidade.',
+  ] as const,
+] as const
+
+export const CLEAN_RESULT_PARTS = [
+  ['Boa limpeza! Sem poeira, mais luz chega às células.'] as const,
+  ['A eficiência sobe. A limpeza gasta um pouco da reserva de água.'] as const,
+] as const
+
+export const PANEL_TEST_OPTIONS = [
+  {
+    id: 'dust' as const,
+    name: 'Envelhecer + poeira',
+    pros: ['Mostra o efeito real da poeira', 'Dá para ver a queda na hora'],
+    cons: ['Eficiência cai cerca de 65%', 'Energia e água diminuem'],
+  },
+  {
+    id: 'clean' as const,
+    name: 'Limpeza',
+    pros: ['Tira a poeira das células', 'Eficiência e energia sobem'],
+    cons: ['Gasta um pouco da reserva de água'],
+  },
+] as const
 
 export type SiteId = 'A' | 'B' | 'C'
 
@@ -105,12 +143,41 @@ export const INSTALL_SITES = [
   },
 ] as const
 
-export type SeasonId = 'summer_n' | 'winter_n'
+export type SeasonId = 'summer_n' | 'equinox_n' | 'winter_n'
 
 export const SEASONS = [
-  { id: 'summer_n' as const, label: 'Verão Norte', sunBoost: 1.12, tip: 'Sol mais alto no céu' },
-  { id: 'winter_n' as const, label: 'Inverno Norte', sunBoost: 0.82, tip: 'Sol mais baixo — menos luz' },
+  { id: 'summer_n' as const, label: 'Verão Norte', sunBoost: 1.12, tip: 'Sol mais alto no céu', idealTilt: 28 },
+  {
+    id: 'equinox_n' as const,
+    label: 'Equinócio',
+    sunBoost: 1,
+    tip: 'Sol a meio caminho — primavera ou outono',
+    idealTilt: 35,
+  },
+  { id: 'winter_n' as const, label: 'Inverno Norte', sunBoost: 0.82, tip: 'Sol mais baixo — menos luz', idealTilt: 42 },
 ] as const
+
+/** Teaching array used only to turn efficiency into watts. Not a NASA measurement. */
+export const DEMO_PANEL_WATTS = 600
+
+export function estimateGenerationWatts(efficiency: number): number {
+  return Math.round((efficiency / 100) * DEMO_PANEL_WATTS)
+}
+
+export const AZIMUTH_POINTS = [
+  { id: 'east', label: 'Leste', azimuth: -90 },
+  { id: 'south', label: 'Sul', azimuth: 0 },
+  { id: 'west', label: 'Oeste', azimuth: 90 },
+  { id: 'north', label: 'Norte', azimuth: 180 },
+] as const
+
+export function azimuthCardinal(azimuth: number): string {
+  const abs = Math.abs(azimuth)
+  if (abs >= 135) return 'Norte'
+  if (azimuth <= -45) return 'Leste'
+  if (azimuth >= 45) return 'Oeste'
+  return 'Sul'
+}
 
 export const MARS24_FORMULA =
   'Z = arccos(sin δ sin φ + cos δ cos φ cos H)   →   h = 90° − Z'
@@ -121,28 +188,25 @@ export const MARS24_KID =
 /** Rough efficiency model for kids UI (not a full Mars24 sim). */
 export function estimatePanelEfficiency(opts: {
   season: SeasonId
-  azimuth: number // -90 east … 0 south … 90 west
+  azimuth: number // -90 leste, 0 sul, 90 oeste, ±180 norte
   tilt: number // 0–60
   site: SiteId
 }): number {
   const season = SEASONS.find((s) => s.id === opts.season)!
   const siteFactor = opts.site === 'B' ? 1 : opts.site === 'A' ? 0.72 : 0.8
   const azFactor = 1 - Math.min(1, Math.abs(opts.azimuth) / 120) * 0.35
-  const idealTilt = opts.season === 'summer_n' ? 28 : 42
+  const idealTilt = SEASONS.find((item) => item.id === opts.season)?.idealTilt ?? 35
   const tiltFactor = 1 - Math.min(1, Math.abs(opts.tilt - idealTilt) / 45) * 0.45
   return Math.round(Math.min(98, Math.max(18, 55 * season.sunBoost * siteFactor * azFactor * tiltFactor)))
 }
-
-export const STORM_ALERT =
-  'Alerta Ambiental: Nuvem de poeira se aproximando! Geração solar caindo 65%.'
 
 export const LOGBOOK_EVENT = 'Instalação e ativação dos painéis solares em Arcadia Planitia'
 
 export const LOGBOOK_ASPECTS = [
   'Local com boa luz o dia todo',
   'Inclinação ajustada com a Capi',
-  'Poeira reduz a geração — economizar energia ajuda',
-  'Baterias guardam energia para a noite',
+  'Poeira cobre as células e a luz não passa',
+  'Limpar o painel devolve parte da geração',
 ] as const
 
 export const TRANSMISSION_LINES = [

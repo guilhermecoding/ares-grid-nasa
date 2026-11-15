@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { hasSeenDialog, markDialogSeen } from '../services/progressStore'
 import { soundEngine } from '../services/soundEngine'
 
 const CHAR_MS = 10
@@ -23,22 +24,36 @@ interface PixelDialogBoxProps {
   lineClassNames?: readonly (string | undefined)[]
   /** Words to paint yellow (case-insensitive) inside typed lines. */
   highlightWords?: readonly string[]
+  /** Phrases to paint with their own color. Only the phrase changes color. */
+  coloredPhrases?: readonly { phrase: string; className: string }[]
   /** Where the TV panel anchors (default: bottom). */
   position?: 'bottom' | 'center'
+  /** Stable id. After this dialog has been finished once, a skip button appears. */
+  dialogId?: string
+  /** Skip a dialog the player already finished. Defaults to revealing the full text. */
+  onSkip?: () => void
 }
 
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-function renderWithHighlights(text: string, words: readonly string[] | undefined): ReactNode {
-  if (!words?.length || !text) return text
-  const pattern = new RegExp(`(${words.map(escapeRegExp).join('|')})`, 'gi')
+function renderWithHighlights(
+  text: string,
+  words: readonly string[] | undefined,
+  phrases: readonly { phrase: string; className: string }[] | undefined,
+): ReactNode {
+  const marks = [
+    ...(phrases ?? []).map((item) => ({ text: item.phrase, className: item.className })),
+    ...(words ?? []).map((word) => ({ text: word, className: 'font-bold text-energy' })),
+  ]
+  if (!marks.length || !text) return text
+  const pattern = new RegExp(`(${marks.map((mark) => escapeRegExp(mark.text)).join('|')})`, 'gi')
   const parts = text.split(pattern)
   return parts.map((part, i) => {
-    const hit = words.some((w) => w.toLowerCase() === part.toLowerCase())
+    const hit = marks.find((mark) => mark.text.toLowerCase() === part.toLowerCase())
     return hit ? (
-      <span key={i} className="font-bold text-energy">
+      <span key={i} className={hit.className}>
         {part}
       </span>
     ) : (
@@ -70,7 +85,10 @@ export function PixelDialogBox({
   bodyClassName = 'font-pixel',
   lineClassNames,
   highlightWords,
+  coloredPhrases,
   position = 'bottom',
+  dialogId,
+  onSkip,
 }: PixelDialogBoxProps) {
   const [entered, setEntered] = useState(false)
   const [lineIdx, setLineIdx] = useState(0)
@@ -78,28 +96,46 @@ export function PixelDialogBox({
   const [typingDone, setTypingDone] = useState(false)
   const [visible, setVisible] = useState(open)
   const [imgFailed, setImgFailed] = useState(false)
+  const [skipGate, setSkipGate] = useState<{
+    open: boolean
+    dialogId: string | undefined
+    canSkip: boolean
+  }>({ open: false, dialogId: undefined, canSkip: false })
+  if (open !== skipGate.open || dialogId !== skipGate.dialogId) {
+    setSkipGate({
+      open,
+      dialogId,
+      canSkip: open && Boolean(dialogId && hasSeenDialog(dialogId)),
+    })
+  }
+  const canSkip = skipGate.canSkip
   const wasOpenRef = useRef(open)
   const onTypingCompleteRef = useRef(onTypingComplete)
-  onTypingCompleteRef.current = onTypingComplete
-
-  useEffect(() => {
-    if (open) {
-      setVisible(true)
-      if (!wasOpenRef.current) soundEngine.dialogOpen()
-    } else if (wasOpenRef.current && visible) {
-      soundEngine.dialogClose()
-    }
-    wasOpenRef.current = open
-  }, [open, visible])
-
   const linesKey = lines.join('\0')
+  const [lineSession, setLineSession] = useState({ open, entered, linesKey })
 
-  useEffect(() => {
-    if (!open || !entered) return
+  if (open && !visible) setVisible(true)
+
+  if (
+    entered &&
+    open &&
+    (lineSession.open !== open || lineSession.entered !== entered || lineSession.linesKey !== linesKey)
+  ) {
+    setLineSession({ open, entered, linesKey })
     setLineIdx(0)
     setCharIdx(0)
     setTypingDone(false)
-  }, [open, entered, linesKey])
+  }
+
+  useEffect(() => {
+    onTypingCompleteRef.current = onTypingComplete
+  }, [onTypingComplete])
+
+  useEffect(() => {
+    if (open && !wasOpenRef.current) soundEngine.dialogOpen()
+    else if (!open && wasOpenRef.current) soundEngine.dialogClose()
+    wasOpenRef.current = open
+  }, [open])
 
   useEffect(() => {
     if (!entered || !open || typingDone || lines.length === 0) return
@@ -118,6 +154,7 @@ export function PixelDialogBox({
     if (lineIdx >= lines.length - 1) {
       const id = window.setTimeout(() => {
         setTypingDone(true)
+        if (dialogId) markDialogSeen(dialogId)
         onTypingCompleteRef.current?.()
       }, LINE_PAUSE_MS)
       return () => clearTimeout(id)
@@ -128,7 +165,7 @@ export function PixelDialogBox({
       setCharIdx(0)
     }, LINE_PAUSE_MS)
     return () => clearTimeout(id)
-  }, [entered, open, typingDone, lines, lineIdx, charIdx])
+  }, [entered, open, typingDone, lines, lineIdx, charIdx, dialogId])
 
   const skipTyping = () => {
     if (!entered || typingDone || lines.length === 0) return
@@ -136,7 +173,14 @@ export function PixelDialogBox({
     setLineIdx(last)
     setCharIdx(lines[last]?.length ?? 0)
     setTypingDone(true)
+    if (dialogId) markDialogSeen(dialogId)
     onTypingCompleteRef.current?.()
+  }
+
+  const skipDialog = (event: { stopPropagation: () => void }) => {
+    event.stopPropagation()
+    if (onSkip) onSkip()
+    else skipTyping()
   }
 
   if (!visible) return null
@@ -235,10 +279,21 @@ export function PixelDialogBox({
                     <CornerRivet className="bottom-1.5 left-1.5 border-b-2 border-l-2" />
                     <CornerRivet className="right-1.5 bottom-1.5 border-r-2 border-b-2" />
 
-                    {title ? (
-                      <p className="mb-1.5 border-b border-[#f4fff4]/25 pb-1 font-pixel text-[10px] tracking-widest text-[#f4fff4]/70 uppercase sm:text-xs">
-                        {title}
-                      </p>
+                    {title || canSkip ? (
+                      <div className="mb-1.5 flex items-center justify-between gap-2 border-b border-[#f4fff4]/25 pb-1">
+                        <p className="font-pixel text-[10px] tracking-widest text-[#f4fff4]/70 uppercase sm:text-xs">
+                          {title}
+                        </p>
+                        {canSkip ? (
+                          <button
+                            type="button"
+                            className="shrink-0 font-pixel text-[10px] text-cyan-hud underline sm:text-xs"
+                            onClick={skipDialog}
+                          >
+                            Pular
+                          </button>
+                        ) : null}
+                      </div>
                     ) : null}
 
                     <div
@@ -255,7 +310,7 @@ export function PixelDialogBox({
                             key={i}
                             className={`${i === 0 ? '' : 'mt-1 opacity-95'}${lineClass ? ` ${lineClass}` : ''}`}
                           >
-                            {renderWithHighlights(text, highlightWords)}
+                            {renderWithHighlights(text, highlightWords, coloredPhrases)}
                             {isCurrent && <span className="ml-0.5 inline-block w-2 animate-pulse bg-[#f4fff4]">▌</span>}
                           </p>
                         )

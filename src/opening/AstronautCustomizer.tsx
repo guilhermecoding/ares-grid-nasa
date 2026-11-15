@@ -127,6 +127,7 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
       <div className="relative h-full w-full overflow-hidden">
         <LaunchSpaceCanvas warp={0.35} hologramActive paused />
         <CapiDialog
+          dialogId="opening-astronaut"
           lines={[confirmLine]}
           confirmMode
           characterSrc={MEDIA.capi.excited2}

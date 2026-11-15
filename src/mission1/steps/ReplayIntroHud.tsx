@@ -104,6 +104,8 @@ export function ReplayIntroHud({
         open={open}
         lines={[...lines]}
         title="Capi"
+        dialogId={`m1-replay-${part}`}
+        onSkip={() => setOpen(false)}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
         highlightWords={part === 1 ? REPLAY_INTRO_HIGHLIGHT_WORDS : undefined}

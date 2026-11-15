@@ -48,13 +48,18 @@ export function LandingScene({ onStartMission }: LandingSceneProps) {
         </div>
 
         {hudDone && !capiDone && (
-          <CapiDialog lines={CAPI_LANDING_LINES} onComplete={() => setCapiDone(true)} continueLabel="Continuar" />
+          <CapiDialog
+            dialogId="opening-landing"
+            lines={CAPI_LANDING_LINES}
+            onComplete={() => setCapiDone(true)}
+            continueLabel="Continuar"
+          />
         )}
 
         {capiDone && (
           <div className="absolute inset-x-0 bottom-6 z-30 flex justify-center px-4">
             <McButton className="min-h-14 w-full max-w-md px-4 font-pixel text-lg font-bold sm:text-xl" onClick={onStartMission}>
-              INICIAR MISSÃO 01: ENERGIA SOLAR
+              COMEÇAR MISSÕES
             </McButton>
           </div>
         )}

@@ -293,6 +293,7 @@ export default function Mission2View({
         <CapiBridgeDialog
           key="bridge-nutrition"
           open
+          dialogId="m2-bridge-nutrition"
           lines={BRIDGE_TO_NUTRITION}
           highlightWords={['alimentar']}
           onDone={() => {
@@ -305,6 +306,7 @@ export default function Mission2View({
         <CapiBridgeDialog
           key="bridge-hygiene"
           open
+          dialogId="m2-bridge-hygiene"
           lines={BRIDGE_TO_HYGIENE}
           highlightWords={['higiene']}
           onDone={() => {
@@ -317,6 +319,7 @@ export default function Mission2View({
         <CapiBridgeDialog
           key="bridge-sleep"
           open
+          dialogId="m2-bridge-sleep"
           lines={BRIDGE_TO_SLEEP}
           highlightWords={['descanse']}
           onDone={() => {

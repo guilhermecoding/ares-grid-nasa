@@ -34,6 +34,8 @@ export function IntroHud({ onContinue }: Props) {
         open={open}
         lines={[...lines]}
         title="Capi"
+        dialogId={`m1-intro-${part}`}
+        onSkip={() => setOpen(false)}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
         highlightWords={part === 1 ? INTRO_HIGHLIGHT_WORDS : undefined}

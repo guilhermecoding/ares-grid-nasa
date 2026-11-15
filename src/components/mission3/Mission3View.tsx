@@ -221,6 +221,7 @@ export default function Mission3View({
       {bridge && (
         <CapiBridgeM3
           key={bridge.next}
+          dialogId={`m3-bridge-${bridge.next}`}
           lines={bridge.lines}
           onDone={() => {
             const next = bridge.next

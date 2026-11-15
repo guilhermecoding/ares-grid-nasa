@@ -9,6 +9,9 @@ import capiRef from '../assets/image/capi/capi-ref.jpeg'
 import pointA from '../assets/image/mission1/point-a.svg'
 import pointB from '../assets/image/mission1/point-b.svg'
 import pointC from '../assets/image/mission1/point-c.svg'
+import siteSlope from '../assets/image/mission1/site-encosta.jpg'
+import sitePlain from '../assets/image/mission1/site-planicie.jpg'
+import siteVale from '../assets/image/mission1/site-vale.jpg'
 import solarPanel from '../assets/image/mission1/solar-panel.svg'
 
 export const MEDIA = {
@@ -36,6 +39,11 @@ export const MEDIA = {
     pointB,
     pointC,
     panel: solarPanel,
+    sites: {
+      A: siteVale,
+      B: sitePlain,
+      C: siteSlope,
+    },
   },
   /** Mission 02 sprites — public paths with SVG/icon UI fallbacks when missing. */
   mission2: {

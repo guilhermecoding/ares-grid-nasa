@@ -31,6 +31,8 @@ export function IntroStep({ onContinue }: Props) {
         open={open}
         lines={[...lines]}
         title="Capi"
+        dialogId={`m2-intro-${part}`}
+        onSkip={() => setOpen(false)}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
         highlightWords={INTRO_HIGHLIGHT_WORDS_M2}

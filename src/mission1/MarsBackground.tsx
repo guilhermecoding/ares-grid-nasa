@@ -26,22 +26,35 @@ export function MarsBackground({
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
-  const isSummer = season === 'summer_n'
+  const seasonMix = season === 'summer_n' ? 0 : season === 'equinox_n' ? 0.5 : 1
   const sunX = 20 + (hour / 24) * 60
-  const sunY = isSummer ? 14 + Math.abs(hour - 12) * 1.0 : 30 + Math.abs(hour - 12) * 1.7
-  const sunScale = isSummer ? 1.15 : 0.82
-  const sunOpacity = storm ? 0.35 : isSummer ? 0.98 : 0.72
-  const sunGlow = isSummer
-    ? '0 0 52px rgba(255,220,120,0.7)'
-    : '0 0 28px rgba(255,180,90,0.4)'
+  const sunY =
+    (14 + Math.abs(hour - 12) * 1.0) * (1 - seasonMix) +
+    (30 + Math.abs(hour - 12) * 1.7) * seasonMix
+  const sunScale = 1.15 * (1 - seasonMix) + 0.82 * seasonMix
+  const sunOpacity = storm ? 0.35 : 0.98 * (1 - seasonMix) + 0.72 * seasonMix
+  const sunGlow =
+    seasonMix < 0.5
+      ? '0 0 52px rgba(255,220,120,0.7)'
+      : seasonMix === 0.5
+        ? '0 0 40px rgba(255,200,100,0.55)'
+        : '0 0 28px rgba(255,180,90,0.4)'
   const skyTop = storm
     ? '#5a4030'
     : hour < 7 || hour > 19
       ? '#3a2040'
-      : isSummer
+      : seasonMix === 0
         ? '#d48850'
-        : '#a86840'
-  const skyBot = storm ? '#8a5a38' : isSummer ? '#e8a878' : '#c88858'
+        : seasonMix === 0.5
+          ? '#be7848'
+          : '#a86840'
+  const skyBot = storm
+    ? '#8a5a38'
+    : seasonMix === 0
+      ? '#e8a878'
+      : seasonMix === 0.5
+        ? '#d89868'
+        : '#c88858'
 
   const motes = useMemo(
     () =>

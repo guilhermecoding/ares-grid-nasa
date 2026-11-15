@@ -10,6 +10,8 @@ interface CapiDialogProps {
   confirmMode?: boolean
   continueLabel?: string
   characterSrc?: string
+  /** Stable id prefix. Each line becomes `{dialogId}-{index}`. */
+  dialogId?: string
 }
 
 /** Capi speech popup — thin wrapper over the shared PixelDialogBox pattern. */
@@ -19,6 +21,7 @@ export function CapiDialog({
   confirmMode = false,
   continueLabel = 'Continuar',
   characterSrc = MEDIA.capi.neutral,
+  dialogId,
 }: CapiDialogProps) {
   const [open, setOpen] = useState(true)
   const [idx, setIdx] = useState(0)
@@ -39,9 +42,12 @@ export function CapiDialog({
 
   return (
     <PixelDialogBox
+      key={dialogId ? `${dialogId}-${idx}` : line}
       open={open}
       lines={pageLines}
       title="Capi"
+      dialogId={dialogId ? `${dialogId}-${idx}` : undefined}
+      onSkip={dialogId ? advance : undefined}
       characterSrc={characterSrc}
       characterAlt="Capi"
       onTypingComplete={() => setReady(true)}
