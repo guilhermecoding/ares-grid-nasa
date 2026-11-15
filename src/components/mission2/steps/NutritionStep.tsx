@@ -123,23 +123,30 @@ export function NutritionStep({
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
       <div className="pointer-events-none h-[6.5rem] shrink-0 sm:h-28" />
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-24">
-        <SwipeDeck
-          title="Etapa — Alimentação"
-          subtitle={
-            <span className="inline-flex items-center gap-2">
-              <img src={MEDIA.mission2.tray} alt="" className="size-8 object-contain" draggable={false} />
-              <span>
-                Complete <strong>3 cards</strong> (inclua Hidratação). <SciTermM2 term="Metabolismo" /> e{' '}
-                <SciTermM2 term="Hidratação" />. Feitos: {completedIds.length}/{NUTRITION_REQUIRED_COUNT}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
+        <div className="flex min-h-full flex-col justify-center py-3">
+          <SwipeDeck
+            title="Etapa — Alimentação"
+            subtitle={
+              <span className="flex items-start gap-2">
+                <img
+                  src={MEDIA.mission2.tray}
+                  alt=""
+                  className="mt-0.5 size-7 shrink-0 object-contain"
+                  draggable={false}
+                />
+                <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+                  Complete <strong>3 cards</strong> (inclua Hidratação). <SciTermM2 term="Metabolismo" /> e{' '}
+                  <SciTermM2 term="Hidratação" />. Feitos: {completedIds.length}/{NUTRITION_REQUIRED_COUNT}
+                </span>
               </span>
-            </span>
-          }
-          cards={deckCards}
-          canAccept={canAccept}
-          onAccept={handleAccept}
-          emptyMessage="Refeição completa — continue."
-        />
+            }
+            cards={deckCards}
+            canAccept={canAccept}
+            onAccept={handleAccept}
+            emptyMessage="Refeição completa — continue."
+          />
+        </div>
       </div>
 
       <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo da refeição" />

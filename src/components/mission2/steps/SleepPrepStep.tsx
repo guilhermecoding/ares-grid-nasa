@@ -33,9 +33,12 @@ export function SleepPrepStep({ exerciseDone, nutritionDone, hygieneDone, onSlee
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
       <div className="pointer-events-none h-[7.5rem] shrink-0 sm:h-32" />
 
-      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col justify-center px-3 pb-24 sm:px-4">
-        <h2 className="font-pixel text-sm text-cyan-hud sm:text-base">Etapa — Sono</h2>
-        <p className="mt-1 font-pixel text-[10px] leading-snug text-void-200 sm:text-xs">
+      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-3 pb-24 sm:px-4">
+        <div className="flex min-h-full flex-col justify-center py-3">
+        <h2 className="font-pixel text-sm leading-relaxed text-cyan-hud [overflow-wrap:anywhere] sm:text-base">
+          Etapa — Sono
+        </h2>
+        <p className="mt-1 font-pixel text-[11px] leading-relaxed text-void-100 [overflow-wrap:anywhere] sm:text-xs">
           Checklist do dia. Sensores de <SciTermM2 term="Actigrafia" /> medem o descanso.
         </p>
 
@@ -81,6 +84,7 @@ export function SleepPrepStep({ exerciseDone, nutritionDone, hygieneDone, onSlee
             ? 'Tudo certo, Comandante! Toque no card para dormir.'
             : 'Ainda falta algo no checklist.'}
         </motion.p>
+        </div>
       </div>
 
       <div className="absolute inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-end px-3 sm:px-4">

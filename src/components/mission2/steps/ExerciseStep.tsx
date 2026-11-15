@@ -85,20 +85,22 @@ export function ExerciseStep({
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
       <div className="pointer-events-none h-[6.5rem] shrink-0 sm:h-28" />
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-24">
-        <SwipeDeck
-          title="Etapa — Exercícios"
-          subtitle={
-            <>
-              Recarregue a saúde com <strong>2 exercícios</strong>. Termo:{' '}
-              <SciTermM2 term="Microgravidade" />. Feitos: {completedIds.length}/{EXERCISE_REQUIRED_COUNT}
-            </>
-          }
-          cards={deckCards}
-          canAccept={canAccept}
-          onAccept={handleAccept}
-          emptyMessage="2 exercícios feitos — continue."
-        />
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
+        <div className="flex min-h-full flex-col justify-center py-3">
+          <SwipeDeck
+            title="Etapa — Exercícios"
+            subtitle={
+              <>
+                Recarregue a saúde com <strong>2 exercícios</strong>. Termo:{' '}
+                <SciTermM2 term="Microgravidade" />. Feitos: {completedIds.length}/{EXERCISE_REQUIRED_COUNT}
+              </>
+            }
+            cards={deckCards}
+            canAccept={canAccept}
+            onAccept={handleAccept}
+            emptyMessage="2 exercícios feitos — continue."
+          />
+        </div>
       </div>
 
       <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo dos exercícios" />

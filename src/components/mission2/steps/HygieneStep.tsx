@@ -133,25 +133,32 @@ export function HygieneStep({
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
       <div className="pointer-events-none h-[6.5rem] shrink-0 sm:h-28" />
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-24">
-        <SwipeDeck
-          title="Etapa — Higiene"
-          subtitle={
-            <span className="inline-flex items-center gap-2">
-              <img src={MEDIA.mission2.hygiene} alt="" className="size-8 object-contain" draggable={false} />
-              <span>
-                Reduza <SciTermM2 term="Contaminação" />. Complete as 3 ações (4º card é bônus). Risco:{' '}
-                <strong className={contaminationRisk === 0 ? 'text-[#4ade80]' : 'text-danger'}>
-                  {contaminationRisk}%
-                </strong>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
+        <div className="flex min-h-full flex-col justify-center py-3">
+          <SwipeDeck
+            title="Etapa — Higiene"
+            subtitle={
+              <span className="flex items-start gap-2">
+                <img
+                  src={MEDIA.mission2.hygiene}
+                  alt=""
+                  className="mt-0.5 size-7 shrink-0 object-contain"
+                  draggable={false}
+                />
+                <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+                  Reduza <SciTermM2 term="Contaminação" />. Complete as 3 ações (4º card é bônus). Risco:{' '}
+                  <strong className={contaminationRisk === 0 ? 'text-[#4ade80]' : 'text-danger'}>
+                    {contaminationRisk}%
+                  </strong>
+                </span>
               </span>
-            </span>
-          }
-          cards={deckCards}
-          canAccept={canAccept}
-          onAccept={handleAccept}
-          emptyMessage={requiredDone ? 'Higiene ok — continue (bônus opcional).' : 'Higiene completa — continue.'}
-        />
+            }
+            cards={deckCards}
+            canAccept={canAccept}
+            onAccept={handleAccept}
+            emptyMessage={requiredDone ? 'Higiene ok — continue (bônus opcional).' : 'Higiene completa — continue.'}
+          />
+        </div>
       </div>
 
       <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo da higiene" />

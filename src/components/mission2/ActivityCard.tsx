@@ -256,10 +256,16 @@ export function SwipeDeck({
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-col px-3 sm:px-4">
-      <h2 className="shrink-0 font-pixel text-sm text-cyan-hud sm:text-base">{title}</h2>
-      {subtitle ? (
-        <div className="mt-0.5 shrink-0 font-pixel text-[10px] leading-snug text-void-200 sm:text-xs">{subtitle}</div>
-      ) : null}
+      <div className="w-full shrink-0 overflow-visible rounded-md border border-cyan-hud/40 bg-[#0a1628]/92 px-3 py-2 shadow-[0_4px_14px_rgba(0,0,0,0.35)]">
+        <h2 className="font-pixel text-sm leading-relaxed text-cyan-hud [overflow-wrap:anywhere] sm:text-base">
+          {title}
+        </h2>
+        {subtitle ? (
+          <div className="mt-1 font-pixel text-[11px] leading-relaxed text-void-100 [overflow-wrap:anywhere] sm:text-xs">
+            {subtitle}
+          </div>
+        ) : null}
+      </div>
 
       <div className="relative mx-auto mt-2 h-[min(38dvh,15.5rem)] w-[min(72vw,11.5rem)] sm:h-[min(40dvh,16.5rem)] sm:w-[min(70vw,12.5rem)]">
         {stack.length === 0 ? (
