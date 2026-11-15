@@ -4,7 +4,8 @@
 @custom-variant portrait (@media (orientation: portrait));
 
 @theme {
-  --font-pixel: 'Pixelify Sans', 'Nunito', system-ui, sans-serif;
+  /* Silkscreen: pixel look with clearer digits than Pixelify Sans */
+  --font-pixel: 'Silkscreen', 'Nunito', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
 
   --color-void-950: #07040f;

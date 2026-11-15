@@ -21,7 +21,7 @@ function PixelPip({
   path: string
 }) {
   return (
-    <svg viewBox="0 0 16 16" className="size-4 sm:size-[1.15rem]" aria-hidden>
+    <svg viewBox="0 0 16 16" className="size-4 sm:size-[1.15rem]" aria-hidden style={{ imageRendering: 'pixelated' }}>
       <path d={path} fill="none" stroke="#1a1028" strokeWidth="1.45" strokeLinejoin="round" />
       <path
         d={path}
@@ -67,11 +67,19 @@ function PipRow({
   )
 }
 
-export function ResourcePips({ stats }: { stats: BaseStats }) {
+interface Props {
+  stats: BaseStats
+  className?: string
+}
+
+/** Energy / life / shield — always one horizontal strip of pixel icons. */
+export function ResourcePips({ stats, className = '' }: Props) {
   return (
-    <div className="flex flex-col gap-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
+    <div
+      className={`flex flex-row flex-nowrap items-center gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] sm:gap-3 ${className}`}
+    >
       <PipRow label="Energia" value={stats.energy} color="var(--color-energy)" path={BOLT} />
-      <PipRow label="Base" value={stats.lifeSupport} color="var(--color-life)" path={LEAF} />
+      <PipRow label="Vida" value={stats.lifeSupport} color="var(--color-life)" path={LEAF} />
       <PipRow label="Escudo" value={stats.shield} color="var(--color-shield)" path={SHIELD} />
     </div>
   )

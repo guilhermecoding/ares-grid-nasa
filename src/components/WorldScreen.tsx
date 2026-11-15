@@ -3,6 +3,7 @@ import { updateProgress } from '../services/progressStore'
 import type { WorldState } from '../types/game'
 import { FloatingControls } from './FloatingControls'
 import { MarsMap } from './MarsMap'
+import { StatusIndicators } from './StatusIndicators'
 
 interface Props {
   state: WorldState
@@ -34,7 +35,9 @@ export function WorldScreen({
     <div className="relative h-full min-h-0 overflow-hidden">
       <MarsMap state={state} onEnterMission={onEnterMission} />
 
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3 sm:pt-4">
+      <StatusIndicators stats={state.stats} placement="world" />
+
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3 pl-[min(52vw,14rem)] pr-3 sm:px-4 sm:pt-4 sm:pl-[15rem]">
         <h1 className="rounded border border-cyan-hud/40 bg-[#0a1628]/88 px-3 py-2 text-center font-pixel text-sm tracking-wide text-cyan-hud shadow-[0_0_18px_rgba(94,231,255,0.25)] sm:px-5 sm:text-lg md:text-xl">
           Missões em Arcadia Planitia
         </h1>

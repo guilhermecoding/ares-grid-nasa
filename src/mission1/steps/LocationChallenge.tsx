@@ -31,7 +31,7 @@ function placePanel(
   const pad = 10
   const safeTop = 56
   const safeBottom = 12
-  const safeRight = 72 // leave room for "Sair"
+  const safeRight = 220 // leave room for status pips + exit
   const gap = 12
 
   const ax = anchor.left - map.left + anchor.width / 2
@@ -157,7 +157,7 @@ export function LocationChallenge({ onConfirm }: Props) {
 
   return (
     <div className={`relative flex h-full min-h-0 flex-col ${capiOpen ? 'z-[60]' : 'z-10'}`}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-40 px-3 pt-3 pr-20 sm:px-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-40 px-3 pt-3 pr-[13.5rem] sm:px-4 sm:pr-[15rem]">
         <p className="font-pixel text-sm text-[#f4fff4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] sm:text-base">
           Desafio 1.1 — Escolha o local dos painéis
         </p>

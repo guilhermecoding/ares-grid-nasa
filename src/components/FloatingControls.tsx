@@ -67,9 +67,13 @@ export function FloatingControls({
   const pad = 'size-12'
   const action = 'min-h-12 px-3'
 
+  const utilityCluster = mapMode
+    ? 'pointer-events-none absolute right-2 bottom-[max(1rem,env(safe-area-inset-bottom))] z-30 flex gap-1.5 sm:right-3'
+    : 'pointer-events-none absolute left-2 top-2 z-30 flex gap-1.5 sm:left-3 sm:top-3'
+
   return (
     <>
-      <div className="pointer-events-none absolute left-2 top-2 z-30 flex gap-1.5 sm:left-3 sm:top-3">
+      <div className={utilityCluster}>
         <button
           type="button"
           onClick={onNasa}
