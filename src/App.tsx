@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useState } from 'react'
 import { DialogBox } from './components/DialogBox'
+import { MissionGateTransition } from './components/MissionGateTransition'
 import { NasaDataModal } from './components/NasaDataModal'
 import { WorldScreen } from './components/WorldScreen'
-import { applyWeatherBundle, createWorldState, interact, moveRover, sleep } from './engine/worldEngine'
+import { applyWeatherBundle, createWorldState } from './engine/worldEngine'
+import { getMissionNode } from './data/missionNodes'
 import { OpeningFlow } from './opening/OpeningFlow'
 import { fetchDonkiBundle } from './services/donkiService'
 import { loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
@@ -10,18 +12,20 @@ import { setMuted, soundEngine, unlockAudio } from './services/soundEngine'
 import type { DonkiBundle } from './types/nasa'
 import type { ScreenId, WorldState } from './types/game'
 
+const Mission01Screen = lazy(() => import('./mission1/Mission01Screen'))
+
 const TUTORIAL_STEPS = [
   {
-    title: 'Oi! Eu sou seu robô',
-    body: 'Esta é Arcadia Planitia — uma planície de Marte com gelo escondido. Vamos cuidar da base juntos!',
+    title: 'Missões em Arcadia',
+    body: 'Este é o mapa de missões! Toque na ilha liberada para começar a aventura científica.',
   },
   {
-    title: 'Andar e interagir',
-    body: 'Use as setas (ou toque numa casa vizinha) para andar. Chegue perto de um módulo e aperte Interagir.',
+    title: 'Ilhas e cadeados',
+    body: 'Ilhas com cadeado ainda estão bloqueadas. Complete a missão atual para avançar!',
   },
   {
-    title: 'Energia e dormir',
-    body: 'Trabalhar gasta energia. Quando cansar, volte para a casinha 🏠 e aperte Dormir para o próximo Sol.',
+    title: 'Missão 1 — Energia',
+    body: 'Sua primeira missão: instalar painéis solares com a ajuda da Capi. Boa exploração!',
   },
 ]
 
@@ -33,8 +37,8 @@ export default function App() {
   const [nasaOpen, setNasaOpen] = useState(false)
   const [tutorialStep, setTutorialStep] = useState(0)
   const [tutorialOpen, setTutorialOpen] = useState(false)
-  const [levelUpOpen, setLevelUpOpen] = useState(false)
-  const [levelUpText, setLevelUpText] = useState('')
+  const [activeMission, setActiveMission] = useState<number | null>(null)
+  const [gate, setGate] = useState<{ missionId: number; title: string } | null>(null)
   const [muted, setMutedState] = useState(() => {
     setMuted(progress.muted)
     return progress.muted
@@ -70,103 +74,35 @@ export default function App() {
     }
   }, [bundle])
 
-  // Keyboard controls
-  useEffect(() => {
-    if (screen !== 'world' || !world || tutorialOpen || levelUpOpen) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setWorld((w) => (w ? moveRover(w, 0, -1) : w))
-        soundEngine.step()
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setWorld((w) => (w ? moveRover(w, 0, 1) : w))
-        soundEngine.step()
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault()
-        setWorld((w) => (w ? moveRover(w, -1, 0) : w))
-        soundEngine.step()
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault()
-        setWorld((w) => (w ? moveRover(w, 1, 0) : w))
-        soundEngine.step()
-      } else if (e.key === ' ' || e.key.toLowerCase() === 'e') {
-        e.preventDefault()
-        setWorld((w) => {
-          if (!w) return w
-          const next = interact(w)
-          if (next.justLeveledUp) {
-            soundEngine.success()
-            setLevelUpText(next.levelUpTitle ?? 'Nível novo!')
-            setLevelUpOpen(true)
-            syncProgressFromWorld(next)
-          } else {
-            soundEngine.click()
-          }
-          return next
-        })
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [screen, world, tutorialOpen, levelUpOpen, syncProgressFromWorld])
-
-  const handleMove = (dx: number, dy: number) => {
-    if (!world) return
-    soundEngine.step()
-    setWorld(moveRover(world, dx, dy))
+  const handleEnterMission = (level: number) => {
+    const node = getMissionNode(level)
+    setGate({ missionId: level, title: node.gateTitle })
   }
 
-  const handleInteract = () => {
-    if (!world) return
-    const next = interact(world)
-    if (next.justLeveledUp) {
+  const handleGateComplete = () => {
+    if (!gate) return
+    setActiveMission(gate.missionId)
+    setGate(null)
+    setScreen('mission')
+  }
+
+  const leaveMission = (completed: boolean) => {
+    if (completed && world) {
+      const nextLevel = Math.max(world.level, 2)
+      const nextXp = world.xp + 40
+      const next = { ...world, level: nextLevel, xp: nextXp, message: 'Missão 1 concluída! Nova ilha no mapa.' }
+      setWorld(next)
+      setProgress(
+        updateProgress({
+          level: nextLevel,
+          xp: nextXp,
+          unlockedTools: next.unlockedTools,
+        }),
+      )
       soundEngine.success()
-      setLevelUpText(next.levelUpTitle ?? 'Nível novo!')
-      setLevelUpOpen(true)
-      syncProgressFromWorld(next)
-    } else {
-      soundEngine.harvest()
     }
-    setWorld(next)
-  }
-
-  const handleSleep = async () => {
-    if (!world) return
-    soundEngine.telemetry()
-    let b = bundle
-    if (!b) {
-      b = await fetchDonkiBundle()
-      setBundle(b)
-    }
-    const next = sleep(world, b)
-    setWorld(next)
-    setProgress(
-      updateProgress({
-        level: next.level,
-        xp: next.xp,
-        unlockedTools: next.unlockedTools,
-        solsPlayed: loadProgress().solsPlayed + 1,
-      }),
-    )
-    if (next.justLeveledUp) {
-      soundEngine.success()
-      setLevelUpText(next.levelUpTitle ?? 'Nível novo!')
-      setLevelUpOpen(true)
-    }
-  }
-
-  const handleCellTap = (x: number, y: number) => {
-    if (!world) return
-    const dx = x - world.rover.x
-    const dy = y - world.rover.y
-    if (Math.abs(dx) + Math.abs(dy) === 1) {
-      handleMove(dx, dy)
-    } else if (dx === 0 && dy === 0) {
-      handleInteract()
-    } else {
-      setWorld({ ...world, message: 'Toque numa casa vizinha para andar até lá.' })
-    }
+    setActiveMission(null)
+    setScreen('world')
   }
 
   const finishTutorial = () => {
@@ -202,10 +138,7 @@ export default function App() {
           muted={muted}
           showControlHints={!progress.controlsHintSeen && !tutorialOpen}
           onControlHintsDone={() => setProgress(updateProgress({ controlsHintSeen: true }))}
-          onMove={handleMove}
-          onInteract={handleInteract}
-          onSleep={() => void handleSleep()}
-          onCellTap={handleCellTap}
+          onEnterMission={handleEnterMission}
           onToggleMute={() => {
             const next = !muted
             setMuted(next)
@@ -221,6 +154,25 @@ export default function App() {
         />
       )}
 
+      {screen === 'mission' && activeMission === 1 && (
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center bg-void-950 font-pixel text-cyan-hud">
+              Carregando missão…
+            </div>
+          }
+        >
+          <Mission01Screen onComplete={() => leaveMission(true)} onExit={() => leaveMission(false)} />
+        </Suspense>
+      )}
+
+      <MissionGateTransition
+        open={!!gate}
+        missionNumber={gate?.missionId ?? 1}
+        title={gate?.title ?? ''}
+        onComplete={handleGateComplete}
+      />
+
       <NasaDataModal open={nasaOpen} weather={world?.weather ?? null} onClose={() => setNasaOpen(false)} />
 
       <DialogBox
@@ -234,14 +186,6 @@ export default function App() {
           if (tutorialStep < TUTORIAL_STEPS.length - 1) setTutorialStep((s) => s + 1)
           else finishTutorial()
         }}
-      />
-
-      <DialogBox
-        open={levelUpOpen}
-        title="Subiu de nível!"
-        body={levelUpText}
-        primaryLabel="Continuar"
-        onPrimary={() => setLevelUpOpen(false)}
       />
     </div>
   )

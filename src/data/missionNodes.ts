@@ -2,11 +2,21 @@ export interface MissionNode {
   id: string
   level: number
   title: string
+  /** Full plaque title for gate transition */
+  gateTitle: string
   lockedHint: string
+  soonHint: string
   leftPct: number
   topPct: number
-  /** Canonical 4×4 tile when the island is tapped */
+  /** Canonical 4×4 tile when the island is tapped (legacy grid) */
   anchor: { x: number; y: number }
+}
+
+/** Missions that currently have a dedicated playable screen. */
+export const PLAYABLE_MISSION_LEVELS = [1] as const
+
+export function isPlayableMission(level: number): boolean {
+  return (PLAYABLE_MISSION_LEVELS as readonly number[]).includes(level)
 }
 
 /**
@@ -18,46 +28,56 @@ export const MISSION_NODES: readonly MissionNode[] = [
     id: 'm1-energia',
     level: 1,
     title: 'Energia Solar',
+    gateTitle: 'ENERGIA PARA EXPLORAR MARTE',
     lockedHint: 'Complete a missão anterior!',
+    soonHint: 'Em breve!',
     leftPct: 16,
     topPct: 74,
-    anchor: { x: 1, y: 0 }, // SOLAR_PANEL
+    anchor: { x: 1, y: 0 },
   },
   {
     id: 'm2-saude',
     level: 2,
     title: 'Saúde',
+    gateTitle: 'CUIDANDO DO ASTRONAUTA',
     lockedHint: 'Missão bloqueada',
+    soonHint: 'Em breve!',
     leftPct: 30,
     topPct: 58,
-    anchor: { x: 0, y: 0 }, // HABITAT
+    anchor: { x: 0, y: 0 },
   },
   {
     id: 'm3-gelo',
     level: 3,
     title: 'Gelo de Marte',
+    gateTitle: 'O MISTÉRIO DO GELO DE MARTE',
     lockedHint: 'Ainda não!',
+    soonHint: 'Em breve!',
     leftPct: 48,
     topPct: 48,
-    anchor: { x: 2, y: 1 }, // SWIM_ICE_DRILL
+    anchor: { x: 2, y: 1 },
   },
   {
     id: 'm4-estufa',
     level: 4,
     title: 'Estufa',
+    gateTitle: 'A PRIMEIRA ESTUFA DE MARTE',
     lockedHint: 'Missão bloqueada',
+    soonHint: 'Em breve!',
     leftPct: 66,
     topPct: 36,
-    anchor: { x: 1, y: 1 }, // HYDROPONIC_BAY
+    anchor: { x: 1, y: 1 },
   },
   {
     id: 'm5-tempestades',
     level: 5,
     title: 'Tempestades',
+    gateTitle: 'ALERTA! TEMPESTADES EM MARTE',
     lockedHint: 'Última missão — avance mais!',
+    soonHint: 'Em breve!',
     leftPct: 84,
     topPct: 26,
-    anchor: { x: 3, y: 2 }, // RADIATION_SHIELD
+    anchor: { x: 3, y: 2 },
   },
 ] as const
 

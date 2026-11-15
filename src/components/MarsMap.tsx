@@ -1,12 +1,12 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { ARCADIA_MAP_SRC } from '../data/mapPois'
-import { getMissionNode, MISSION_NODES, missionPathD } from '../data/missionNodes'
+import { getMissionNode, isPlayableMission, MISSION_NODES, missionPathD } from '../data/missionNodes'
 import { LOCK_SPRITE, ROVER_SPRITE } from '../data/tileSprites'
 import type { WorldState } from '../types/game'
 
 interface Props {
   state: WorldState
-  onCellTap: (x: number, y: number) => void
+  onEnterMission: (level: number) => void
 }
 
 function dayOverlay(hour: number): string {
@@ -16,18 +16,20 @@ function dayOverlay(hour: number): string {
   return 'transparent'
 }
 
-function MarsMapComponent({ state, onCellTap }: Props) {
+function MarsMapComponent({ state, onEnterMission }: Props) {
   const storm = state.weather.intensity > 45
   const current = getMissionNode(state.level)
   const [hintId, setHintId] = useState<string | null>(null)
+  const [hintText, setHintText] = useState('')
   const hintTimer = useRef(0)
 
   useEffect(() => {
     return () => window.clearTimeout(hintTimer.current)
   }, [])
 
-  const showLockedHint = (id: string) => {
+  const showHint = (id: string, text: string) => {
     setHintId(id)
+    setHintText(text)
     window.clearTimeout(hintTimer.current)
     hintTimer.current = window.setTimeout(() => setHintId(null), 2000)
   }
@@ -55,7 +57,6 @@ function MarsMapComponent({ state, onCellTap }: Props) {
         />
       )}
 
-      {/* Soft guide along the painted bridges */}
       <svg
         className="pointer-events-none absolute inset-0 z-[2] h-full w-full opacity-50"
         viewBox="0 0 100 100"
@@ -72,11 +73,10 @@ function MarsMapComponent({ state, onCellTap }: Props) {
         />
       </svg>
 
-      {/* Hotspots over painted islands — motifs are in the art */}
       {MISSION_NODES.map((node) => {
         const unlocked = state.level >= node.level
         const isCurrent = node.level === state.level
-        const showHint = hintId === node.id
+        const showing = hintId === node.id
 
         return (
           <div
@@ -89,16 +89,20 @@ function MarsMapComponent({ state, onCellTap }: Props) {
               aria-label={unlocked ? node.title : `${node.title} trancada`}
               onClick={() => {
                 if (!unlocked) {
-                  showLockedHint(node.id)
+                  showHint(node.id, node.lockedHint)
                   return
                 }
-                onCellTap(node.anchor.x, node.anchor.y)
+                if (!isPlayableMission(node.level)) {
+                  showHint(node.id, node.soonHint)
+                  return
+                }
+                onEnterMission(node.level)
               }}
               onPointerEnter={() => {
-                if (!unlocked) showLockedHint(node.id)
+                if (!unlocked) showHint(node.id, node.lockedHint)
               }}
               onFocus={() => {
-                if (!unlocked) showLockedHint(node.id)
+                if (!unlocked) showHint(node.id, node.lockedHint)
               }}
               className={`island-bob relative flex flex-col items-center outline-none ${isCurrent ? 'scale-105' : ''}`}
             >
@@ -133,12 +137,12 @@ function MarsMapComponent({ state, onCellTap }: Props) {
               </span>
             </button>
 
-            {showHint && !unlocked && (
+            {showing && (
               <div
                 className="pointer-events-none absolute top-0 left-1/2 z-20 w-max max-w-[9rem] -translate-x-1/2 -translate-y-[calc(100%+0.4rem)] rounded border border-cyan-hud/40 bg-[#0a1628]/95 px-2 py-1 font-pixel text-[9px] leading-snug text-[#f4fff4] shadow-lg sm:text-[10px]"
                 role="status"
               >
-                {node.lockedHint}
+                {hintText}
               </div>
             )}
           </div>

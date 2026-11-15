@@ -1,21 +1,15 @@
 import { useCallback } from 'react'
-import { getLevelDef } from '../data/levels'
 import { updateProgress } from '../services/progressStore'
 import type { WorldState } from '../types/game'
 import { FloatingControls } from './FloatingControls'
 import { MarsMap } from './MarsMap'
-import { MessageBadge } from './MessageBadge'
-import { TopStatusBar } from './TopStatusBar'
 
 interface Props {
   state: WorldState
   muted: boolean
   showControlHints: boolean
   onControlHintsDone: () => void
-  onMove: (dx: number, dy: number) => void
-  onInteract: () => void
-  onSleep: () => void
-  onCellTap: (x: number, y: number) => void
+  onEnterMission: (level: number) => void
   onToggleMute: () => void
   onNasa: () => void
   onHome: () => void
@@ -26,17 +20,11 @@ export function WorldScreen({
   muted,
   showControlHints,
   onControlHintsDone,
-  onMove,
-  onInteract,
-  onSleep,
-  onCellTap,
+  onEnterMission,
   onToggleMute,
   onNasa,
   onHome,
 }: Props) {
-  const levelDef = getLevelDef(state.level)
-  const canSleep = state.grid[state.rover.y]![state.rover.x]!.type === 'HABITAT'
-
   const handleLabelsDone = useCallback(() => {
     updateProgress({ controlsHintSeen: true })
     onControlHintsDone()
@@ -44,32 +32,26 @@ export function WorldScreen({
 
   return (
     <div className="relative h-full min-h-0 overflow-hidden">
-      <MarsMap state={state} onCellTap={onCellTap} />
+      <MarsMap state={state} onEnterMission={onEnterMission} />
 
-      <TopStatusBar
-        level={state.level}
-        levelTitle={levelDef.title}
-        quest={state.quest}
-        stats={state.stats}
-        sol={state.sol}
-        hour={state.hour}
-        weather={state.weather}
-        cargo={state.rover.cargo}
-      />
-
-      <MessageBadge message={state.message} />
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3 sm:pt-4">
+        <h1 className="rounded border border-cyan-hud/40 bg-[#0a1628]/88 px-3 py-2 text-center font-pixel text-sm tracking-wide text-cyan-hud shadow-[0_0_18px_rgba(94,231,255,0.25)] sm:px-5 sm:text-lg md:text-xl">
+          Missões em Arcadia Planitia
+        </h1>
+      </header>
 
       <FloatingControls
-        canSleep={canSleep}
+        canSleep={false}
         muted={muted}
         showLabels={showControlHints}
         onLabelsDone={handleLabelsDone}
-        onMove={onMove}
-        onInteract={onInteract}
-        onSleep={onSleep}
+        onMove={() => {}}
+        onInteract={() => {}}
+        onSleep={() => {}}
         onToggleMute={onToggleMute}
         onNasa={onNasa}
         onHome={onHome}
+        mapMode
       />
     </div>
   )
