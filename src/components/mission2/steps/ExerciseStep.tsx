@@ -72,7 +72,7 @@ export function ExerciseStep({
           title="Etapa — Exercícios"
           subtitle={
             <>
-              Recarregue o bem-estar com <strong>2 exercícios</strong>. Termo:{' '}
+              Recarregue a saúde com <strong>2 exercícios</strong>. Termo:{' '}
               <SciTermM2 term="Microgravidade" />. Feitos: {completedIds.length}/{EXERCISE_REQUIRED_COUNT}
             </>
           }

@@ -14,11 +14,11 @@ export const EXPOSURE_MS = 180_000
 
 export const RISK_WARNING_LINES = [
   'Atenção! Lá fora há radiação, poeira e frio extremo.',
-  'Ficar tempo demais na superfície faz o Bem-estar cair.',
+  'Ficar tempo demais na superfície faz a Saúde cair.',
   'Você tem cerca de 3 minutos ao ar livre. Escolha o local e trabalhe rápido!',
 ] as const
 
-export const RISK_HIGHLIGHT_WORDS = ['Bem-estar'] as const
+export const RISK_HIGHLIGHT_WORDS = ['Saúde'] as const
 
 export const MISSION1_META = {
   number: 1,

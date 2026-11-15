@@ -298,7 +298,7 @@ export function interact(state: WorldState): WorldState {
       stats.wellbeing = clamp(stats.wellbeing + crop.lifeSupportReturn * 0.35)
       tile.growth = 0
       tile.cropId = tile.cropId === 'radish' ? 'spirulina' : tile.cropId === 'spirulina' ? 'romaine' : 'radish'
-      message = `Colheita de ${crop.name}! Água e bem-estar sobem.`
+      message = `Colheita de ${crop.name}! Água e saúde sobem.`
       next = bumpQuest({ ...next, stats, rover, iceStored, message, grid }, 'harvest')
       return tryLevelUp(applyPassiveHour({ ...next, hour: Math.min(23, next.hour + 1) }))
     }

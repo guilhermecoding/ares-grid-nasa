@@ -91,7 +91,7 @@ export function ActivityCard({ card, done, disabled, busy, onStart, onActivate }
 
       <div className="mt-auto space-y-1 pt-3 font-pixel text-[10px] sm:text-xs">
         <p className="font-bold" style={{ color: card.color }}>
-          +{card.wellbeingGain} bem-estar
+          +{card.wellbeingGain} saúde
         </p>
         <p className="text-energy">
           −{card.energyCost}% energia
@@ -107,7 +107,7 @@ export function ActivityCard({ card, done, disabled, busy, onStart, onActivate }
             <span />
           </div>
           <p className="relative z-[1] mt-2 font-pixel text-sm font-bold text-[#1a1c3a]">
-            +{card.wellbeingGain} bem-estar
+            +{card.wellbeingGain} saúde
           </p>
           <div className="relative z-[1] mt-3 h-2.5 w-[85%] overflow-hidden rounded-full bg-[#1a1c3a]/25">
             <motion.div

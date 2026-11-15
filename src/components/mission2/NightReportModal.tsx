@@ -112,7 +112,7 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
                 <ul className="mt-2 space-y-1 font-pixel text-[10px] text-void-200 sm:text-xs">
                   <li>Duração: {scores.sleepHours} h</li>
                   <li>Sleep Score: {scores.sleepScore}/100</li>
-                  <li>Bem-estar: {scores.wellbeing}%</li>
+                  <li>Saúde: {scores.wellbeing}%</li>
                 </ul>
               )}
               {current.id === 'activities' && (

@@ -68,7 +68,7 @@ export function SleepPrepStep({ exerciseDone, nutritionDone, hygieneDone, onSlee
             <span className="mt-1 block font-pixel text-[10px] text-void-300 sm:text-xs">
               Luz baixa, bunk pronta, sensores de sono ativos.
             </span>
-            <span className="mt-2 block font-pixel text-xs font-bold text-[#c47848]">+ bem-estar ao amanhecer</span>
+            <span className="mt-2 block font-pixel text-xs font-bold text-[#c47848]">+ saúde ao amanhecer</span>
           </span>
         </motion.button>
 

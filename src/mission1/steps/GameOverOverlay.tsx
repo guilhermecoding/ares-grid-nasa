@@ -37,7 +37,7 @@ export function GameOverOverlay({ onExit }: Props) {
           GAME OVER
         </h2>
         <p id="m1-game-over-body" className="mt-3 font-pixel text-[11px] leading-snug text-[#f4fff4] sm:text-sm">
-          O bem-estar chegou a zero — volte à base! Na próxima, escolha o local e trabalhe mais rápido.
+          A saúde chegou a zero — volte à base! Na próxima, escolha o local e trabalhe mais rápido.
         </p>
         <McButton className="mt-5 min-h-12 w-full font-pixel text-lg font-bold" onClick={onExit}>
           Voltar ao mapa

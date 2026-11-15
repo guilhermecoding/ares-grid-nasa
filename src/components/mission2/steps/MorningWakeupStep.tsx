@@ -45,8 +45,8 @@ export function MorningWakeupStep({ playerName, scores, onAdvance }: Props) {
             <p className="font-pixel text-lg text-[#f0b429]">{scores.sleepScore}</p>
           </div>
           <div className="rounded border border-cyan-hud/30 bg-void-950/60 px-2 py-2">
-            <p className="font-pixel text-[9px] text-void-300">Bem-estar</p>
-            <p className="font-pixel text-lg text-[#7b8cff]">{scores.wellbeing}%</p>
+            <p className="font-pixel text-[9px] text-void-300">Saúde</p>
+            <p className="font-pixel text-lg text-[var(--color-wellbeing)]">{scores.wellbeing}%</p>
           </div>
         </div>
 
