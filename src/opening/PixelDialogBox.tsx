@@ -107,6 +107,15 @@ export function PixelDialogBox({
     return () => clearTimeout(id)
   }, [entered, open, typingDone, lines, lineIdx, charIdx])
 
+  const skipTyping = () => {
+    if (!entered || typingDone || lines.length === 0) return
+    const last = lines.length - 1
+    setLineIdx(last)
+    setCharIdx(lines[last]?.length ?? 0)
+    setTypingDone(true)
+    onTypingCompleteRef.current?.()
+  }
+
   if (!visible) return null
 
   return (
@@ -140,12 +149,24 @@ export function PixelDialogBox({
         {open && (
           <motion.div
             key="pixel-tv"
-            className="pointer-events-auto relative w-full max-w-2xl origin-center overflow-visible"
+            className={`pointer-events-auto relative w-full max-w-2xl origin-center overflow-visible ${
+              entered && !typingDone ? 'cursor-pointer' : ''
+            }`}
             style={{ imageRendering: 'pixelated' }}
             initial={{ scaleY: 0.02, scaleX: 0.96, opacity: 0.85 }}
             animate={{ scaleY: 1, scaleX: 1, opacity: 1 }}
             exit={{ scaleY: 0.02, scaleX: 0.96, opacity: 0.85 }}
             transition={{ duration: TV_MS, ease: [0.22, 0.08, 0.25, 1] }}
+            onClick={skipTyping}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                skipTyping()
+              }
+            }}
+            role={entered && !typingDone ? 'button' : undefined}
+            tabIndex={entered && !typingDone ? 0 : undefined}
+            aria-label={entered && !typingDone ? 'Mostrar texto completo' : undefined}
             onAnimationComplete={(def) => {
               if (!open) return
               if (def === 'exit') return
@@ -218,7 +239,15 @@ export function PixelDialogBox({
                       })}
                     </div>
 
-                    {footer ? <div className="relative z-[1] mt-3 flex justify-center">{footer}</div> : null}
+                    {footer ? (
+                      <div
+                        className="relative z-[1] mt-3 flex justify-center"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        {footer}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
