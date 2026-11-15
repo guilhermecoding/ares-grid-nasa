@@ -47,10 +47,10 @@ export const MEDIA = {
   },
   /** Mission 02 sprites — public paths with SVG/icon UI fallbacks when missing. */
   mission2: {
-    treadmill: '/assets/mission2/treadmill.svg',
-    resistance: '/assets/mission2/resistance.svg',
-    stretch: '/assets/mission2/stretch.svg',
-    balance: '/assets/mission2/balance.svg',
+    treadmill: '/assets/mission2/treadmill.png',
+    resistance: '/assets/mission2/resistance.png',
+    stretch: '/assets/mission2/stretch.png',
+    balance: '/assets/mission2/balance.png',
     tray: '/assets/mission2/food-tray.svg',
     hygiene: '/assets/mission2/hygiene.svg',
     bunk: '/assets/mission2/bunk.svg',

@@ -55,12 +55,12 @@ function ExerciseCard({
         selected ? 'border-life' : 'border-cyan-hud/30'
       } ${blocked ? 'opacity-50' : ''}`}
     >
-      <div className="flex items-center justify-center bg-[#061018] p-3">
+      <div className="flex h-32 items-end justify-center bg-[#061018] px-2 pt-2 sm:h-36">
         <img
           src={ICONS[exercise.id]}
           alt=""
           draggable={false}
-          className="size-16 object-contain sm:size-20"
+          className="h-full w-full object-contain object-bottom"
         />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3 md:p-4">

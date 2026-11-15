@@ -267,7 +267,7 @@ export function PixelDialogBox({
                 <div className="rounded-sm bg-[#1a1c3a] p-[2px]">
                   {/* Indigo panel */}
                   <div
-                    className={`relative min-h-[120px] rounded-sm bg-[#30346d] px-4 pt-3 pb-3 sm:min-h-[132px] sm:px-5 sm:pt-4 sm:pb-4 ${
+                    className={`relative flex max-h-[calc(100dvh-4.5rem)] min-h-[120px] flex-col rounded-sm bg-[#30346d] px-4 pt-3 pb-3 sm:min-h-[132px] sm:px-5 sm:pt-4 sm:pb-4 ${
                       characterSrc ? 'pr-24 sm:pr-32' : ''
                     }`}
                     style={{
@@ -302,7 +302,7 @@ export function PixelDialogBox({
                     ) : null}
 
                     <div
-                      className={`${bodyClassName} text-sm leading-relaxed break-words text-[#f4fff4] sm:text-base`}
+                      className={`${bodyClassName} min-h-0 flex-1 overflow-y-auto text-sm leading-relaxed break-words text-[#f4fff4] sm:text-base`}
                       role="log"
                       aria-live="polite"
                     >
@@ -324,7 +324,7 @@ export function PixelDialogBox({
 
                     {footer ? (
                       <div
-                        className="relative z-[1] mt-3 flex justify-center"
+                        className="relative z-[1] mt-3 flex shrink-0 justify-center"
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => e.stopPropagation()}
                       >

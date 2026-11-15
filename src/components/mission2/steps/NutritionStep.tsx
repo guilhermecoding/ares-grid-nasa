@@ -274,15 +274,17 @@ export function NutritionStep({ onConfirm }: Props) {
         characterAlt="Capi"
         onTypingComplete={() => setReadySig(signature)}
         footer={
-          capiReady && verdict === 'balanced' ? (
-            <McButton className="mc-btn-green min-h-12 px-4 font-pixel" onClick={confirm}>
-              Confirmar refeição
-            </McButton>
-          ) : capiReady ? (
+          verdict === 'balanced' ? (
+            capiReady ? (
+              <McButton className="mc-btn-green min-h-12 px-4 font-pixel" onClick={confirm}>
+                Confirmar refeição
+              </McButton>
+            ) : null
+          ) : (
             <McButton className="min-h-12 px-4 font-pixel" onClick={() => setClosedSig(signature)}>
-              Ajustar bandeja
+              Fechar
             </McButton>
-          ) : null
+          )
         }
       />
     </div>
