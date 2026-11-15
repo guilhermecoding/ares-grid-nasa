@@ -38,7 +38,7 @@ export function LandingScene({ onStartMission }: LandingSceneProps) {
       animate={shake ? { x: [0, -5, 6, -4, 3, 0], y: [0, 4, -3, 2, 0] } : { x: 0, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <MarsApproachCanvas progress={progress} />
+      <MarsApproachCanvas progress={progress} paused={hudDone && !capiDone} />
 
       <div className="relative z-10 flex h-full flex-col justify-between p-3 sm:p-5">
         <div className="mx-auto w-full max-w-lg pt-8">

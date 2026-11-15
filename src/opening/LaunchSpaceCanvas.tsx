@@ -14,6 +14,8 @@ interface LaunchSpaceCanvasProps {
   hologramActive?: boolean
   /** Cockpit frame overlay (off for full-bleed title space) */
   cockpit?: boolean
+  /** Freeze canvas rAF + CSS anims (e.g. while a dialog is open) */
+  paused?: boolean
   className?: string
 }
 
@@ -290,15 +292,33 @@ export function LaunchSpaceCanvas({
   warp = 0.55,
   hologramActive = false,
   cockpit = true,
+  paused = false,
   className = '',
 }: LaunchSpaceCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const warpRef = useRef(warp)
+  const pausedRef = useRef(paused)
   const rafRef = useRef(0)
+  const drawRef = useRef<((now: number) => void) | null>(null)
+  const lastNowRef = useRef(performance.now())
 
   useEffect(() => {
     warpRef.current = warp
   }, [warp])
+
+  useEffect(() => {
+    pausedRef.current = paused
+    if (paused) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
+      return
+    }
+    // Resume only after the canvas loop has registered a real draw fn.
+    if (drawRef.current && rafRef.current === 0) {
+      lastNowRef.current = performance.now()
+      rafRef.current = requestAnimationFrame((t) => drawRef.current?.(t))
+    }
+  }, [paused])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -308,7 +328,8 @@ export function LaunchSpaceCanvas({
 
     let w = 0
     let h = 0
-    let lastNow = performance.now()
+    let alive = true
+    lastNowRef.current = performance.now()
     const stars: Star[] = []
     const STAR_COUNT = 240
 
@@ -343,15 +364,23 @@ export function LaunchSpaceCanvas({
     resize()
     const onResize = () => resize()
     window.addEventListener('resize', onResize)
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null
+    if (canvas.parentElement) ro?.observe(canvas.parentElement)
 
     let earthY = h * 0.92
     const t0 = performance.now()
     const margin = 48
 
     const draw = (now: number) => {
+      if (!alive) return
+      if (pausedRef.current) {
+        rafRef.current = 0
+        return
+      }
+
       const t = (now - t0) / 1000
-      const dt = Math.min(0.05, (now - lastNow) / 1000)
-      lastNow = now
+      const dt = Math.min(0.05, (now - lastNowRef.current) / 1000)
+      lastNowRef.current = now
 
       const warpAmt = Math.min(1, Math.max(0, warpRef.current))
       // Units/sec — smooth continuous fly-by, not frame-tied blinks
@@ -481,16 +510,30 @@ export function LaunchSpaceCanvas({
       rafRef.current = requestAnimationFrame(draw)
     }
 
-    rafRef.current = requestAnimationFrame(draw)
+    drawRef.current = draw
+    if (!pausedRef.current) {
+      rafRef.current = requestAnimationFrame(draw)
+    }
     return () => {
+      alive = false
+      drawRef.current = null
       cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
+      ro?.disconnect()
       window.removeEventListener('resize', onResize)
     }
   }, [])
 
   return (
-    <div className={`absolute inset-0 h-full w-full overflow-hidden ${className}`}>
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden />
+    <div
+      className={`absolute inset-0 h-full w-full overflow-hidden ${paused ? '[&_*]:![animation-play-state:paused]' : ''} ${className}`}
+    >
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 h-full w-full transition-[filter] duration-300"
+        style={paused ? { filter: 'grayscale(0.85) brightness(0.65)' } : undefined}
+        aria-hidden
+      />
       {cockpit ? <TechCockpit hologramActive={hologramActive} /> : null}
     </div>
   )

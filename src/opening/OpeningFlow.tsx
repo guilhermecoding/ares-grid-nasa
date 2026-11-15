@@ -104,7 +104,7 @@ export function OpeningFlow({
 
       {phase === 'scene2_takeoff' && (
         <div className="relative h-full w-full">
-          <LaunchSpaceCanvas warp={0.85} hologramActive={hologram} />
+          <LaunchSpaceCanvas warp={0.85} hologramActive={hologram} paused={takeoffRevealed} />
           {takeoffRevealed && (
             <PixelDialogBox
               open={takeoffDialogOpen}
@@ -142,7 +142,7 @@ export function OpeningFlow({
 
       {phase === 'scene3_capi_intro' && (
         <div className="relative h-full w-full">
-          <LaunchSpaceCanvas warp={0.4} hologramActive={capiSceneReady} />
+          <LaunchSpaceCanvas warp={0.4} hologramActive={capiSceneReady} paused={capiSceneReady} />
           {capiSceneReady && (
             <CapiDialog lines={CAPI_INTRO_LINES} onComplete={() => setPhase('scene3_1_customizer')} />
           )}

@@ -101,9 +101,22 @@ export function PixelDialogBox({
   if (!visible) return null
 
   return (
-    <div
-      className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center p-3 pb-4 sm:p-5 sm:pb-6 ${className}`}
-    >
+    <div className={`pointer-events-none absolute inset-0 z-20 ${className}`}>
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            key="dialog-dim"
+            className="pointer-events-none absolute inset-0 bg-zinc-600/55"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            aria-hidden
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-3 pb-4 sm:p-5 sm:pb-6">
       <AnimatePresence
         onExitComplete={() => {
           setVisible(false)
@@ -200,6 +213,7 @@ export function PixelDialogBox({
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   )
 }
