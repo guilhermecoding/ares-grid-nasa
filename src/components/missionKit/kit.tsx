@@ -9,12 +9,14 @@ export function Tag({
   className = '',
 }: {
   children: ReactNode
-  tone?: 'accent' | 'energy' | 'water' | 'danger' | 'muted'
+  tone?: 'accent' | 'ok' | 'energy' | 'water' | 'danger' | 'muted'
   className?: string
 }) {
   const color =
     tone === 'energy'
       ? 'border-energy text-energy'
+      : tone === 'ok'
+        ? 'border-life text-[#7dffb0]'
       : tone === 'water'
         ? 'border-[#38bdf8] text-[#7dd3fc]'
         : tone === 'danger'

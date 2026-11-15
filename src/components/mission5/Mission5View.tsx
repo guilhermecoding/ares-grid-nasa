@@ -352,6 +352,7 @@ export default function Mission5View({
           )}
           {step === 'step5_2_clean_panels' && (
             <PanelScrubStep
+              paused={overlay != null}
               windSafe={windSafe}
               panelsClean={panelsClean}
               onWindSafe={() => setWindSafe(true)}

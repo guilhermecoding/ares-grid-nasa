@@ -7,6 +7,8 @@ import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
+  /** The wind countdown waits while Capi is talking. */
+  paused?: boolean
   windSafe: boolean
   panelsClean: boolean
   onWindSafe: () => void
@@ -31,16 +33,16 @@ function arc(from: number, to: number): string {
   return `M ${point(from)} A 78 78 0 0 1 ${point(to)}`
 }
 
-export function PanelScrubStep({ windSafe, panelsClean, onWindSafe, onEarly, onClean, onDone }: Props) {
+export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSafe, onEarly, onClean, onDone }: Props) {
   const [left, setLeft] = useState(windSafe ? 0 : WAIT_S)
   const [progress, setProgress] = useState(0)
   const lastScrubRef = useRef(0)
 
   useEffect(() => {
-    if (windSafe || left <= 0) return
+    if (paused || windSafe || left <= 0) return
     const id = window.setTimeout(() => setLeft((value) => value - 1), 1000)
     return () => window.clearTimeout(id)
-  }, [left, windSafe])
+  }, [left, paused, windSafe])
 
   const wind = windSafe ? WIND_CALM : WIND_CALM + left * WIND_PER_S
   const calm = wind < SAFE_BELOW
@@ -81,7 +83,7 @@ export function PanelScrubStep({ windSafe, panelsClean, onWindSafe, onEarly, onC
           <p className="font-pixel text-xl leading-none" style={{ color: calm ? '#5ecf9a' : wind < 70 ? '#f0b429' : '#ff6b8a' }} aria-live="polite">
             {wind} km/h
           </p>
-          <Tag tone={calm ? 'accent' : 'danger'}>
+          <Tag tone={calm ? 'ok' : 'danger'}>
             <Wind className={`size-3 ${calm ? '' : 'gk-blink'}`} aria-hidden />
             {windSafe ? 'Vento seguro · limpeza liberada' : calm ? 'Vento seguro' : `Vento forte · ${left}s`}
           </Tag>
@@ -120,7 +122,7 @@ export function PanelScrubStep({ windSafe, panelsClean, onWindSafe, onEarly, onC
               <div className="relative h-56 overflow-hidden md:h-64">
                 <SolarCells />
                 <div className="gk-sweep absolute inset-y-0 left-0 w-1/3 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent)]" aria-hidden />
-                <Tag className="absolute top-2 left-2">Painel limpo · {MISSION5_META.panelWatts} W</Tag>
+                <Tag tone="ok" className="absolute top-2 left-2">Painel limpo · {MISSION5_META.panelWatts} W</Tag>
               </div>
             ) : (
               <DustScrubCanvas
