@@ -21,6 +21,8 @@ interface PixelDialogBoxProps {
   bodyClassName?: string
   /** Optional per-line class overrides (e.g. formula in normal bold). */
   lineClassNames?: readonly (string | undefined)[]
+  /** Where the TV panel anchors (default: bottom). */
+  position?: 'bottom' | 'center'
 }
 
 function CornerRivet({ className }: { className: string }) {
@@ -45,6 +47,7 @@ export function PixelDialogBox({
   className = '',
   bodyClassName = 'font-pixel',
   lineClassNames,
+  position = 'bottom',
 }: PixelDialogBoxProps) {
   const [entered, setEntered] = useState(false)
   const [lineIdx, setLineIdx] = useState(0)
@@ -122,7 +125,11 @@ export function PixelDialogBox({
         ) : null}
       </AnimatePresence>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-3 pb-4 sm:p-5 sm:pb-6">
+      <div
+        className={`pointer-events-none absolute inset-x-0 flex justify-center p-3 sm:p-5 ${
+          position === 'center' ? 'inset-y-0 items-center' : 'bottom-0 pb-4 sm:pb-6'
+        }`}
+      >
       <AnimatePresence
         onExitComplete={() => {
           setVisible(false)

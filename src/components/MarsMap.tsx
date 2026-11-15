@@ -1,7 +1,10 @@
 import { memo, useEffect, useRef, useState } from 'react'
+import { MEDIA } from '../constants/mediaAssets'
 import { ARCADIA_MAP_SRC } from '../data/mapPois'
 import { getMissionNode, isPlayableMission, MISSION_NODES, missionPathD } from '../data/missionNodes'
 import { LOCK_SPRITE, ROVER_SPRITE } from '../data/tileSprites'
+import { McButton } from '../opening/McButton'
+import { PixelDialogBox } from '../opening/PixelDialogBox'
 import type { WorldState } from '../types/game'
 
 interface Props {
@@ -21,6 +24,8 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
   const current = getMissionNode(state.level)
   const [hintId, setHintId] = useState<string | null>(null)
   const [hintText, setHintText] = useState('')
+  const [replayLevel, setReplayLevel] = useState<number | null>(null)
+  const [replayReady, setReplayReady] = useState(false)
   const hintTimer = useRef(0)
 
   useEffect(() => {
@@ -75,6 +80,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
 
       {MISSION_NODES.map((node) => {
         const unlocked = state.level >= node.level
+        const completed = node.level < state.level
         const isCurrent = node.level === state.level
         const showing = hintId === node.id
 
@@ -86,10 +92,25 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
           >
             <button
               type="button"
-              aria-label={unlocked ? node.title : `${node.title} trancada`}
+              aria-label={
+                completed
+                  ? `${node.title} concluída`
+                  : unlocked
+                    ? node.title
+                    : `${node.title} trancada`
+              }
               onClick={() => {
                 if (!unlocked) {
                   showHint(node.id, node.lockedHint)
+                  return
+                }
+                if (completed) {
+                  if (!isPlayableMission(node.level)) {
+                    showHint(node.id, node.soonHint)
+                    return
+                  }
+                  setReplayReady(false)
+                  setReplayLevel(node.level)
                   return
                 }
                 if (!isPlayableMission(node.level)) {
@@ -100,9 +121,11 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
               }}
               onPointerEnter={() => {
                 if (!unlocked) showHint(node.id, node.lockedHint)
+                else if (completed) showHint(node.id, 'Missão concluída!')
               }}
               onFocus={() => {
                 if (!unlocked) showHint(node.id, node.lockedHint)
+                else if (completed) showHint(node.id, 'Missão concluída!')
               }}
               className={`island-bob relative flex flex-col items-center outline-none ${isCurrent ? 'scale-105' : ''}`}
             >
@@ -119,14 +142,31 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
               )}
 
               <span
-                className={`size-[min(20vw,6.25rem)] rounded-full border-2 transition ${
+                className={`relative flex size-[min(20vw,6.25rem)] items-center justify-center rounded-full border-2 transition ${
                   unlocked
                     ? isCurrent
                       ? 'border-cyan-hud bg-cyan-hud/10 shadow-[0_0_20px_rgba(94,231,255,0.4)]'
                       : 'border-cyan-hud/40 bg-transparent hover:border-cyan-hud/70 hover:bg-cyan-hud/5'
                     : 'border-transparent bg-transparent'
                 }`}
-              />
+              >
+                {completed && (
+                  <span
+                    className="pointer-events-none flex size-8 items-center justify-center rounded-full bg-[#1f8a52] shadow-[0_2px_6px_rgba(0,0,0,0.65)] sm:size-9"
+                    aria-hidden
+                  >
+                    <svg viewBox="0 0 24 24" className="size-5 text-[#e8ffe8] sm:size-6" fill="none">
+                      <path
+                        d="M5 12.5 L10 17.5 L19 6.5"
+                        stroke="currentColor"
+                        strokeWidth="3.2"
+                        strokeLinecap="square"
+                        strokeLinejoin="miter"
+                      />
+                    </svg>
+                  </span>
+                )}
+              </span>
 
               <span
                 className={`mt-1 max-w-[8rem] truncate rounded px-1.5 py-0.5 text-center font-pixel text-[9px] leading-tight sm:text-[10px] ${
@@ -161,6 +201,45 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
           style={{ imageRendering: 'pixelated' }}
         />
       </div>
+
+      <PixelDialogBox
+        open={replayLevel !== null}
+        position="center"
+        title="Capi"
+        characterSrc={MEDIA.capi.neutral}
+        lines={['Quer voltar?', 'Seu progresso não será perdido.']}
+        onTypingComplete={() => setReplayReady(true)}
+        onClosed={() => {
+          setReplayLevel(null)
+          setReplayReady(false)
+        }}
+        footer={
+          replayReady ? (
+            <div className="flex flex-wrap justify-center gap-2">
+              <McButton
+                className="min-h-12 px-4 font-pixel"
+                onClick={() => {
+                  setReplayReady(false)
+                  setReplayLevel(null)
+                }}
+              >
+                Cancelar
+              </McButton>
+              <McButton
+                className="mc-btn-green min-h-12 px-4 font-pixel font-bold"
+                onClick={() => {
+                  const level = replayLevel
+                  setReplayReady(false)
+                  setReplayLevel(null)
+                  if (level !== null) onEnterMission(level)
+                }}
+              >
+                Quero
+              </McButton>
+            </div>
+          ) : null
+        }
+      />
     </div>
   )
 }
