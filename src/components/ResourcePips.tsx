@@ -1,10 +1,28 @@
 import type { BaseStats } from '../types/game'
 
-function PixelIcon({ color, path }: { color: string; path: string }) {
+function PixelIcon({
+  color,
+  path,
+  fill,
+}: {
+  color: string
+  path: string
+  /** 0–1 vertical fill from the bottom. */
+  fill: number
+}) {
+  const amount = Math.max(0, Math.min(1, fill))
   return (
     <svg viewBox="0 0 16 16" className="size-5 sm:size-[1.35rem]" aria-hidden style={{ imageRendering: 'pixelated' }}>
       <path d={path} fill="none" stroke="#1a1028" strokeWidth="1.45" strokeLinejoin="round" />
-      <path d={path} fill={color} />
+      {/* Empty / drained body */}
+      <path d={path} fill={color} opacity={0.22} />
+      {/* Filled portion rises from the bottom */}
+      <path
+        d={path}
+        fill={color}
+        opacity={amount <= 0 ? 0 : 1}
+        style={amount > 0 && amount < 1 ? { clipPath: `inset(${(1 - amount) * 100}% 0 0 0)` } : undefined}
+      />
     </svg>
   )
 }
@@ -30,7 +48,7 @@ function StatPip({
       <span className="sr-only">
         {label} {shown}%
       </span>
-      <PixelIcon color={color} path={path} />
+      <PixelIcon color={color} path={path} fill={shown / 100} />
       <span
         className="font-pixel text-[9px] leading-none tabular-nums text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.85)] sm:text-[10px]"
         aria-hidden
@@ -46,7 +64,7 @@ interface Props {
   className?: string
 }
 
-/** Energy / water / wellbeing — one icon each, value under the icon. */
+/** Energy / water / wellbeing — one icon each, fill level + value under the icon. */
 export function ResourcePips({ stats, className = '' }: Props) {
   return (
     <div
