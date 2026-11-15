@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
 import {
   EXERCISES,
-  FOOD_ITEMS,
+  foodById,
+  mealKcal,
   HYGIENE_ACTIONS,
   MISSION2_META,
   NIGHT_REPORT_STEPS,
@@ -24,13 +25,14 @@ interface Props {
 /** Reusable holographic night panel — 7 steps with kid-friendly progress. */
 export function NightReportModal({ open, playerName, choices, scores, onDone }: Props) {
   const [step, setStep] = useState(0)
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (!open) setStep(0)
+  }
 
   useEffect(() => {
-    if (!open) {
-      setStep(0)
-      return
-    }
-    soundEngine.telemetry()
+    if (open) soundEngine.telemetry()
   }, [open])
 
   useEffect(() => {
@@ -55,9 +57,8 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
     .join(', ')
 
   const foodLabels = choices.foods
-    .map((id) => FOOD_ITEMS.find((f) => f.id === id)?.label)
+    .map((id) => foodById(id)?.label)
     .filter(Boolean)
-    .slice(0, 4)
     .join(', ')
 
   const hygieneOk = choices.hygieneDone.length >= HYGIENE_ACTIONS.length
@@ -118,8 +119,10 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
               {current.id === 'activities' && (
                 <ul className="mt-2 space-y-1 font-pixel text-[10px] text-void-200 sm:text-xs">
                   <li>Exercícios: {exerciseLabels || '—'}</li>
-                  <li>Refeição: {foodLabels || '—'}…</li>
-                  <li>Água do dia: {choices.waterRationL.toFixed(1)}L</li>
+                  <li>
+                    Refeição: {foodLabels || '—'} · {mealKcal(choices.foods)} kcal
+                  </li>
+                  <li>Água da refeição: {Math.round(choices.waterRationL * 1000)} ml</li>
                   <li>Higiene: {hygieneOk ? 'completa' : 'parcial'}</li>
                 </ul>
               )}

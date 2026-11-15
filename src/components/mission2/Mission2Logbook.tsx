@@ -87,8 +87,8 @@ export function Mission2Logbook({
         id: 'nutrition',
         label: 'Alimentação e hidratação',
         detail: nutritionCards.includes('hydrate')
-          ? `${nutritionCards.length} cards · hidratação ok`
-          : `${nutritionCards.length} cards`,
+          ? 'Refeição equilibrada · água da refeição ok'
+          : 'Refeição em aberto',
       },
       {
         id: 'hygiene',

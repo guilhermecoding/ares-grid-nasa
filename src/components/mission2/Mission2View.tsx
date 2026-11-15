@@ -7,6 +7,7 @@ import {
   BRIDGE_TO_NUTRITION,
   BRIDGE_TO_SLEEP,
   HYGIENE_BONUS_CARD,
+  BALANCED_MEAL_BONUS,
   computeMission2Scores,
   isMission2EnergySoftLocked,
   lightingForStep,
@@ -73,7 +74,7 @@ export default function Mission2View({
   const [exercises, setExercises] = useState<ExerciseId[]>([])
   const [foods, setFoods] = useState<string[]>([])
   const [nutritionCards, setNutritionCards] = useState<NutritionCardId[]>([])
-  const [waterRationL, setWaterRationL] = useState(2.2)
+  const [waterRationL, setWaterRationL] = useState(0.35)
   const [hygieneDone, setHygieneDone] = useState<HygieneId[]>([])
   const [cabinDone, setCabinDone] = useState(false)
   const [nightOpen, setNightOpen] = useState(false)
@@ -149,29 +150,15 @@ export default function Mission2View({
     [gainWellbeing, spend],
   )
 
-  const onNutritionOne = useCallback(
-    (
-      id: NutritionCardId,
-      energyCost: number,
-      waterCostL: number,
-      wellbeingGain: number,
-      foodIds: string[],
-      ration?: number,
-    ) => {
-      spend(energyCost, waterCostL)
-      gainWellbeing(wellbeingGain)
-      setNutritionCards((prev) => (prev.includes(id) ? prev : [...prev, id]))
-      if (foodIds.length) {
-        setFoods((prev) => {
-          const next = new Set(prev)
-          for (const f of foodIds) next.add(f)
-          return [...next]
-        })
-      }
-      if (ration != null) setWaterRationL(ration)
-    },
-    [gainWellbeing, spend],
-  )
+  const onNutritionConfirm = useCallback((foodsPicked: string[], waterMl: number) => {
+    setFoods(foodsPicked)
+    setNutritionCards(['protein', 'veggie', 'carb', 'hydrate'])
+    setWaterRationL(waterMl / 1000)
+    setWaterL((w) => Math.max(0, Math.round((w - waterMl / 1000) * 10) / 10))
+    setWellbeingBoost((b) => b + BALANCED_MEAL_BONUS.wellbeing)
+    setBaseEnergy((e) => clamp(e + BALANCED_MEAL_BONUS.energy))
+    setBridge('hygiene')
+  }, [])
 
   const onHygieneOne = useCallback(
     (
@@ -258,13 +245,7 @@ export default function Mission2View({
       )}
 
       {step === 'step2_2_nutrition' && !bridge && (
-        <NutritionStep
-          energyPct={baseEnergy}
-          waterL={waterL}
-          completedIds={nutritionCards}
-          onCompleteOne={onNutritionOne}
-          onContinue={() => setBridge('hygiene')}
-        />
+        <NutritionStep onConfirm={onNutritionConfirm} />
       )}
 
       {step === 'step2_3_hygiene' && !bridge && (
