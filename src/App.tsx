@@ -80,13 +80,9 @@ export default function App() {
   const applyMissionComplete = useCallback(
     (completed: boolean, missionId: number, resultStats?: BaseStats) => {
       const w = worldRef.current
-      if (!completed || !w) return
-      const nextLevel = Math.max(w.level, missionId + 1)
-      const nextXp = w.xp + (missionId === 2 ? 50 : 40)
-      const message =
-        missionId === 2
-          ? 'Missão 2 concluída! O mistério do gelo aguarda.'
-          : 'Missão 1 concluída! Nova ilha no mapa.'
+      if (!w) return
+
+      // Always keep session meters — never snap back to pre-entry scores on exit/replay.
       const nextStats: BaseStats = resultStats
         ? {
             energy: Math.max(0, Math.min(100, Math.round(resultStats.energy))),
@@ -94,6 +90,21 @@ export default function App() {
             wellbeing: Math.max(0, Math.min(100, Math.round(resultStats.wellbeing))),
           }
         : w.stats
+
+      const alreadyCleared = w.level > missionId
+      const nextLevel = completed ? Math.max(w.level, missionId + 1) : w.level
+      const xpGain = completed && !alreadyCleared ? (missionId === 2 ? 50 : 40) : 0
+      const nextXp = w.xp + xpGain
+      const message = completed
+        ? missionId === 2
+          ? alreadyCleared
+            ? 'Missão 2 refeita — indicadores atualizados!'
+            : 'Missão 2 concluída! O mistério do gelo aguarda.'
+          : alreadyCleared
+            ? 'Missão 1 refeita — indicadores atualizados!'
+            : 'Missão 1 concluída! Nova ilha no mapa.'
+        : w.message
+
       const next = { ...w, level: nextLevel, xp: nextXp, message, stats: nextStats }
       setWorld(next)
       setProgress(
@@ -243,7 +254,7 @@ export default function App() {
           <Mission01Screen
             stats={world?.stats}
             onComplete={(result) => leaveMission(true, result)}
-            onExit={() => leaveMission(false)}
+            onExit={(result) => leaveMission(false, result)}
             onReady={() => setMissionReady(true)}
           />
         </Suspense>
@@ -261,7 +272,7 @@ export default function App() {
             stats={world?.stats}
             playerName={progress.playerName}
             onComplete={(result) => leaveMission(true, result)}
-            onExit={() => leaveMission(false)}
+            onExit={(result) => leaveMission(false, result)}
             onReady={() => setMissionReady(true)}
           />
         </Suspense>

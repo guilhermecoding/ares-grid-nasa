@@ -36,7 +36,8 @@ const DEFAULT_STATS: BaseStats = { energy: 68, water: 85, wellbeing: 70 }
 interface Props {
   /** Final meters after the day (energy/water spent stay saved for the base). */
   onComplete: (result: BaseStats) => void
-  onExit: () => void
+  /** Leave without finishing — still pass current meters so progress is not rolled back. */
+  onExit: (result: BaseStats) => void
   onReady?: () => void
   stats?: BaseStats
   playerName?: string
@@ -228,7 +229,7 @@ export default function Mission2View({
         <button
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
-          onClick={onExit}
+          onClick={() => onExit(hudStats)}
           aria-label="Sair da missão"
           title="Sair"
           style={{ touchAction: 'manipulation' }}
@@ -358,7 +359,7 @@ export default function Mission2View({
         <Mission2Outro stats={hudStats} onDone={() => onComplete(hudStats)} />
       )}
 
-      {energySoftLocked && <EnergyDepletedOverlay onExit={onExit} />}
+      {energySoftLocked && <EnergyDepletedOverlay onExit={() => onExit(hudStats)} />}
     </div>
   )
 }

@@ -69,7 +69,8 @@ function deriveMissionStats(
 interface Props {
   /** Final HUD meters after a successful run (energy from the installed panel). */
   onComplete: (result: BaseStats) => void
-  onExit: () => void
+  /** Leave without finishing — still pass current meters so progress is not rolled back. */
+  onExit: (result: BaseStats) => void
   /** Called once the mission UI has painted and is ready for the gate to open. */
   onReady?: () => void
   stats?: BaseStats
@@ -187,7 +188,7 @@ export default function Mission01Screen({
         <button
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
-          onClick={onExit}
+          onClick={() => onExit(hudStats)}
           aria-label="Sair da missão"
           title="Sair"
         >
@@ -255,7 +256,7 @@ export default function Mission01Screen({
         <TransmissionOutro stats={hudStats} onDone={finish} />
       )}
 
-      {gameOver && <GameOverOverlay onExit={onExit} />}
+      {gameOver && <GameOverOverlay onExit={() => onExit(hudStats)} />}
     </div>
   )
 }
