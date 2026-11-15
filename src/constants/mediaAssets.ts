@@ -64,6 +64,7 @@ export const MEDIA = {
     sectorAlpha: '/assets/mission3/sector-alpha.svg',
     sectorBeta: '/assets/mission3/sector-beta.svg',
     sectorGamma: '/assets/mission3/sector-gamma.svg',
+    crater: '/assets/mission3/crater.svg',
     processIdentify: '/assets/mission3/process-identify.svg',
     processSeparate: '/assets/mission3/process-separate.svg',
     processMelt: '/assets/mission3/process-melt.svg',

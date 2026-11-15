@@ -177,6 +177,13 @@ export function LayeredMapStep({ energy, waterL, onSpend, onConfirm }: Props) {
 
           <div className="relative mt-3 aspect-[16/10] w-full overflow-hidden rounded border-2 border-[#6b4228]">
             <ArcadiaSiteMap />
+            <img
+              src={MEDIA.mission3.crater}
+              alt=""
+              className="pointer-events-none absolute w-[58%] max-w-none -translate-x-1/2 -translate-y-1/2"
+              style={{ left: '76%', top: '64%' }}
+              draggable={false}
+            />
             <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
               {activeLayers.map((layer, i) =>
                 SITES.filter((s) => layer.id !== 'ice' || s.iceHint).map((s) => (

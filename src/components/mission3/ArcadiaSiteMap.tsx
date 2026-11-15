@@ -64,26 +64,6 @@ export function ArcadiaSiteMap() {
       ctx.ellipse(w * 0.52, h * 0.38, w * 0.16, h * 0.18, 0, 0, Math.PI * 2)
       ctx.fill()
 
-      const cx = w * 0.76
-      const cy = h * 0.64
-      const r = Math.min(w, h) * 0.16
-      ctx.beginPath()
-      ctx.ellipse(cx + r * 0.18, cy + r * 0.22, r * 1.05, r * 0.72, 0, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(40,16,8,0.4)'
-      ctx.fill()
-      const bowl = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.2, r * 0.15, cx, cy, r)
-      bowl.addColorStop(0, '#f0c09a')
-      bowl.addColorStop(0.45, '#c47848')
-      bowl.addColorStop(0.72, '#6d3018')
-      bowl.addColorStop(1, '#2c140c')
-      ctx.beginPath()
-      ctx.ellipse(cx, cy, r, r * 0.7, 0, 0, Math.PI * 2)
-      ctx.fillStyle = bowl
-      ctx.fill()
-      ctx.beginPath()
-      ctx.ellipse(cx, cy, r * 0.48, r * 0.32, 0, 0, Math.PI * 2)
-      ctx.fillStyle = '#3a1c12'
-      ctx.fill()
     }
 
     draw()
