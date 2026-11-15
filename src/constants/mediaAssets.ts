@@ -1,23 +1,35 @@
 /** Centralized media paths for the opening sequence and shared UI. */
 
+import emblem from '../assets/image/artefacts/arcadia_emblema_capivara.png'
+import capiDuvida from '../assets/image/artefacts/capi-duvida.png'
+import capiExcited2 from '../assets/image/artefacts/capi-excited2.png'
+import capiNeutral from '../assets/image/artefacts/capi-neutral.png'
+import capiRef from '../assets/image/capi/capi-ref.jpeg'
+import pointA from '../assets/image/mission1/point-a.svg'
+import pointB from '../assets/image/mission1/point-b.svg'
+import pointC from '../assets/image/mission1/point-c.svg'
+import solarPanel from '../assets/image/mission1/solar-panel.svg'
+
 export const MEDIA = {
   capi: {
     /** Emblem for title / ready gate */
-    emblem: '/assets/artefacts/arcadia_emblema_capivara.png',
+    emblem,
     /** Portrait used in PixelDialogBox / CapiDialog */
-    neutral: '/assets/artefacts/capi-neutral.png',
+    neutral: capiNeutral,
     /** Excited portrait (confirm astronaut / celebration) */
-    excited2: '/assets/artefacts/capi-excited2.png',
-    ref: '/assets/capi/capi-ref.jpeg',
+    excited2: capiExcited2,
+    /** Doubt / trade-off feedback (e.g. non-ideal panel site) */
+    duvida: capiDuvida,
+    ref: capiRef,
   },
   opening: {
     pixelDialogFrame: '/art/opening/pixel-dialog-frame.png',
     pixelDialogRef: '/art/opening/pixel-dialog-ref.png',
   },
   mission1: {
-    pointA: '/assets/mission1/point-a.svg',
-    pointB: '/assets/mission1/point-b.svg',
-    pointC: '/assets/mission1/point-c.svg',
-    panel: '/assets/mission1/solar-panel.svg',
+    pointA,
+    pointB,
+    pointC,
+    panel: solarPanel,
   },
 } as const

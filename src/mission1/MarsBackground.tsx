@@ -26,10 +26,22 @@ export function MarsBackground({
     return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
+  const isSummer = season === 'summer_n'
   const sunX = 20 + (hour / 24) * 60
-  const sunY = season === 'summer_n' ? 18 + Math.abs(hour - 12) * 1.2 : 28 + Math.abs(hour - 12) * 1.6
-  const skyTop = storm ? '#5a4030' : hour < 7 || hour > 19 ? '#3a2040' : '#c47848'
-  const skyBot = storm ? '#8a5a38' : '#e8a878'
+  const sunY = isSummer ? 14 + Math.abs(hour - 12) * 1.0 : 30 + Math.abs(hour - 12) * 1.7
+  const sunScale = isSummer ? 1.15 : 0.82
+  const sunOpacity = storm ? 0.35 : isSummer ? 0.98 : 0.72
+  const sunGlow = isSummer
+    ? '0 0 52px rgba(255,220,120,0.7)'
+    : '0 0 28px rgba(255,180,90,0.4)'
+  const skyTop = storm
+    ? '#5a4030'
+    : hour < 7 || hour > 19
+      ? '#3a2040'
+      : isSummer
+        ? '#d48850'
+        : '#a86840'
+  const skyBot = storm ? '#8a5a38' : isSummer ? '#e8a878' : '#c88858'
 
   const motes = useMemo(
     () =>
@@ -52,13 +64,30 @@ export function MarsBackground({
         }}
       />
 
-      {/* Sun */}
+      {/* Sun — moves/scales with Martian season; inner pulse stays independent */}
       <motion.div
-        className="absolute size-[min(18vw,7rem)] rounded-full bg-[#ffe0a0] shadow-[0_0_40px_rgba(255,200,100,0.55)]"
-        style={{ left: `${sunX}%`, top: `${sunY}%`, opacity: storm ? 0.35 : 0.95 }}
-        animate={{ scale: [1, 1.04, 1] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-      />
+        className="absolute origin-center"
+        initial={false}
+        animate={{
+          left: `${sunX}%`,
+          top: `${sunY}%`,
+          opacity: sunOpacity,
+          scale: sunScale,
+        }}
+        transition={{ duration: 1.1, ease: 'easeInOut' }}
+      >
+        <motion.div
+          className="size-[min(18vw,7rem)] rounded-full bg-[#ffe0a0]"
+          animate={{
+            scale: [1, 1.045, 1],
+            boxShadow: sunGlow,
+          }}
+          transition={{
+            scale: { duration: 6, repeat: Infinity, ease: 'easeInOut' },
+            boxShadow: { duration: 1.0, ease: 'easeInOut' },
+          }}
+        />
+      </motion.div>
 
       {/* Far hills */}
       <svg className="absolute inset-x-0 bottom-[28%] h-[22%] w-full" viewBox="0 0 400 80" preserveAspectRatio="none">

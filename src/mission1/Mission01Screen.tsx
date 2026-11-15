@@ -83,6 +83,7 @@ export default function Mission01Screen({ onComplete, onExit, onReady }: Props) 
       {step === 'step2_solar_calc' && (
         <SolarCalcChallenge
           site={site}
+          onSeasonChange={setSeason}
           onConfirm={(opts) => {
             setSeason(opts.season)
             setTilt(opts.tilt)

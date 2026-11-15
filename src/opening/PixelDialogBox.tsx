@@ -17,6 +17,10 @@ interface PixelDialogBoxProps {
   onClosed?: () => void
   onTypingComplete?: () => void
   className?: string
+  /** Overrides the dialog body typeface (default: font-pixel). */
+  bodyClassName?: string
+  /** Optional per-line class overrides (e.g. formula in normal bold). */
+  lineClassNames?: readonly (string | undefined)[]
 }
 
 function CornerRivet({ className }: { className: string }) {
@@ -39,6 +43,8 @@ export function PixelDialogBox({
   onClosed,
   onTypingComplete,
   className = '',
+  bodyClassName = 'font-pixel',
+  lineClassNames,
 }: PixelDialogBoxProps) {
   const [entered, setEntered] = useState(false)
   const [lineIdx, setLineIdx] = useState(0)
@@ -184,12 +190,20 @@ export function PixelDialogBox({
                       </p>
                     ) : null}
 
-                    <div className="font-pixel text-sm leading-relaxed text-[#f4fff4] sm:text-base" role="log" aria-live="polite">
+                    <div
+                      className={`${bodyClassName} text-sm leading-relaxed break-words text-[#f4fff4] sm:text-base`}
+                      role="log"
+                      aria-live="polite"
+                    >
                       {lines.slice(0, Math.min(lineIdx + 1, lines.length)).map((line, i) => {
                         const text = i < lineIdx || typingDone ? line : line.slice(0, charIdx)
                         const isCurrent = i === lineIdx && entered && !typingDone
+                        const lineClass = lineClassNames?.[i]
                         return (
-                          <p key={i} className={i === 0 ? '' : 'mt-1 opacity-95'}>
+                          <p
+                            key={i}
+                            className={`${i === 0 ? '' : 'mt-1 opacity-95'}${lineClass ? ` ${lineClass}` : ''}`}
+                          >
                             {text}
                             {isCurrent && <span className="ml-0.5 inline-block w-2 animate-pulse bg-[#f4fff4]">▌</span>}
                           </p>

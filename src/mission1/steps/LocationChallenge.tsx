@@ -289,7 +289,7 @@ export function LocationChallenge({ onConfirm }: Props) {
         open={capiOpen}
         lines={capiLines}
         title="Capi"
-        characterSrc={MEDIA.capi.neutral}
+        characterSrc={MEDIA.capi.duvida}
         onTypingComplete={() => setCapiReady(true)}
         onClosed={() => {
           if (pendingAdvance && selected) {
