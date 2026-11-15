@@ -11,6 +11,7 @@ import {
   PANEL_TEST_CLEAN_WATER_COST,
   PANEL_TEST_DUST_ENERGY_FACTOR,
   PANEL_TEST_DUST_WATER_COST,
+  TRANSMISSION_LINES,
   type Mission1Step,
   type PanelTestChoice,
   type SeasonId,
@@ -29,13 +30,13 @@ import { MarsBackground } from './MarsBackground'
 import { GameOverOverlay } from './steps/GameOverOverlay'
 import { IntroHud } from './steps/IntroHud'
 import { LocationChallenge } from './steps/LocationChallenge'
-import { LogbookModal } from './steps/LogbookModal'
+import { MissionLogbook } from '../components/logbook/MissionLogbook'
+import { MissionOutro } from '../components/MissionOutro'
 import { PanelCleanSuccessDialog } from './steps/PanelCleanSuccessDialog'
 import { ReplayIntroHud } from './steps/ReplayIntroHud'
 import { RiskWarningHud } from './steps/RiskWarningHud'
 import { PanelConditionDialog } from './steps/PanelConditionDialog'
 import { SolarCalcChallenge } from './steps/SolarCalcChallenge'
-import { TransmissionOutro } from './steps/TransmissionOutro'
 
 const DEFAULT_STATS: BaseStats = { energy: 0, water: 85, wellbeing: 70 }
 
@@ -380,17 +381,27 @@ export default function Mission01Screen({
       {!gameOver && step === 'step4_logbook' && (
         <>
           <MarsBackground hour={hour} season={season} storm={false} dustIntensity={0.25} />
-          <LogbookModal
-            siteLabel={siteLabel}
-            tilt={tilt}
-            panelTest={panelTest}
+          <MissionLogbook
+            missionId={1}
+            subtitle="Checklist da missão cumprida"
+            items={[
+              { label: 'Local de instalação escolhido', detail: siteLabel },
+              { label: 'Painéis solares ajustados', detail: `Inclinação ${tilt}°` },
+              {
+                label: 'Condição do painel testada',
+                detail:
+                  panelTest === 'dust' ? 'Poeira cobriu as células e a eficiência caiu' : 'Limpeza removeu a poeira',
+              },
+              { label: 'Energia externa ativada', detail: 'Base pronta para explorar' },
+              { label: 'Registro científico no diário', detail: 'Evento da Missão 1 documentado' },
+            ]}
             onDone={() => setStep('step5_transmission')}
           />
         </>
       )}
 
       {!gameOver && step === 'step5_transmission' && (
-        <TransmissionOutro stats={hudStats} onDone={finish} />
+        <MissionOutro missionId={1} lines={TRANSMISSION_LINES} stats={hudStats} onDone={finish} />
       )}
 
       {gameOver && <GameOverOverlay onExit={handleGameOverExit} />}

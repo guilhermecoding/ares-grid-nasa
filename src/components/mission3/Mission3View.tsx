@@ -9,6 +9,7 @@ import {
   IDEAL_SITE,
   PROCESS_STEPS,
   SITES,
+  WATER_REWARD_L,
   formatDepth,
   isCrossSectionStep,
   type Mission3Step,
@@ -22,8 +23,8 @@ import { clearMissionRun, loadProgress, resumeWaterLiters, saveMissionRun } from
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { ArcadiaExplorationBackground } from './ArcadiaExplorationBackground'
 import { CapiBridgeM3 } from './CapiBridgeM3'
-import { Mission3Logbook } from './Mission3Logbook'
-import { Mission3Outro } from './Mission3Outro'
+import { MissionLogbook } from '../logbook/MissionLogbook'
+import { MissionOutro } from '../MissionOutro'
 import { IceProcessingStep } from './steps/IceProcessingStep'
 import { IntroStep } from './steps/IntroStep'
 import { LayeredMapStep } from './steps/LayeredMapStep'
@@ -31,6 +32,12 @@ import { MethodologyStep } from './steps/MethodologyStep'
 import { PotabilityStep } from './steps/PotabilityStep'
 
 const DEFAULT_STATS: BaseStats = { energy: 70, water: 55, wellbeing: 72 }
+
+const OUTRO_LINES = [
+  'Retornando à espaçonave com a amostra selada…',
+  'DADOS DA MISSÃO 3 ARMAZENADOS.',
+  `Gelo de Arcadia virou +${WATER_REWARD_L} L de água potável!`,
+] as const
 
 interface Props {
   onComplete: (result: BaseStats) => void
@@ -303,14 +310,21 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
       )}
 
       {phase === 'logbook' && (
-        <Mission3Logbook
-          siteName={siteInfo.name}
-          depthLabel={formatDepth(DRILL_TARGET_M)}
+        <MissionLogbook
+          missionId={3}
+          subtitle="Checklist da exploração cumprida"
+          items={[
+            { label: 'Radar SHARAD analisado', detail: 'Gelo localizado embaixo do solo' },
+            { label: 'Local de perfuração escolhido', detail: `${siteInfo.name}, plano e estável` },
+            { label: 'Perfuração concluída', detail: `Amostra a ${formatDepth(DRILL_TARGET_M)} de profundidade` },
+            { label: 'Gelo transformado em água', detail: `+${WATER_REWARD_L} L aprovados para consumo` },
+            { label: 'Registro científico no diário', detail: 'Evento da Missão 3 documentado' },
+          ]}
           onDone={() => setPhase('outro')}
         />
       )}
 
-      {phase === 'outro' && <Mission3Outro stats={hudStats} waterL={waterL} onDone={finish} />}
+      {phase === 'outro' && <MissionOutro missionId={3} lines={OUTRO_LINES} stats={hudStats} onDone={finish} />}
 
       {energySoftLocked && (
         <CapiBeat

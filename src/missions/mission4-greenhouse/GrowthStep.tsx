@@ -199,7 +199,7 @@ export function GrowthStep({
                           onHarvest(species)
                         }}
                         aria-label={`Colher ${speciesLabel(species)}`}
-                        className={`flex min-h-12 items-center gap-1 border-2 border-[#04080f] bg-energy px-2 font-pixel text-[10px] text-[#1a1203] uppercase shadow-[0_3px_0_#7a5a0c] ${
+                        className={`flex min-h-12 items-center gap-1 border-2 border-[#04080f] bg-energy px-2 font-pixel text-[11px] whitespace-nowrap text-[#1a1203] uppercase shadow-[0_3px_0_#7a5a0c] sm:gap-1.5 sm:px-3 sm:text-xs ${
                           misted ? 'gk-bob' : 'opacity-50'
                         }`}
                         style={{ touchAction: 'manipulation' }}
@@ -271,12 +271,12 @@ export function GrowthStep({
                       if (option.id === 'mild') setFault((value) => (value === 'temp' ? null : value))
                       onSetTemp(option.id === 'mild')
                     }}
-                    className={`flex min-h-14 flex-col items-center justify-center gap-0.5 border-2 px-1 font-pixel text-[10px] uppercase ${
+                    className={`flex min-h-16 flex-col items-center justify-center gap-1 border-2 px-1 py-1.5 font-pixel text-xs leading-none uppercase ${
                       selected ? 'bg-[#f4fff4]/10 text-[#f4fff4]' : 'border-[#30346d] bg-[#04080f]/70 text-[#f4fff4]/60'
                     }`}
                     style={{ touchAction: 'manipulation', borderColor: selected ? option.color : undefined }}
                   >
-                    <option.Icon className="size-4" style={{ color: option.color }} aria-hidden />
+                    <option.Icon className="size-5" style={{ color: option.color }} aria-hidden />
                     {option.label}
                     <span style={{ color: option.color }}>{option.value}</span>
                   </button>
@@ -323,7 +323,7 @@ export function GrowthStep({
 
           {stage < 2 ? (
             <McButton
-              className={`min-h-14 w-full px-4 font-pixel text-sm ${ready ? 'btn-bob' : ''}`}
+              className={`min-h-14 w-full px-4 font-pixel text-base ${ready ? 'btn-bob' : ''}`}
               onClick={tryAdvance}
             >
               Fazer crescer ▸

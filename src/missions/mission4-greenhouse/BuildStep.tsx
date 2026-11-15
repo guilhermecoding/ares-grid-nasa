@@ -244,8 +244,8 @@ export function BuildStep({
                 </span>
                 <span className="mt-1 text-sm leading-snug text-[#f4fff4]/80">{mod.detail}</span>
                 {current ? (
-                  <span className="mt-2 inline-flex w-fit items-center gap-1 bg-energy px-2 py-1 font-pixel text-[10px] text-[#1a1203] uppercase">
-                    <Zap className="size-3" aria-hidden /> Instalar · −{mod.energyCost}% energia
+                  <span className="mt-2 flex min-h-10 w-full items-center justify-center gap-1.5 border-2 border-[#04080f] bg-energy px-2 py-1 text-center font-pixel text-xs leading-snug text-[#1a1203] uppercase shadow-[0_3px_0_#7a5a0c]">
+                    <Zap className="size-4 shrink-0" aria-hidden /> Instalar · −{mod.energyCost}% energia
                   </span>
                 ) : null}
                 {fx?.id === mod.id ? (
@@ -282,7 +282,7 @@ export function BuildStep({
                       start(id, e)
                     }}
                     aria-label={`Arrastar: ${link.source}`}
-                    className={`flex min-h-14 touch-none items-center gap-2 border-2 px-2.5 font-pixel text-[10px] leading-snug uppercase select-none sm:text-xs ${
+                    className={`flex min-h-14 touch-none items-center gap-2 border-2 px-2.5 font-pixel text-xs leading-snug uppercase select-none ${
                       !modulesReady ? 'opacity-45' : isLinked ? '' : dragging ? 'opacity-60' : 'gk-pulse cursor-grab'
                     }`}
                     style={{

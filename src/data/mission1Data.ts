@@ -202,15 +202,6 @@ export function estimatePanelEfficiency(opts: {
   return Math.round(Math.min(98, Math.max(18, 55 * season.sunBoost * siteFactor * azFactor * tiltFactor)))
 }
 
-export const LOGBOOK_EVENT = 'Instalação e ativação dos painéis solares em Arcadia Planitia'
-
-export const LOGBOOK_ASPECTS = [
-  'Local com boa luz o dia todo',
-  'Inclinação ajustada com a Capi',
-  'Poeira cobre as células e a luz não passa',
-  'Limpar o painel devolve parte da geração',
-] as const
-
 export const TRANSMISSION_LINES = [
   'DADOS DA MISSÃO 1 ARMAZENADOS.',
   'TENTANDO CONEXÃO COM A CENTRAL TERRESTRE…',

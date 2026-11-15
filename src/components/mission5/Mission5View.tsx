@@ -25,9 +25,10 @@ import { ShieldMonitor } from '../../missions/mission5-storms/ShieldMonitor'
 import { clearMissionRun, loadProgress, resumeWaterLiters, saveMissionRun } from '../../services/progressStore'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { EarthTransmission } from './EarthTransmission'
-import { ExpeditionEnding } from './ExpeditionEnding'
+import { NasaSources } from './NasaSources'
 import { MarsStormBackground, type StormScene } from './MarsStormBackground'
-import { Mission5Logbook } from './Mission5Logbook'
+import { MissionLogbook } from '../logbook/MissionLogbook'
+import { MissionOutro } from '../MissionOutro'
 import { Mission5Stage } from './Mission5Stage'
 
 const DEFAULT_STATS: BaseStats = { energy: 70, water: 55, wellbeing: 72 }
@@ -58,6 +59,11 @@ const ENTER_LINES: Record<Mission5Step, readonly string[]> = {
   scene6_earth_transmission: ['O relatório das cinco missões está pronto para a Terra.'],
   scene7_ending: ['A expedição fecha com a base pronta.'],
 }
+
+const OUTRO_LINES = [
+  'RELATÓRIO RECEBIDO PELA CENTRAL NA TERRA.',
+  'Base protegida. Expedição Ares Grid completa!',
+] as const
 
 const INTRO_GOALS = [
   { icon: <Lock className="size-4" aria-hidden />, label: '5.1 Vedar o habitat' },
@@ -389,7 +395,20 @@ export default function Mission5View({
         </Mission5Stage>
       )}
 
-      {phase === 'logbook' ? <Mission5Logbook onDone={() => setPhase('night')} /> : null}
+      {phase === 'logbook' ? (
+        <MissionLogbook
+          missionId={5}
+          subtitle="Checklist do alerta cumprido"
+          items={[
+            { label: 'Base selada contra a poeira', detail: 'Travas fechadas antes da tempestade' },
+            { label: 'Painéis limpos com vento seguro', detail: 'Geração de volta a 480 W' },
+            { label: 'Abrigo alcançado no alerta solar', detail: 'Blindagem de água e regolito conferida' },
+            { label: 'Base inspecionada depois da tempestade', detail: 'Painéis, antena, habitat e estufa em ordem' },
+            { label: 'Registro científico no diário', detail: 'Evento da Missão 5 documentado' },
+          ]}
+          onDone={() => setPhase('night')}
+        />
+      ) : null}
 
       <NightReportModal
         open={phase === 'night'}
@@ -413,9 +432,9 @@ export default function Mission5View({
       ) : null}
 
       {phase === 'ending' && step === 'scene7_ending' ? (
-        <div className="absolute inset-0 z-30 flex items-center justify-center p-4">
-          <ExpeditionEnding playerName={name} onReplay={finish} />
-        </div>
+        <MissionOutro missionId={5} lines={OUTRO_LINES} stats={hudStats} onDone={finish}>
+          <NasaSources />
+        </MissionOutro>
       ) : null}
     </div>
   )

@@ -8,6 +8,7 @@ import {
   BRIDGE_TO_SLEEP,
   HYGIENE_BONUS_CARD,
   BALANCED_MEAL_BONUS,
+  EXERCISES,
   computeMission2Scores,
   isMission2EnergySoftLocked,
   lightingForStep,
@@ -24,8 +25,8 @@ import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { CapiBridgeDialog } from './CapiBridgeDialog'
 import { EnergyDepletedOverlay } from './EnergyDepletedOverlay'
 import { HabitatInteriorBackground } from './HabitatInteriorBackground'
-import { Mission2Logbook } from './Mission2Logbook'
-import { Mission2Outro } from './Mission2Outro'
+import { MissionLogbook } from '../logbook/MissionLogbook'
+import { MissionOutro } from '../MissionOutro'
 import { NightReportModal } from './NightReportModal'
 import { ExerciseStep } from './steps/ExerciseStep'
 import { HygieneStep } from './steps/HygieneStep'
@@ -35,6 +36,12 @@ import { NutritionStep } from './steps/NutritionStep'
 import { SleepPrepStep } from './steps/SleepPrepStep'
 
 const DEFAULT_STATS: BaseStats = { energy: 68, water: 85, wellbeing: 70 }
+
+const OUTRO_LINES = [
+  'DADOS DA MISSÃO 2 ARMAZENADOS.',
+  'TENTANDO CONEXÃO COM A CENTRAL TERRESTRE…',
+  'Rotina de saúde salva a bordo!',
+] as const
 
 interface Props {
   /** Final meters after the day (energy/water spent stay saved for the base). */
@@ -378,17 +385,32 @@ export default function Mission2View({
       )}
 
       {step === 'logbook' && (
-        <Mission2Logbook
-          exercises={exercises}
-          nutritionCards={nutritionCards}
-          hygieneDone={hygieneDone}
-          sleepScore={scores.sleepScore}
+        <MissionLogbook
+          missionId={2}
+          subtitle="Checklist da rotina cumprida"
+          items={[
+            {
+              label: 'Exercícios do dia concluídos',
+              detail:
+                exercises.flatMap((id) => EXERCISES.find((e) => e.id === id)?.title ?? []).join(' · ') ||
+                `${exercises.length} atividades`,
+            },
+            {
+              label: 'Alimentação e hidratação',
+              detail: nutritionCards.includes('hydrate')
+                ? 'Refeição equilibrada · água da refeição ok'
+                : 'Refeição em aberto',
+            },
+            { label: 'Higiene do módulo', detail: `${hygieneDone.length} ações registradas` },
+            { label: 'Descanso e Sleep Score', detail: `Score ${scores.sleepScore}/100` },
+            { label: 'Registro científico no diário', detail: 'Rotina de saúde documentada' },
+          ]}
           onDone={() => setStep('mission_outro')}
         />
       )}
 
       {step === 'mission_outro' && (
-        <Mission2Outro stats={hudStats} onDone={finish} />
+        <MissionOutro missionId={2} lines={OUTRO_LINES} stats={hudStats} onDone={finish} />
       )}
 
       {energySoftLocked && <EnergyDepletedOverlay onExit={() => onExit(hudStats)} />}

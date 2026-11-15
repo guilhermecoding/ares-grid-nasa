@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { MEDIA } from '../constants/mediaAssets'
 import { ARCADIA_MAP_SRC } from '../data/mapPois'
+import { TOTAL_MISSIONS, TROPHY_SPRITE } from '../data/missionBadges'
 import { getMissionNode, isPlayableMission, MISSION_NODES, missionPathD } from '../data/missionNodes'
 import { LOCK_SPRITE } from '../data/tileSprites'
 import { McButton } from '../opening/McButton'
@@ -22,6 +23,7 @@ function dayOverlay(hour: number): string {
 function MarsMapComponent({ state, onEnterMission }: Props) {
   const storm = state.weather.intensity > 45
   const current = getMissionNode(state.level)
+  const expeditionDone = state.level > TOTAL_MISSIONS
   const [hintId, setHintId] = useState<string | null>(null)
   const [hintText, setHintText] = useState('')
   const [replayLevel, setReplayLevel] = useState<number | null>(null)
@@ -140,6 +142,20 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
                 </span>
               )}
 
+              {expeditionDone && node.level === TOTAL_MISSIONS ? (
+                <span className="lock-float pointer-events-none absolute -top-12 z-10 sm:-top-14">
+                  <img
+                    src={TROPHY_SPRITE}
+                    alt="Troféu: as 5 missões concluídas"
+                    width={96}
+                    height={96}
+                    draggable={false}
+                    className="trophy-glow size-16 object-contain sm:size-20"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </span>
+              ) : null}
+
               <span
                 className={`relative flex size-[min(20vw,6.25rem)] items-center justify-center rounded-full border-2 transition ${
                   unlocked
@@ -189,7 +205,9 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
       })}
 
       <div
-        className="pointer-events-none absolute z-[4] -translate-x-1/2 -translate-y-[95%] transition-[left,top] duration-300 ease-out"
+        className={`pointer-events-none absolute z-[4] transition-[left,top] duration-300 ease-out ${
+          expeditionDone ? '-translate-x-[135%] -translate-y-[30%]' : '-translate-x-1/2 -translate-y-[95%]'
+        }`}
         style={{ left: `${current.leftPct}%`, top: `${current.topPct}%` }}
       >
         <img

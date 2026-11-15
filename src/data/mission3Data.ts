@@ -22,7 +22,6 @@ export const MISSION3_META = {
   location: 'Arcadia Planitia',
   lat: '40.0° N',
   lon: '180.0° W',
-  nextMission: 'AVANÇAR PARA A MISSÃO 04: A PRIMEIRA ESTUFA DE MARTE',
 } as const
 
 /** Official citations shown in panels / logbook. */
@@ -261,14 +260,6 @@ export const CAPI_POTABILITY = {
   ],
   pass: ['Todos os indicadores verdes: APROVADO PARA CONSUMO!', `+${WATER_REWARD_L} L de água potável para a base.`],
 } as const
-
-/* ───────────── Diário de bordo ───────────── */
-
-export const LOGBOOK_EVENTS_M3 = [
-  { id: 'right', label: 'Análise SHARAD, perfuração em Arcadia Planitia e extração de água', correct: true },
-  { id: 'storm', label: 'Limpeza dos painéis depois de uma tempestade', correct: false },
-  { id: 'meal', label: 'Preparo da refeição dos astronautas', correct: false },
-] as const
 
 export function isCrossSectionStep(step: Mission3Step): boolean {
   return step === 'step3_3_drilling' || step === 'step3_4_sample_collection'

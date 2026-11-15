@@ -93,10 +93,4 @@ export const GAME_NASA_SOURCES = [
   NASA_CITATIONS_M5.shield,
 ] as const
 
-export const LOGBOOK_EVENTS_M5 = [
-  { id: 'right', label: 'Protocolo de poeira, limpeza dos painéis e abrigo contra radiação solar', correct: true },
-  { id: 'plant', label: 'Plantio de morangos na estufa', correct: false },
-  { id: 'ice', label: 'Perfuração do gelo subterrâneo', correct: false },
-] as const
-
 export const CURATED_DONKI_ALERT = 'Erupção solar classe M e uma CME a caminho — dados no estilo DONKI.'

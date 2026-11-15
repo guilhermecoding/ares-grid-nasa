@@ -2,8 +2,11 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { ConfettiBurst } from './components/ConfettiBurst'
 import { MissionGateTransition } from './components/MissionGateTransition'
 import { NasaDataModal } from './components/NasaDataModal'
+import { CertificateModal } from './components/world/CertificateModal'
+import { LogbookMenu } from './components/world/LogbookMenu'
 import { WorldScreen } from './components/WorldScreen'
 import { applyWeatherBundle, createWorldState } from './engine/worldEngine'
+import { TOTAL_MISSIONS } from './data/missionBadges'
 import { getMissionNode } from './data/missionNodes'
 import { MEDIA } from './constants/mediaAssets'
 import { McButton } from './opening/McButton'
@@ -30,6 +33,9 @@ type GateState = {
   resultStats?: BaseStats
 }
 
+/** Dialogs opened from the missions-screen menu. */
+type WorldPanel = 'logbook' | 'certificate' | 'certificate-first' | null
+
 const TUTORIAL_STEPS = [
   {
     title: 'Missões em Arcadia',
@@ -51,6 +57,7 @@ export default function App() {
   const [world, setWorld] = useState<WorldState | null>(null)
   const [bundle, setBundle] = useState<DonkiBundle | null>(null)
   const [nasaOpen, setNasaOpen] = useState(false)
+  const [worldPanel, setWorldPanel] = useState<WorldPanel>(null)
   const [tutorialStep, setTutorialStep] = useState(0)
   const [tutorialOpen, setTutorialOpen] = useState(false)
   const [tutorialBoxOpen, setTutorialBoxOpen] = useState(true)
@@ -137,12 +144,16 @@ export default function App() {
 
       const next = { ...w, level: nextLevel, xp: nextXp, message, stats: nextStats }
       setWorld(next)
+      // Read the store again: the mission logbook saved its photo while playing.
+      const stored = loadProgress()
       setProgress(
         updateProgress({
           level: nextLevel,
           xp: nextXp,
           unlockedTools: next.unlockedTools,
           baseStats: nextStats,
+          expeditionCompletedAt:
+            stored.expeditionCompletedAt ?? (nextLevel > TOTAL_MISSIONS ? Date.now() : null),
         }),
       )
     },
@@ -162,6 +173,8 @@ export default function App() {
     w = applyWeatherBundle(w, nextBundle)
     setWorld(w)
     setScreen('world')
+    // A save that finished the expedition before the certificate existed gets it now.
+    if (p.level > TOTAL_MISSIONS && !p.certificateSeen) setWorldPanel('certificate-first')
     if (!p.tutorialDone) {
       setTutorialStep(0)
       setTutorialReady(false)
@@ -217,7 +230,21 @@ export default function App() {
     const celebrateExit = g?.direction === 'exit' && !!g.completed
     setGate(null)
     setMissionReady(false)
-    if (celebrateExit) setCelebrate(true)
+    if (!celebrateExit) return
+    // First time all five missions are done: hand over the certificate (it brings its own confetti).
+    const stored = loadProgress()
+    if (stored.level > TOTAL_MISSIONS && !stored.certificateSeen) setWorldPanel('certificate-first')
+    else setCelebrate(true)
+  }, [])
+
+  const closeLogbook = useCallback(() => setWorldPanel(null), [])
+
+  const closeCertificate = useCallback(() => {
+    setWorldPanel(null)
+    const stored = loadProgress()
+    if (stored.level > TOTAL_MISSIONS && !stored.certificateSeen) {
+      setProgress(updateProgress({ certificateSeen: true }))
+    }
   }, [])
 
   useEffect(() => {
@@ -271,6 +298,14 @@ export default function App() {
           onHome={() => {
             if (world) syncProgressFromWorld(world)
             setScreen('home')
+          }}
+          onLogbook={() => {
+            soundEngine.click()
+            setWorldPanel('logbook')
+          }}
+          onCertificate={() => {
+            soundEngine.click()
+            setWorldPanel('certificate')
           }}
         />
       )}
@@ -378,6 +413,21 @@ export default function App() {
       />
 
       <NasaDataModal open={nasaOpen} weather={world?.weather ?? null} onClose={() => setNasaOpen(false)} />
+
+      {screen === 'world' && world && worldPanel === 'logbook' ? (
+        <LogbookMenu level={world.level} entries={progress.logbook} onClose={closeLogbook} />
+      ) : null}
+
+      {screen === 'world' && world && (worldPanel === 'certificate' || worldPanel === 'certificate-first') ? (
+        <CertificateModal
+          playerName={progress.playerName}
+          insignia={progress.insignia}
+          level={world.level}
+          completedAt={progress.expeditionCompletedAt ?? progress.logbook.m5?.capturedAt ?? null}
+          celebrate={worldPanel === 'certificate-first'}
+          onClose={closeCertificate}
+        />
+      ) : null}
 
       {celebrate && <ConfettiBurst />}
 

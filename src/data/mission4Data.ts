@@ -9,7 +9,7 @@ export type Mission4Step =
   | 'step4_5_bioregenerative'
   | 'step4_logbook_and_sleep'
 
-export type Mission4Phase = 'play' | 'logbook' | 'night'
+export type Mission4Phase = 'play' | 'logbook' | 'night' | 'outro'
 
 export interface Mission4Run {
   step: Mission4Step
@@ -135,12 +135,6 @@ export const BLSS_LINKS: readonly { id: BlssLinkId; label: string; detail: strin
   { id: 'water', label: 'Água', detail: 'O vapor das folhas vira água limpa de novo.' },
   { id: 'nutrient', label: 'Nutrientes', detail: 'O que sobra da planta volta como alimento do solo.' },
 ]
-
-export const LOGBOOK_EVENTS_M4 = [
-  { id: 'right', label: 'Construção, plantio e operação da estufa bioregenerativa', correct: true },
-  { id: 'storm', label: 'Limpeza dos painéis depois de uma tempestade', correct: false },
-  { id: 'drill', label: 'Perfuração em busca de gelo', correct: false },
-] as const
 
 export function speciesLabel(id: SpeciesId): string {
   for (const group of PLANT_GROUPS) {

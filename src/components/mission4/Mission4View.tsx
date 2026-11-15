@@ -10,6 +10,7 @@ import { MEDIA } from '../../constants/mediaAssets'
 import {
   CULTIVATION_METHODS,
   GREENHOUSE_MODULES,
+  speciesLabel,
   type BlssLinkId,
   type CultivationMethodId,
   type GreenhouseModuleId,
@@ -27,11 +28,18 @@ import type { Mission2Choices, Mission2Scores } from '../../data/mission2Data'
 import { clearMissionRun, loadProgress, resumeWaterLiters, saveMissionRun } from '../../services/progressStore'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { GreenhouseInteriorBackground } from './GreenhouseInteriorBackground'
-import { Mission4Logbook } from './Mission4Logbook'
+import { MissionLogbook } from '../logbook/MissionLogbook'
+import { MissionOutro } from '../MissionOutro'
 import { Mission4Stage } from './Mission4Stage'
 
 const DEFAULT_STATS: BaseStats = { energy: 70, water: 55, wellbeing: 72 }
 const EMPTY_CHOICES: Mission2Choices = { exercises: [], foods: [], waterRationL: 0.35, hygieneDone: [] }
+
+const OUTRO_LINES = [
+  'DADOS DA MISSÃO 4 ARMAZENADOS.',
+  'ENVIANDO O RELATÓRIO DA ESTUFA PARA A TERRA…',
+  'Primeira colheita de Marte registrada!',
+] as const
 
 const INTRO_GOALS = [
   { icon: <Wrench className="size-4" aria-hidden />, label: '4.1 Montar o domo' },
@@ -457,9 +465,22 @@ export default function Mission4View({
       )}
 
       {phase === 'logbook' && method ? (
-        <Mission4Logbook
-          method={method}
-          species={plants.map((item) => item.species)}
+        <MissionLogbook
+          missionId={4}
+          subtitle="Checklist da estufa cumprida"
+          items={[
+            { label: 'Estufa montada e ligada', detail: 'Energia e água conectadas ao domo' },
+            {
+              label: 'Método de cultivo escolhido',
+              detail: CULTIVATION_METHODS.find((item) => item.id === method)?.title ?? method,
+            },
+            {
+              label: 'Mudas plantadas e cuidadas',
+              detail: [...new Set(plants.map((item) => speciesLabel(item.species)))].join(' · '),
+            },
+            { label: 'Primeira colheita de Marte', detail: 'Comida e oxigênio no ciclo bioregenerativo' },
+            { label: 'Registro científico no diário', detail: 'Evento da Missão 4 documentado' },
+          ]}
           onDone={() => {
             setPhase('night')
             setStep('step4_logbook_and_sleep')
@@ -473,9 +494,13 @@ export default function Mission4View({
         choices={EMPTY_CHOICES}
         scores={nightScores}
         researchNote="Diário da estufa: método de cultivo, espécies plantadas e a foto do domo. Comida e oxigênio subiram no ciclo bioregenerativo."
-        doneLabel="Avançar para a Missão 05"
-        onDone={finish}
+        doneLabel="Enviar os dados da missão"
+        onDone={() => setPhase('outro')}
       />
+
+      {phase === 'outro' ? (
+        <MissionOutro missionId={4} lines={OUTRO_LINES} stats={hudStats} onDone={finish} />
+      ) : null}
     </div>
   )
 }

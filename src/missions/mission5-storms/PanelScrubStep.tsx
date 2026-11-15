@@ -89,7 +89,7 @@ export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSa
           </Tag>
           {!windSafe ? (
             <McButton
-              className={`mt-1 min-h-12 w-full px-3 font-pixel text-xs ${calm ? 'mc-btn-green btn-bob' : ''}`}
+              className={`mt-1 min-h-14 w-full px-3 font-pixel text-base ${calm ? 'mc-btn-green btn-bob' : ''}`}
               onClick={() => {
                 if (!calm) {
                   soundEngine.fail()

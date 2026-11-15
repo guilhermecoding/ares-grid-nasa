@@ -108,7 +108,7 @@ export function BlssStep({ linked, foodPct, o2Pct, onLink, onDone }: Props) {
                       onLink(link.id)
                     }}
                     aria-label={on ? `${link.label}: ligado` : `Ligar o caminho: ${link.label}`}
-                    className={`flex min-h-12 items-center gap-1.5 border-2 px-2.5 font-pixel text-[10px] whitespace-nowrap uppercase sm:text-xs ${
+                    className={`flex min-h-12 items-center gap-1.5 border-2 px-2.5 font-pixel text-xs whitespace-nowrap uppercase ${
                       on ? 'bg-[#04080f]/90 text-[#f4fff4]' : 'gk-pulse bg-[#04080f] text-[#f4fff4]'
                     }`}
                     style={{

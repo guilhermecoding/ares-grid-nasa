@@ -63,6 +63,24 @@ export interface PlayerProgress {
   skippedDialogGroups: string[]
   /** Unfinished mission attempts. Cleared when that mission is completed. */
   missionRuns: MissionRuns
+  /** Science photos and notes saved by each mission logbook. */
+  logbook: LogbookEntries
+  /** The completion certificate was already shown once. */
+  certificateSeen: boolean
+  /** Epoch ms of the first time all five missions were done. */
+  expeditionCompletedAt: number | null
+}
+
+export interface LogbookNote {
+  label: string
+  detail?: string
+}
+
+/** One saved logbook page: the photo caption and the checklist of that visit. */
+export interface LogbookEntry {
+  capturedAt: number
+  caption: string
+  notes: LogbookNote[]
 }
 
 /** In-progress Missão 01. A finished visit has no run and opens the panel replay. */
@@ -113,6 +131,12 @@ export interface MissionRuns {
   m5?: Mission5Run
 }
 
+export type MissionKey = keyof MissionRuns
+
+export type LogbookEntries = Partial<Record<MissionKey, LogbookEntry>>
+
+const MISSION_KEYS: readonly MissionKey[] = ['m1', 'm2', 'm3', 'm4', 'm5']
+
 const DEFAULT_PROGRESS: PlayerProgress = {
   version: 2,
   playerName: 'Robô Jr.',
@@ -133,6 +157,9 @@ const DEFAULT_PROGRESS: PlayerProgress = {
   seenDialogIds: [],
   skippedDialogGroups: [],
   missionRuns: {},
+  logbook: {},
+  certificateSeen: false,
+  expeditionCompletedAt: null,
 }
 
 function canUseStorage(): boolean {
@@ -171,6 +198,12 @@ export function loadProgress(): PlayerProgress {
       seenDialogIds,
       skippedDialogGroups,
       missionRuns: parseMissionRuns(parsed.missionRuns),
+      logbook: parseLogbook(parsed.logbook),
+      certificateSeen: parsed.certificateSeen === true,
+      expeditionCompletedAt:
+        typeof parsed.expeditionCompletedAt === 'number' && parsed.expeditionCompletedAt > 0
+          ? parsed.expeditionCompletedAt
+          : null,
     }
     // Persist firstInstalledAt once for legacy panel saves.
     if (parsedPanel?.migrated && mission1Panel) {
@@ -392,7 +425,7 @@ function parseMission4Run(raw: unknown): Mission4Run | undefined {
   const p = raw as Partial<Mission4Run>
   if (!p.step || !M4_STEPS.has(p.step)) return undefined
   if (typeof p.waterL !== 'number' || typeof p.waterPct !== 'number') return undefined
-  const phase = p.phase === 'logbook' || p.phase === 'night' ? p.phase : 'play'
+  const phase = p.phase === 'logbook' || p.phase === 'night' || p.phase === 'outro' ? p.phase : 'play'
   const method = p.method && M4_METHODS.has(p.method) ? p.method : null
   const growthStage: 0 | 1 | 2 = p.growthStage === 1 || p.growthStage === 2 ? p.growthStage : 0
   const plants = Array.isArray(p.plants)
@@ -459,6 +492,32 @@ function parseMissionRuns(raw: unknown): MissionRuns {
     m4: parseMission4Run(p.m4),
     m5: parseMission5Run(p.m5),
   }
+}
+
+function parseLogbook(raw: unknown): LogbookEntries {
+  if (!raw || typeof raw !== 'object') return {}
+  const source = raw as Record<string, unknown>
+  const entries: LogbookEntries = {}
+  for (const key of MISSION_KEYS) {
+    const item = source[key]
+    if (!item || typeof item !== 'object') continue
+    const entry = item as Partial<LogbookEntry>
+    if (typeof entry.capturedAt !== 'number' || typeof entry.caption !== 'string') continue
+    const notes = Array.isArray(entry.notes)
+      ? entry.notes.flatMap((note): LogbookNote[] => {
+          if (!note || typeof note !== 'object' || typeof (note as LogbookNote).label !== 'string') return []
+          const { label, detail } = note as LogbookNote
+          return [typeof detail === 'string' ? { label, detail } : { label }]
+        })
+      : []
+    entries[key] = { capturedAt: entry.capturedAt, caption: entry.caption, notes }
+  }
+  return entries
+}
+
+/** Store the photo and notes of a mission. A replay replaces the older page. */
+export function saveLogbookEntry(key: MissionKey, entry: LogbookEntry): void {
+  updateProgress({ logbook: { ...loadProgress().logbook, [key]: entry } })
 }
 
 export function saveMissionRun<K extends keyof MissionRuns>(
