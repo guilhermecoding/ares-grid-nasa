@@ -177,23 +177,9 @@ export default function App() {
         >
           <Mission01Screen
             stats={world?.stats}
-            muted={muted}
             onComplete={() => leaveMission(true)}
             onExit={() => leaveMission(false)}
             onReady={() => setMissionReady(true)}
-            onToggleMute={() => {
-              const next = !muted
-              setMuted(next)
-              setMutedState(next)
-              setProgress(updateProgress({ muted: next }))
-              if (!next) void unlockAudio()
-            }}
-            onNasa={() => setNasaOpen(true)}
-            onHome={() => {
-              leaveMission(false)
-              if (world) syncProgressFromWorld(world)
-              setScreen('home')
-            }}
           />
         </Suspense>
       )}

@@ -68,6 +68,42 @@
     font-family: inherit;
   }
 
+  /* Square / chunky game scrollbars (Firefox) */
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: #5ee7ff #1a1c3a;
+  }
+
+  /* Square / chunky game scrollbars (WebKit) */
+  *::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #1a1c3a;
+    border: 2px solid #0a1628;
+    border-radius: 0;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #5ee7ff;
+    border: 2px solid #1a1c3a;
+    border-radius: 0;
+    box-shadow:
+      inset 2px 2px 0 #9af0ff,
+      inset -2px -2px 0 #2a8aaa;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #7aeeff;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: #1a1c3a;
+    border-radius: 0;
+  }
+
   :focus-visible {
     outline: 3px solid var(--color-star);
     outline-offset: 2px;
@@ -91,6 +127,91 @@
 
   .font-body {
     font-family: var(--font-body);
+  }
+
+  /**
+   * Always-visible square game scrollbar.
+   * Use overflow-y: scroll (not auto) so the track stays on screen.
+   */
+  .scroll-game {
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+    scrollbar-color: #30346d #c8d0c8;
+  }
+
+  .scroll-game::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    -webkit-appearance: none;
+    display: block;
+  }
+
+  .scroll-game::-webkit-scrollbar-track {
+    background: #c8d0c8;
+    border: 2px solid #1a1c3a;
+    border-radius: 0;
+  }
+
+  .scroll-game::-webkit-scrollbar-thumb {
+    background: #30346d;
+    border: 2px solid #1a1c3a;
+    border-radius: 0;
+    box-shadow:
+      inset 2px 2px 0 #5a5e9a,
+      inset -2px -2px 0 #1a1c3a;
+    min-height: 28px;
+  }
+
+  .scroll-game::-webkit-scrollbar-thumb:hover {
+    background: #40448a;
+  }
+
+  .scroll-game::-webkit-scrollbar-corner {
+    background: #c8d0c8;
+    border-radius: 0;
+  }
+
+  /** Dark HUD variant (mission panels / dialogs) */
+  .scroll-game-dark {
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+    scrollbar-color: #5ee7ff #1a1c3a;
+  }
+
+  .scroll-game-dark::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    -webkit-appearance: none;
+    display: block;
+  }
+
+  .scroll-game-dark::-webkit-scrollbar-track {
+    background: #1a1c3a;
+    border: 2px solid #0a1628;
+    border-radius: 0;
+  }
+
+  .scroll-game-dark::-webkit-scrollbar-thumb {
+    background: #5ee7ff;
+    border: 2px solid #1a1c3a;
+    border-radius: 0;
+    box-shadow:
+      inset 2px 2px 0 #9af0ff,
+      inset -2px -2px 0 #2a8aaa;
+    min-height: 28px;
+  }
+
+  .scroll-game-dark::-webkit-scrollbar-thumb:hover {
+    background: #7aeeff;
+  }
+
+  .scroll-game-dark::-webkit-scrollbar-corner {
+    background: #1a1c3a;
+    border-radius: 0;
   }
 
   .touch-target {
@@ -191,6 +312,17 @@
     }
     50% {
       transform: translateY(-3px);
+    }
+  }
+
+  /** Soft CTA bounce on the ready / home gate */
+  .btn-bob {
+    animation: bob 1.6s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-bob {
+      animation: none;
     }
   }
 

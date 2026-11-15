@@ -37,8 +37,8 @@ export function WorldScreen({
 
       <StatusIndicators stats={state.stats} placement="world" />
 
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center px-3 pt-3 pl-[min(52vw,14rem)] pr-3 sm:px-4 sm:pt-4 sm:pl-[15rem]">
-        <h1 className="rounded border border-cyan-hud/40 bg-[#0a1628]/88 px-3 py-2 text-center font-pixel text-sm tracking-wide text-cyan-hud shadow-[0_0_18px_rgba(94,231,255,0.25)] sm:px-5 sm:text-lg md:text-xl">
+      <header className="pointer-events-none absolute top-0 left-0 z-20 max-w-[min(70vw,22rem)] px-3 pt-3 pr-2 sm:max-w-[28rem] sm:px-4 sm:pt-4">
+        <h1 className="rounded border border-cyan-hud/40 bg-[#0a1628]/88 px-3 py-2 text-left font-pixel text-sm tracking-wide text-cyan-hud shadow-[0_0_18px_rgba(94,231,255,0.25)] sm:px-4 sm:text-lg md:text-xl">
           Missões em Arcadia Planitia
         </h1>
       </header>

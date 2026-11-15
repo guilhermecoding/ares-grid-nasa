@@ -4,16 +4,18 @@ import { ResourcePips } from './ResourcePips'
 interface Props {
   stats: BaseStats
   /** Screen corner / placement — world map vs mission HUD. */
-  placement?: 'world' | 'mission'
+  placement?: 'world' | 'mission' | 'inline'
   className?: string
 }
 
 /** Compact top HUD strip for mission map and in-mission screens. */
 export function StatusIndicators({ stats, placement = 'world', className = '' }: Props) {
   const position =
-    placement === 'mission'
-      ? '' // positioned by parent (next to exit)
-      : 'absolute top-3 left-3 z-30 sm:top-4 sm:left-4'
+    placement === 'inline'
+      ? ''
+      : placement === 'mission'
+        ? 'absolute top-3 left-3 z-40'
+        : 'absolute top-3 right-3 z-30 sm:top-4 sm:right-4'
 
   return (
     <div

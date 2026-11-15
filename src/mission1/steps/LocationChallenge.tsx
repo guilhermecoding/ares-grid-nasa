@@ -29,9 +29,9 @@ function placePanel(
   panelH: number,
 ): PanelPos {
   const pad = 10
-  const safeTop = 56
-  const safeBottom = 12
-  const safeRight = 220 // leave room for status pips + exit
+  const safeTop = 56 // status indicators (left) + exit (right)
+  const safeBottom = 72 // challenge title strip at bottom
+  const safeRight = 72 // leave room for exit
   const gap = 12
 
   const ax = anchor.left - map.left + anchor.width / 2
@@ -157,15 +157,6 @@ export function LocationChallenge({ onConfirm }: Props) {
 
   return (
     <div className={`relative flex h-full min-h-0 flex-col ${capiOpen ? 'z-[60]' : 'z-10'}`}>
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-40 px-3 pt-3 pr-[13.5rem] sm:px-4 sm:pr-[15rem]">
-        <p className="font-pixel text-sm text-[#f4fff4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] sm:text-base">
-          Desafio 1.1 — Escolha o local dos painéis
-        </p>
-        <p className="mt-1 text-sm text-void-100/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">
-          Toque em A, B ou C. O cartão abre perto do ponto.
-        </p>
-      </div>
-
       <div ref={mapRef} className={`relative min-h-0 flex-1 ${capiOpen ? 'pointer-events-none' : ''}`}>
         {INSTALL_SITES.map((s) => {
           const active = selected === s.id
@@ -218,7 +209,7 @@ export function LocationChallenge({ onConfirm }: Props) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
               transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-              className="absolute z-40 w-[min(17.5rem,calc(100%-1.25rem))] max-h-[min(22rem,calc(100%-4.5rem))] overflow-y-auto rounded-md border-2 border-cyan-hud/55 bg-[#0a1628]/96 p-3 shadow-[0_12px_28px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:w-[min(19rem,calc(100%-1.5rem))] sm:p-3.5"
+              className="scroll-game-dark absolute z-40 w-[min(17.5rem,calc(100%-1.25rem))] max-h-[min(22rem,calc(100%-4.5rem))] rounded-none border-2 border-cyan-hud/55 bg-[#0a1628]/96 p-3 shadow-[0_12px_28px_rgba(0,0,0,0.55)] backdrop-blur-sm sm:w-[min(19rem,calc(100%-1.5rem))] sm:p-3.5"
               style={{
                 left: panelPos?.left ?? 12,
                 top: panelPos?.top ?? 72,
@@ -283,6 +274,15 @@ export function LocationChallenge({ onConfirm }: Props) {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      <div className="pointer-events-none z-40 shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-4">
+        <p className="font-pixel text-sm text-[#f4fff4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] sm:text-base">
+          Desafio 1.1 — Escolha o local dos painéis
+        </p>
+        <p className="mt-1 text-sm text-void-100/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">
+          Toque em A, B ou C. O cartão abre perto do ponto.
+        </p>
       </div>
 
       <PixelDialogBox

@@ -14,7 +14,7 @@ export function NasaDataModal({ open, weather, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-void-950/75 p-4" role="dialog" aria-modal>
-      <div className="glass-panel max-h-[90vh] w-full max-w-lg overflow-auto rounded-2xl p-5">
+      <div className="scroll-game-dark glass-panel max-h-[90vh] w-full max-w-lg rounded-none p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <h2 className="font-pixel text-xl text-star">Ciência NASA</h2>

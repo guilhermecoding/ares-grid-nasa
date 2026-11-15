@@ -53,7 +53,7 @@ export function SolarCalcChallenge({ site, onConfirm, onSeasonChange }: Props) {
           <EfficiencyGauge
             value={efficiency}
             active={installed}
-            className="absolute top-1 left-1 z-20 rounded-full bg-[#0a1628]/75 p-1 shadow-[0_4px_16px_rgba(0,0,0,0.4)] sm:top-2 sm:left-2"
+            className="absolute top-16 left-1 z-20 rounded-full bg-[#0a1628]/75 p-1 shadow-[0_4px_16px_rgba(0,0,0,0.4)] sm:top-[4.75rem] sm:left-2"
           />
 
           <div className="absolute inset-x-[4%] bottom-[6%] flex justify-center sm:inset-x-[8%] sm:bottom-[8%]">
@@ -79,7 +79,7 @@ export function SolarCalcChallenge({ site, onConfirm, onSeasonChange }: Props) {
         </div>
 
         {/* Side panel */}
-        <div className="flex max-h-[48%] min-h-0 flex-col gap-2 overflow-y-auto rounded border-2 border-cyan-hud/40 bg-[#0a1628]/92 p-3 md:max-h-none md:w-[min(100%,22rem)] md:shrink-0">
+        <div className="scroll-game-dark flex max-h-[48%] min-h-0 flex-col gap-2 rounded-none border-2 border-cyan-hud/40 bg-[#0a1628]/92 p-3 md:max-h-none md:w-[min(100%,22rem)] md:shrink-0">
           <p className="font-pixel text-sm text-cyan-hud">Desafio 1.2 — Cálculo solar</p>
           <p className="text-xs text-void-200">
             <SciTerm term="Arcadia Planitia" /> · Lat {MISSION1_META.lat} · Lon {MISSION1_META.lon}

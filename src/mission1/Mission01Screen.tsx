@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FloatingControls } from '../components/FloatingControls'
 import { StatusIndicators } from '../components/StatusIndicators'
 import {
   INSTALL_SITES,
@@ -53,10 +52,6 @@ interface Props {
   /** Called once the mission UI has painted and is ready for the gate to open. */
   onReady?: () => void
   stats?: BaseStats
-  muted?: boolean
-  onToggleMute?: () => void
-  onNasa?: () => void
-  onHome?: () => void
 }
 
 export default function Mission01Screen({
@@ -64,10 +59,6 @@ export default function Mission01Screen({
   onExit,
   onReady,
   stats = DEFAULT_STATS,
-  muted = false,
-  onToggleMute,
-  onNasa,
-  onHome,
 }: Props) {
   const [step, setStep] = useState<Mission1Step>('intro')
   const [site, setSite] = useState<SiteId>('B')
@@ -78,6 +69,8 @@ export default function Mission01Screen({
   const [hour] = useState(12)
 
   const storm = step === 'step3_storm_test'
+  /** Results meters sit under top-left HUD — park indicators next to exit only then. */
+  const indicatorsBesideExit = step === 'step3_storm_test'
   const siteLabel = INSTALL_SITES.find((s) => s.id === site)?.name ?? site
   const hudStats = useMemo(
     () => deriveMissionStats(stats, step, efficiency, stormChoice),
@@ -113,8 +106,10 @@ export default function Mission01Screen({
         dustIntensity={storm ? 0.85 : 0.35}
       />
 
+      {!indicatorsBesideExit && <StatusIndicators stats={hudStats} placement="mission" />}
+
       <div className="absolute top-3 right-3 z-50 flex items-center gap-2">
-        <StatusIndicators stats={hudStats} placement="mission" />
+        {indicatorsBesideExit && <StatusIndicators stats={hudStats} placement="inline" />}
         <button
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
@@ -123,10 +118,8 @@ export default function Mission01Screen({
           title="Sair"
         >
           <svg viewBox="0 0 24 24" className="size-7" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square" strokeLinejoin="miter">
-            {/* Door frame */}
             <path d="M4 3h10v18H4z" />
             <path d="M7 12h1.5" />
-            {/* Arrow out */}
             <path d="M15 12h6" />
             <path d="M18 9l3 3-3 3" />
           </svg>
@@ -180,20 +173,6 @@ export default function Mission01Screen({
       )}
 
       {step === 'step5_transmission' && <TransmissionOutro onDone={finish} />}
-
-      <FloatingControls
-        mapMode
-        canSleep={false}
-        muted={muted}
-        showLabels={false}
-        onLabelsDone={() => {}}
-        onMove={() => {}}
-        onInteract={() => {}}
-        onSleep={() => {}}
-        onToggleMute={() => onToggleMute?.()}
-        onNasa={() => onNasa?.()}
-        onHome={() => onHome?.()}
-      />
     </div>
   )
 }

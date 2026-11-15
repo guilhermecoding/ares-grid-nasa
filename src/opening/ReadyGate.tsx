@@ -56,7 +56,7 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
 
         {openingCompleted ? (
           <div className="mt-2 flex w-full flex-col items-center gap-3">
-            <McButton className="min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onContinue}>
+            <McButton className="btn-bob min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onContinue}>
               CONTINUAR
             </McButton>
             <button
@@ -71,7 +71,7 @@ export function ReadyGate({ openingCompleted, playerName, onStartIntro, onContin
             </button>
           </div>
         ) : (
-          <McButton className="mt-2 min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onStartIntro}>
+          <McButton className="btn-bob mt-2 min-h-14 w-full max-w-xs px-6 font-pixel text-xl font-bold sm:text-2xl" onClick={onStartIntro}>
             INICIAR AVENTURA
           </McButton>
         )}
