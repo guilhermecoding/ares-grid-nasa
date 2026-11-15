@@ -60,9 +60,13 @@ export interface ExerciseOption {
   waterCostL: number
   physicalGain: number
   sleepBonus: number
+  /** Direct wellbeing restored when this card is completed. */
+  wellbeingGain: number
+  /** Accent color for the activity card. */
+  color: string
 }
 
-/** Up to 2 exercises if energy/water budgets allow. */
+/** Complete exactly 2 of these 4 cards. */
 export const EXERCISES: readonly ExerciseOption[] = [
   {
     id: 'treadmill',
@@ -72,6 +76,8 @@ export const EXERCISES: readonly ExerciseOption[] = [
     waterCostL: 0.8,
     physicalGain: 14,
     sleepBonus: 4,
+    wellbeingGain: 14,
+    color: '#38bdf8',
   },
   {
     id: 'resistance',
@@ -81,6 +87,8 @@ export const EXERCISES: readonly ExerciseOption[] = [
     waterCostL: 0.5,
     physicalGain: 22,
     sleepBonus: 2,
+    wellbeingGain: 18,
+    color: '#f97316',
   },
   {
     id: 'stretch',
@@ -90,6 +98,8 @@ export const EXERCISES: readonly ExerciseOption[] = [
     waterCostL: 0.2,
     physicalGain: 6,
     sleepBonus: 6,
+    wellbeingGain: 10,
+    color: '#4ade80',
   },
   {
     id: 'balance',
@@ -99,8 +109,12 @@ export const EXERCISES: readonly ExerciseOption[] = [
     waterCostL: 0.3,
     physicalGain: 8,
     sleepBonus: 5,
+    wellbeingGain: 12,
+    color: '#a78bfa',
   },
 ] as const
+
+export const EXERCISE_REQUIRED_COUNT = 2
 
 export type FoodGroupId = 'protein' | 'veggie' | 'fruit'
 
@@ -130,6 +144,68 @@ export const FOOD_GROUPS: Record<FoodGroupId, { label: string; short: string }> 
   fruit: { label: 'Frutas / Energia', short: 'Frutas' },
 }
 
+export type NutritionCardId = FoodGroupId | 'hydrate'
+
+export interface NutritionCard {
+  id: NutritionCardId
+  title: string
+  detail: string
+  energyCost: number
+  waterCostL: number
+  wellbeingGain: number
+  color: string
+  /** Food item ids added when this group card is completed. */
+  foodIds?: string[]
+  /** Water ration set when hydrate card is completed. */
+  waterRationL?: number
+}
+
+/** Four nutrition cards — complete at least 3 (incl. hydrate) for balance. */
+export const NUTRITION_CARDS: readonly NutritionCard[] = [
+  {
+    id: 'protein',
+    title: 'Proteínas',
+    detail: 'Feijão + soja',
+    energyCost: 3,
+    waterCostL: 0.25,
+    wellbeingGain: 8,
+    color: '#f0b429',
+    foodIds: ['beans', 'tofu'],
+  },
+  {
+    id: 'veggie',
+    title: 'Vegetais',
+    detail: 'Folhas da estufa',
+    energyCost: 2,
+    waterCostL: 0.15,
+    wellbeingGain: 7,
+    color: '#5ecf9a',
+    foodIds: ['lettuce', 'carrot'],
+  },
+  {
+    id: 'fruit',
+    title: 'Frutas',
+    detail: 'Energia rápida',
+    energyCost: 2,
+    waterCostL: 0.1,
+    wellbeingGain: 6,
+    color: '#ff6b8a',
+    foodIds: ['apple', 'berry'],
+  },
+  {
+    id: 'hydrate',
+    title: 'Hidratação',
+    detail: '2.2 L no dia',
+    energyCost: 0,
+    waterCostL: 2.2,
+    wellbeingGain: 10,
+    color: '#38bdf8',
+    waterRationL: 2.2,
+  },
+] as const
+
+export const NUTRITION_REQUIRED_COUNT = 3
+
 export const WATER_RATION = {
   minL: 1.5,
   maxL: 3.0,
@@ -150,7 +226,7 @@ export interface HygieneAction {
   contaminationDrop: number
 }
 
-export const HYGIENE_ACTIONS: readonly HygieneAction[] = [
+export const HYGIENE_ACTIONS: readonly (HygieneAction & { wellbeingGain: number; color: string })[] = [
   {
     id: 'teeth',
     title: 'Escovar os dentes',
@@ -158,6 +234,8 @@ export const HYGIENE_ACTIONS: readonly HygieneAction[] = [
     waterCostL: 0.05,
     energyCost: 1,
     contaminationDrop: 25,
+    wellbeingGain: 5,
+    color: '#7b8cff',
   },
   {
     id: 'body',
@@ -166,6 +244,8 @@ export const HYGIENE_ACTIONS: readonly HygieneAction[] = [
     waterCostL: 0.2,
     energyCost: 2,
     contaminationDrop: 40,
+    wellbeingGain: 8,
+    color: '#5ee7ff',
   },
   {
     id: 'sensors',
@@ -174,8 +254,20 @@ export const HYGIENE_ACTIONS: readonly HygieneAction[] = [
     waterCostL: 0.08,
     energyCost: 2,
     contaminationDrop: 35,
+    wellbeingGain: 6,
+    color: '#c47848',
   },
 ] as const
+
+export const HYGIENE_BONUS_CARD = {
+  id: 'cabin' as const,
+  title: 'Revisar cabine',
+  detail: 'Última checagem de higiene',
+  energyCost: 1,
+  waterCostL: 0.05,
+  wellbeingGain: 4,
+  color: '#4ade80',
+}
 
 export const NIGHT_REPORT_STEPS = [
   { id: 'health', label: 'Saúde', title: 'Indicadores fisiológicos' },

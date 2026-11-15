@@ -1,149 +1,158 @@
-import { motion } from 'framer-motion'
-import { useMemo, useState } from 'react'
-import { ScrollHintArea } from '../../ScrollHintArea'
+import { useCallback, useMemo, useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
 import {
-  FOOD_GROUPS,
-  FOOD_ITEMS,
-  WATER_RATION,
-  foodCosts,
-  nutritionBalance,
-  type FoodGroupId,
+  NUTRITION_CARDS,
+  NUTRITION_REQUIRED_COUNT,
+  type NutritionCardId,
 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
+import { ActivityCard, ActivityCardGrid, StageCostBadge } from '../ActivityCard'
 import { SciTermM2 } from '../SciTermM2'
+
+function NutritionIcon({ id }: { id: NutritionCardId }) {
+  if (id === 'hydrate') {
+    return (
+      <svg viewBox="0 0 40 40" className="size-10 sm:size-12" aria-hidden>
+        <path d="M20 6c0 0-10 12-10 18a10 10 0 0020 0c0-6-10-18-10-18z" fill="#38bdf8" opacity="0.9" />
+      </svg>
+    )
+  }
+  if (id === 'protein') {
+    return (
+      <svg viewBox="0 0 40 40" className="size-10 sm:size-12" aria-hidden>
+        <ellipse cx="20" cy="22" rx="12" ry="8" fill="#f0b429" />
+        <ellipse cx="20" cy="18" rx="8" ry="5" fill="#fbbf24" />
+      </svg>
+    )
+  }
+  if (id === 'veggie') {
+    return (
+      <svg viewBox="0 0 40 40" className="size-10 sm:size-12" aria-hidden>
+        <path d="M20 8c-6 8-10 14-10 20a10 10 0 0020 0c0-6-4-12-10-20z" fill="#5ecf9a" />
+        <path d="M20 8v10" stroke="#166534" strokeWidth="2" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 40 40" className="size-10 sm:size-12" aria-hidden>
+      <circle cx="20" cy="22" r="10" fill="#ff6b8a" />
+      <path d="M20 10c2 4 4 6 6 7" stroke="#166534" strokeWidth="2" fill="none" />
+    </svg>
+  )
+}
 
 interface Props {
   energyPct: number
   waterL: number
-  onConfirm: (foods: string[], waterRationL: number) => void
+  completedIds: NutritionCardId[]
+  onCompleteOne: (
+    id: NutritionCardId,
+    energyCost: number,
+    waterCostL: number,
+    wellbeingGain: number,
+    foodIds: string[],
+    waterRationL?: number,
+  ) => void
+  onContinue: () => void
 }
 
-export function NutritionStep({ energyPct, waterL, onConfirm }: Props) {
-  const [foods, setFoods] = useState<string[]>([])
-  const [ration, setRation] = useState(2.2)
+export function NutritionStep({
+  energyPct,
+  waterL,
+  completedIds,
+  onCompleteOne,
+  onContinue,
+}: Props) {
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const doneSet = useMemo(() => new Set(completedIds), [completedIds])
 
-  const balance = nutritionBalance(foods)
-  const costs = foodCosts(foods)
-  const groupsPresent = useMemo(() => {
-    const g = new Set<FoodGroupId>()
-    for (const id of foods) {
-      const item = FOOD_ITEMS.find((f) => f.id === id)
-      if (item) g.add(item.group)
-    }
-    return g
-  }, [foods])
+  const energySpent = useMemo(
+    () => NUTRITION_CARDS.filter((c) => doneSet.has(c.id)).reduce((s, c) => s + c.energyCost, 0),
+    [doneSet],
+  )
+  const waterSpent = useMemo(
+    () => NUTRITION_CARDS.filter((c) => doneSet.has(c.id)).reduce((s, c) => s + c.waterCostL, 0),
+    [doneSet],
+  )
 
-  const waste = ration > WATER_RATION.wasteThresholdL
-  const low = ration < WATER_RATION.idealMinL
-  const canConfirm =
-    foods.length >= 2 &&
-    groupsPresent.size >= 2 &&
-    costs.energy <= energyPct &&
-    costs.waterL + ration <= waterL
+  const hasHydrate = doneSet.has('hydrate')
+  const ready = completedIds.length >= NUTRITION_REQUIRED_COUNT && hasHydrate
 
-  const toggleFood = (id: string) => {
-    soundEngine.click()
-    setFoods((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
-  }
+  const handleActivate = useCallback(
+    (id: string) => {
+      setBusyId(null)
+      const card = NUTRITION_CARDS.find((c) => c.id === id)
+      if (!card || doneSet.has(card.id)) return
+      if (card.energyCost > energyPct || card.waterCostL > waterL) return
+      onCompleteOne(
+        card.id,
+        card.energyCost,
+        card.waterCostL,
+        card.wellbeingGain,
+        card.foodIds ?? [],
+        card.waterRationL,
+      )
+    },
+    [doneSet, energyPct, onCompleteOne, waterL],
+  )
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
       <div className="pointer-events-none h-[7.5rem] shrink-0 sm:h-32" />
 
-      <ScrollHintArea className="min-h-0 flex-1 px-3 pb-2 sm:px-4">
-        <div className="mx-auto max-w-2xl">
-          <div className="flex items-start gap-3">
-            <img src={MEDIA.mission2.tray} alt="" className="size-12 object-contain" draggable={false} />
-            <div>
-              <h2 className="font-pixel text-sm text-cyan-hud sm:text-base">Desafio 2.2 — Alimentação</h2>
-              <p className="mt-1 font-pixel text-[10px] leading-snug text-void-200 sm:text-xs">
-                Monte uma refeição equilibrada e ajuste a água do dia. <SciTermM2 term="Metabolismo" /> e{' '}
-                <SciTermM2 term="Hidratação" /> importam para o sono.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <div className="mb-1 flex justify-between font-pixel text-[9px] text-void-300">
-              <span>Equilíbrio nutricional</span>
-              <span className="text-[#f4fff4]">{balance}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-void-950">
-              <motion.div
-                className="h-full rounded-full bg-[#5ecf9a]"
-                animate={{ width: `${balance}%` }}
-                transition={{ type: 'spring', stiffness: 200, damping: 24 }}
+      <div className="flex min-h-0 flex-1 flex-col justify-center pb-28">
+        <ActivityCardGrid
+          title="Etapa — Alimentação"
+          subtitle={
+            <span className="inline-flex items-center gap-2">
+              <img src={MEDIA.mission2.tray} alt="" className="size-8 object-contain" draggable={false} />
+              <span>
+                Complete <strong>3 cards</strong> (inclua Hidratação). <SciTermM2 term="Metabolismo" /> e{' '}
+                <SciTermM2 term="Hidratação" />. Feitos: {completedIds.length}/{NUTRITION_REQUIRED_COUNT}
+              </span>
+            </span>
+          }
+        >
+          {NUTRITION_CARDS.map((card) => {
+            const done = doneSet.has(card.id)
+            const cannotAfford = card.energyCost > energyPct || card.waterCostL > waterL
+            return (
+              <ActivityCard
+                key={card.id}
+                card={{
+                  id: card.id,
+                  title: card.title,
+                  detail: card.detail,
+                  color: card.color,
+                  energyCost: card.energyCost,
+                  waterCostL: card.waterCostL,
+                  wellbeingGain: card.wellbeingGain,
+                  iconNode: <NutritionIcon id={card.id} />,
+                }}
+                done={done}
+                disabled={cannotAfford}
+                busy={busyId !== null && busyId !== card.id}
+                onStart={setBusyId}
+                onActivate={handleActivate}
               />
-            </div>
-            {groupsPresent.size < 3 && foods.length > 0 && (
-              <p className="mt-1 font-pixel text-[9px] text-energy">
-                Capi: falta variedade — inclua os 3 grupos (proteína, vegetais e frutas)!
-              </p>
-            )}
-          </div>
+            )
+          })}
+        </ActivityCardGrid>
+      </div>
 
-          {(Object.keys(FOOD_GROUPS) as FoodGroupId[]).map((group) => (
-            <div key={group} className="mt-3">
-              <p className="font-pixel text-[10px] text-cyan-hud">{FOOD_GROUPS[group].label}</p>
-              <div className="mt-1.5 flex flex-wrap gap-2">
-                {FOOD_ITEMS.filter((f) => f.group === group).map((f) => {
-                  const on = foods.includes(f.id)
-                  return (
-                    <motion.button
-                      key={f.id}
-                      type="button"
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => toggleFood(f.id)}
-                      className={`min-h-12 min-w-[7.5rem] rounded-md border-2 px-3 py-2 font-pixel text-[10px] sm:text-xs ${
-                        on
-                          ? 'border-cyan-hud bg-cyan-hud/15 text-[#f4fff4]'
-                          : 'border-void-500/50 bg-[#0a1628]/8 text-void-200'
-                      }`}
-                    >
-                      {f.label}
-                    </motion.button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
+      <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo da refeição" />
 
-          <div className="mt-4 rounded-md border border-cyan-hud/30 bg-[#0a1628]/8 p-3">
-            <label className="flex items-center justify-between font-pixel text-[10px] text-void-200 sm:text-xs">
-              <span>Cota de água do dia</span>
-              <span className="text-cyan-hud tabular-nums">{ration.toFixed(1)}L</span>
-            </label>
-            <input
-              type="range"
-              min={WATER_RATION.minL}
-              max={WATER_RATION.maxL}
-              step={0.1}
-              value={ration}
-              onChange={(e) => setRation(Number(e.target.value))}
-              className="mt-2 h-3 w-full accent-cyan-hud"
-              aria-label="Cota de água"
-            />
-            <p className="mt-2 font-pixel text-[9px] leading-snug text-void-300 sm:text-[10px]">
-              {low && 'Pouca água: hidratação e qualidade do sono caem.'}
-              {waste && 'Água demais: desperdiça a reserva limitada da base.'}
-              {!low && !waste && 'Faixa ideal para o corpo e para a base.'}
-            </p>
-          </div>
-        </div>
-      </ScrollHintArea>
-
-      <div className="shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-4">
+      <div className="absolute inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-end px-3 sm:px-4">
         <McButton
-          className="min-h-12 w-full font-pixel text-lg font-bold disabled:opacity-40"
-          disabled={!canConfirm}
+          className="min-h-12 min-w-[10rem] font-pixel text-lg font-bold disabled:opacity-40"
+          disabled={!ready || busyId !== null}
           onClick={() => {
             soundEngine.harvest()
-            onConfirm(foods, ration)
+            onContinue()
           }}
         >
-          Confirmar refeição
+          Continuar
         </McButton>
       </div>
     </div>

@@ -2,16 +2,15 @@ import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StatusIndicators } from '../StatusIndicators'
 import {
+  HYGIENE_BONUS_CARD,
   computeMission2Scores,
-  exerciseCosts,
-  foodCosts,
-  hygieneCosts,
   lightingForStep,
   roomAccentForStep,
   type ExerciseId,
   type HygieneId,
   type Mission2Choices,
   type Mission2Step,
+  type NutritionCardId,
 } from '../../data/mission2Data'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { HabitatInteriorBackground } from './HabitatInteriorBackground'
@@ -39,7 +38,7 @@ function clamp(n: number) {
 }
 
 function pctToLiters(waterPct: number) {
-  return Math.round(((waterPct / 100) * MAX_WATER_RESERVE_L) * 10) / 10
+  return Math.round((waterPct / 100) * MAX_WATER_RESERVE_L * 10) / 10
 }
 
 function litersToPct(liters: number) {
@@ -57,11 +56,14 @@ export default function Mission2View({
   const [step, setStep] = useState<Mission2Step>('intro')
   const [baseEnergy, setBaseEnergy] = useState(() => clamp(stats.energy))
   const [waterL, setWaterL] = useState(() => pctToLiters(stats.water))
+  const [wellbeingBoost, setWellbeingBoost] = useState(0)
   const [contaminationRisk, setContaminationRisk] = useState(100)
   const [exercises, setExercises] = useState<ExerciseId[]>([])
   const [foods, setFoods] = useState<string[]>([])
+  const [nutritionCards, setNutritionCards] = useState<NutritionCardId[]>([])
   const [waterRationL, setWaterRationL] = useState(2.2)
   const [hygieneDone, setHygieneDone] = useState<HygieneId[]>([])
+  const [cabinDone, setCabinDone] = useState(false)
   const [nightOpen, setNightOpen] = useState(false)
 
   const choices: Mission2Choices = useMemo(
@@ -75,13 +77,12 @@ export default function Mission2View({
   )
 
   const wellbeingLive = useMemo(() => {
-    if (step === 'intro' || step === 'step2_1_exercise') {
-      return clamp(stats.wellbeing * 0.55 + baseEnergy * 0.15)
+    const base = clamp(stats.wellbeing * 0.55 + wellbeingBoost)
+    if (step === 'morning_wakeup' || step === 'special_capi_night_report') {
+      return clamp(Math.max(base, scores.wellbeing))
     }
-    if (step === 'step2_2_nutrition') return clamp(52 + exercises.length * 6 + stats.wellbeing * 0.2)
-    if (step === 'step2_3_hygiene') return clamp(58 + nutritionBalanceProxy(foods) * 0.2)
-    return scores.wellbeing
-  }, [step, baseEnergy, exercises.length, foods, scores.wellbeing, stats.wellbeing])
+    return clamp(base)
+  }, [step, wellbeingBoost, scores.wellbeing, stats.wellbeing])
 
   const hudStats: BaseStats = useMemo(
     () => ({
@@ -113,28 +114,64 @@ export default function Mission2View({
     setWaterL((w) => Math.max(0, Math.round((w - water) * 10) / 10))
   }, [])
 
-  const onExerciseConfirm = (ids: ExerciseId[]) => {
-    const c = exerciseCosts(ids)
-    spend(c.energy, c.waterL)
-    setExercises(ids)
-    setStep('step2_2_nutrition')
-  }
+  const gainWellbeing = useCallback((n: number) => {
+    setWellbeingBoost((b) => b + n)
+  }, [])
 
-  const onNutritionConfirm = (foodIds: string[], ration: number) => {
-    const c = foodCosts(foodIds)
-    spend(c.energy, c.waterL + ration)
-    setFoods(foodIds)
-    setWaterRationL(ration)
-    setStep('step2_3_hygiene')
-  }
+  const onExerciseOne = useCallback(
+    (id: ExerciseId, energyCost: number, waterCostL: number, wellbeingGain: number) => {
+      spend(energyCost, waterCostL)
+      gainWellbeing(wellbeingGain)
+      setExercises((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    },
+    [gainWellbeing, spend],
+  )
 
-  const onHygieneConfirm = (done: HygieneId[]) => {
-    const c = hygieneCosts(done)
-    spend(c.energy, c.waterL)
-    setHygieneDone(done)
-    setContaminationRisk(0)
-    setStep('step2_4_sleep_prep')
-  }
+  const onNutritionOne = useCallback(
+    (
+      id: NutritionCardId,
+      energyCost: number,
+      waterCostL: number,
+      wellbeingGain: number,
+      foodIds: string[],
+      ration?: number,
+    ) => {
+      spend(energyCost, waterCostL)
+      gainWellbeing(wellbeingGain)
+      setNutritionCards((prev) => (prev.includes(id) ? prev : [...prev, id]))
+      if (foodIds.length) {
+        setFoods((prev) => {
+          const next = new Set(prev)
+          for (const f of foodIds) next.add(f)
+          return [...next]
+        })
+      }
+      if (ration != null) setWaterRationL(ration)
+    },
+    [gainWellbeing, spend],
+  )
+
+  const onHygieneOne = useCallback(
+    (
+      id: HygieneId | typeof HYGIENE_BONUS_CARD.id,
+      energyCost: number,
+      waterCostL: number,
+      wellbeingGain: number,
+      contaminationDrop: number,
+    ) => {
+      spend(energyCost, waterCostL)
+      gainWellbeing(wellbeingGain)
+      if (id === HYGIENE_BONUS_CARD.id) {
+        setCabinDone(true)
+      } else {
+        setHygieneDone((prev) => (prev.includes(id) ? prev : [...prev, id]))
+      }
+      if (contaminationDrop > 0) {
+        setContaminationRisk((r) => Math.max(0, r - contaminationDrop))
+      }
+    },
+    [gainWellbeing, spend],
+  )
 
   const onSleep = () => {
     setNightOpen(true)
@@ -180,11 +217,23 @@ export default function Mission2View({
       {step === 'intro' && <IntroStep onContinue={() => setStep('step2_1_exercise')} />}
 
       {step === 'step2_1_exercise' && (
-        <ExerciseStep energyPct={baseEnergy} waterL={waterL} onConfirm={onExerciseConfirm} />
+        <ExerciseStep
+          energyPct={baseEnergy}
+          waterL={waterL}
+          completedIds={exercises}
+          onCompleteOne={onExerciseOne}
+          onContinue={() => setStep('step2_2_nutrition')}
+        />
       )}
 
       {step === 'step2_2_nutrition' && (
-        <NutritionStep energyPct={baseEnergy} waterL={waterL} onConfirm={onNutritionConfirm} />
+        <NutritionStep
+          energyPct={baseEnergy}
+          waterL={waterL}
+          completedIds={nutritionCards}
+          onCompleteOne={onNutritionOne}
+          onContinue={() => setStep('step2_3_hygiene')}
+        />
       )}
 
       {step === 'step2_3_hygiene' && (
@@ -192,14 +241,20 @@ export default function Mission2View({
           energyPct={baseEnergy}
           waterL={waterL}
           contaminationRisk={contaminationRisk}
-          onConfirm={onHygieneConfirm}
+          completedIds={hygieneDone}
+          cabinDone={cabinDone}
+          onCompleteOne={onHygieneOne}
+          onContinue={() => {
+            setContaminationRisk(0)
+            setStep('step2_4_sleep_prep')
+          }}
         />
       )}
 
       {step === 'step2_4_sleep_prep' && (
         <SleepPrepStep
-          exerciseDone={exercises.length > 0}
-          nutritionDone={foods.length > 0}
+          exerciseDone={exercises.length >= 2}
+          nutritionDone={foods.length > 0 && nutritionCards.includes('hydrate')}
           hygieneDone={hygieneDone.length >= 3}
           onSleep={onSleep}
         />
@@ -225,15 +280,4 @@ export default function Mission2View({
       )}
     </div>
   )
-}
-
-function nutritionBalanceProxy(foodIds: string[]): number {
-  const groups = new Set(
-    foodIds.map((id) => {
-      if (['beans', 'tofu', 'grain'].includes(id)) return 'p'
-      if (['lettuce', 'carrot', 'pepper'].includes(id)) return 'v'
-      return 'f'
-    }),
-  )
-  return groups.size * 33
 }
