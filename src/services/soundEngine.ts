@@ -46,7 +46,115 @@ function beep(freq: number, duration: number, type: OscillatorType = 'square', g
   osc.stop(audio.currentTime + duration)
 }
 
+/** One oscillator that glides from one pitch to another. */
+function sweep(from: number, to: number, duration: number, type: OscillatorType = 'sine', gain = 0.05): void {
+  if (muted) return
+  const audio = getCtx()
+  if (!audio) return
+  const t0 = audio.currentTime
+  const osc = audio.createOscillator()
+  const g = audio.createGain()
+  osc.type = type
+  osc.frequency.setValueAtTime(from, t0)
+  osc.frequency.exponentialRampToValueAtTime(to, t0 + duration)
+  g.gain.setValueAtTime(gain, t0)
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + duration)
+  osc.connect(g)
+  g.connect(audio.destination)
+  osc.start(t0)
+  osc.stop(t0 + duration)
+}
+
+/** Short filtered noise: sparks, spray, water rush, dust. */
+function noiseBurst(
+  duration: number,
+  filter: BiquadFilterType,
+  from: number,
+  to: number = from,
+  gain = 0.05,
+): void {
+  if (muted) return
+  const audio = getCtx()
+  if (!audio) return
+  const t0 = audio.currentTime
+  const length = Math.max(1, Math.floor(audio.sampleRate * duration))
+  const buffer = audio.createBuffer(1, length, audio.sampleRate)
+  const data = buffer.getChannelData(0)
+  for (let i = 0; i < length; i += 1) data[i] = Math.random() * 2 - 1
+  const noise = audio.createBufferSource()
+  noise.buffer = buffer
+  const biquad = audio.createBiquadFilter()
+  biquad.type = filter
+  biquad.frequency.setValueAtTime(from, t0)
+  biquad.frequency.exponentialRampToValueAtTime(to, t0 + duration)
+  biquad.Q.value = 0.9
+  const g = audio.createGain()
+  g.gain.setValueAtTime(gain, t0)
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + duration)
+  noise.connect(biquad)
+  biquad.connect(g)
+  g.connect(audio.destination)
+  noise.start(t0)
+  noise.stop(t0 + duration)
+}
+
 export const soundEngine = {
+  /** Picking up a cable, a seed or a tool. */
+  pickup: () => sweep(420, 760, 0.07, 'sine', 0.035),
+  /** A module or a seed locks into place. */
+  snap: () => {
+    beep(170, 0.1, 'square', 0.06)
+    setTimeout(() => beep(540, 0.05, 'square', 0.035), 45)
+  },
+  /** Electric cable connects: spark crackle and a rising charge. */
+  zap: () => {
+    noiseBurst(0.16, 'highpass', 2600, 5200, 0.07)
+    sweep(240, 1500, 0.32, 'sawtooth', 0.05)
+    setTimeout(() => beep(1320, 0.16, 'square', 0.04), 260)
+  },
+  /** Water pipe connects: rush and three bubbles. */
+  flow: () => {
+    noiseBurst(0.5, 'bandpass', 380, 1400, 0.06)
+    setTimeout(() => sweep(420, 760, 0.08, 'sine', 0.045), 120)
+    setTimeout(() => sweep(520, 900, 0.08, 'sine', 0.045), 240)
+    setTimeout(() => sweep(640, 1100, 0.1, 'sine', 0.045), 360)
+  },
+  /** Mist nozzle. Call it while the sprayer moves. */
+  spray: () => noiseBurst(0.12, 'highpass', 3400, 5200, 0.03),
+  /** Plants grow one stage. */
+  grow: () => {
+    const notes = [392, 494, 587, 784, 988]
+    notes.forEach((freq, i) => setTimeout(() => beep(freq, 0.1, 'sine', 0.045), i * 70))
+    setTimeout(() => sweep(900, 1900, 0.3, 'triangle', 0.025), 300)
+  },
+  /** One link of a cycle lights up. Higher pitch for each new link. */
+  cycle: (index: number) => {
+    const base = 440 * 2 ** (Math.max(0, index) / 4)
+    sweep(base * 0.6, base, 0.14, 'triangle', 0.05)
+    setTimeout(() => beep(base * 1.5, 0.18, 'sine', 0.045), 120)
+  },
+  /** Heavy hatch latch closes. */
+  latch: () => {
+    beep(110, 0.14, 'square', 0.08)
+    noiseBurst(0.07, 'bandpass', 1800, 900, 0.05)
+    setTimeout(() => beep(1500, 0.03, 'square', 0.03), 70)
+  },
+  /** Ratchet tick while a latch slides. */
+  ratchet: () => beep(300 + Math.random() * 60, 0.02, 'square', 0.025),
+  /** One Geiger counter click. */
+  geiger: () => noiseBurst(0.018, 'highpass', 3000, 3000, 0.06),
+  /** Brush over dusty glass. */
+  scrub: () => noiseBurst(0.09, 'bandpass', 900, 1500, 0.03),
+  /** Scanner sweep on an inspection point. */
+  scan: () => {
+    sweep(520, 1560, 0.28, 'sine', 0.045)
+    setTimeout(() => beep(1760, 0.1, 'square', 0.03), 280)
+  },
+  /** One data packet leaves the antenna. */
+  uplink: () => {
+    beep(1180, 0.04, 'square', 0.03)
+    setTimeout(() => beep(1580, 0.05, 'square', 0.03), 55)
+  },
   telemetry: () => beep(880, 0.06, 'sine', 0.03),
   step: () => beep(220, 0.08, 'triangle', 0.04),
   harvest: () => {
