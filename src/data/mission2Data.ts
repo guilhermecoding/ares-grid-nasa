@@ -38,17 +38,20 @@ export const SCI_TERMS_M2: Record<string, string> = {
   'Arcadia Planitia': 'Uma planície grande e relativamente plana em Marte.',
 }
 
-export const INTRO_LINES_M2_A = [
-  'Energia solar ligada — ótimo trabalho na Missão 1!',
-  'Agora vamos cuidar de VOCÊ: músculos, ossos, comida, água e sono.',
+/** Short Capi intro parts — one dialog box each. */
+export const INTRO_PARTS_M2 = [
+  ['A vida fora da Terra pode abalar a saúde de um astronauta corajoso.'] as const,
+  ['Com a energia ligada, vamos cuidar de VOCÊ.'] as const,
+  ['Hoje: exercício, refeição, higiene e descanso.'] as const,
 ] as const
 
-export const INTRO_LINES_M2_B = [
-  `Em Marte a gravidade é só ${MISSION2_META.marsGravityPct}% da Terra. Sem rotina, o corpo enfraquece.`,
-  'Organize o dia: Exercício, Refeição, Higiene e descanso. Cada escolha usa água ou energia da base!',
-] as const
+export const INTRO_HIGHLIGHT_WORDS_M2 = ['saúde', 'VOCÊ', 'exercício', 'refeição', 'higiene', 'descanso'] as const
 
-export const INTRO_HIGHLIGHT_WORDS_M2 = ['Exercício', 'Refeição', 'Higiene', 'descanso'] as const
+export const BRIDGE_TO_NUTRITION = ['Músculos aquecidos!', 'Hora de alimentar o corpo.'] as const
+export const BRIDGE_TO_HYGIENE = ['Refeição ok.', 'Agora higiene no módulo fechado.'] as const
+export const BRIDGE_TO_SLEEP = ['Dia quase completo.', 'Prepare a cabine e descanse.'] as const
+
+export type Mission2Bridge = 'nutrition' | 'hygiene' | 'sleep'
 
 export type ExerciseId = 'treadmill' | 'resistance' | 'stretch' | 'balance'
 

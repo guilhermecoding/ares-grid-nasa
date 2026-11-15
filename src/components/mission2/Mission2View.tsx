@@ -2,17 +2,22 @@ import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StatusIndicators } from '../StatusIndicators'
 import {
+  BRIDGE_TO_HYGIENE,
+  BRIDGE_TO_NUTRITION,
+  BRIDGE_TO_SLEEP,
   HYGIENE_BONUS_CARD,
   computeMission2Scores,
   lightingForStep,
   roomAccentForStep,
   type ExerciseId,
   type HygieneId,
+  type Mission2Bridge,
   type Mission2Choices,
   type Mission2Step,
   type NutritionCardId,
 } from '../../data/mission2Data'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
+import { CapiBridgeDialog } from './CapiBridgeDialog'
 import { HabitatInteriorBackground } from './HabitatInteriorBackground'
 import { NightReportModal } from './NightReportModal'
 import { ExerciseStep } from './steps/ExerciseStep'
@@ -65,6 +70,7 @@ export default function Mission2View({
   const [hygieneDone, setHygieneDone] = useState<HygieneId[]>([])
   const [cabinDone, setCabinDone] = useState(false)
   const [nightOpen, setNightOpen] = useState(false)
+  const [bridge, setBridge] = useState<Mission2Bridge | null>(null)
 
   const choices: Mission2Choices = useMemo(
     () => ({ exercises, foods, waterRationL, hygieneDone }),
@@ -216,27 +222,27 @@ export default function Mission2View({
 
       {step === 'intro' && <IntroStep onContinue={() => setStep('step2_1_exercise')} />}
 
-      {step === 'step2_1_exercise' && (
+      {step === 'step2_1_exercise' && !bridge && (
         <ExerciseStep
           energyPct={baseEnergy}
           waterL={waterL}
           completedIds={exercises}
           onCompleteOne={onExerciseOne}
-          onContinue={() => setStep('step2_2_nutrition')}
+          onContinue={() => setBridge('nutrition')}
         />
       )}
 
-      {step === 'step2_2_nutrition' && (
+      {step === 'step2_2_nutrition' && !bridge && (
         <NutritionStep
           energyPct={baseEnergy}
           waterL={waterL}
           completedIds={nutritionCards}
           onCompleteOne={onNutritionOne}
-          onContinue={() => setStep('step2_3_hygiene')}
+          onContinue={() => setBridge('hygiene')}
         />
       )}
 
-      {step === 'step2_3_hygiene' && (
+      {step === 'step2_3_hygiene' && !bridge && (
         <HygieneStep
           energyPct={baseEnergy}
           waterL={waterL}
@@ -246,7 +252,7 @@ export default function Mission2View({
           onCompleteOne={onHygieneOne}
           onContinue={() => {
             setContaminationRisk(0)
-            setStep('step2_4_sleep_prep')
+            setBridge('sleep')
           }}
         />
       )}
@@ -257,6 +263,43 @@ export default function Mission2View({
           nutritionDone={foods.length > 0 && nutritionCards.includes('hydrate')}
           hygieneDone={hygieneDone.length >= 3}
           onSleep={onSleep}
+        />
+      )}
+
+      {bridge === 'nutrition' && (
+        <CapiBridgeDialog
+          key="bridge-nutrition"
+          open
+          lines={BRIDGE_TO_NUTRITION}
+          highlightWords={['alimentar']}
+          onDone={() => {
+            setBridge(null)
+            setStep('step2_2_nutrition')
+          }}
+        />
+      )}
+      {bridge === 'hygiene' && (
+        <CapiBridgeDialog
+          key="bridge-hygiene"
+          open
+          lines={BRIDGE_TO_HYGIENE}
+          highlightWords={['higiene']}
+          onDone={() => {
+            setBridge(null)
+            setStep('step2_3_hygiene')
+          }}
+        />
+      )}
+      {bridge === 'sleep' && (
+        <CapiBridgeDialog
+          key="bridge-sleep"
+          open
+          lines={BRIDGE_TO_SLEEP}
+          highlightWords={['descanse']}
+          onDone={() => {
+            setBridge(null)
+            setStep('step2_4_sleep_prep')
+          }}
         />
       )}
 

@@ -12,10 +12,10 @@ export type Mission1Step =
 /** Surface EVA: wellbeing drains to 0 over this duration while outdoors. */
 export const EXPOSURE_MS = 180_000
 
-export const RISK_WARNING_LINES = [
-  'Atenção! Lá fora há radiação, poeira e frio extremo.',
-  'Ficar tempo demais na superfície faz a Saúde cair.',
-  'Você tem cerca de 3 minutos ao ar livre. Escolha o local e trabalhe rápido!',
+/** Short Capi parts — one dialog box each. */
+export const RISK_WARNING_PARTS = [
+  ['Lá fora há riscos: radiação, poeira e frio.'] as const,
+  ['Ficar tempo demais derruba a Saúde.', 'Rápido e de volta!'] as const,
 ] as const
 
 export const RISK_HIGHLIGHT_WORDS = ['Saúde'] as const
@@ -40,11 +40,13 @@ export const SCI_TERMS: Record<string, string> = {
   Sol: 'O Sol de Marte parece menor, mas ainda aquece e dá energia.',
 }
 
-export const INTRO_LINES = [
-  'Chegamos em Arcadia Planitia! O suporte à vida está OK…',
-  'Mas a energia externa ainda NÃO está instalada.',
-  'Missão 1: instalar painéis solares para a base ter luz e força!',
+/** Short Capi parts — one dialog box each. */
+export const INTRO_PARTS = [
+  ['Chegamos a Marte!', 'Mas aqui não há fonte de energia ainda.'] as const,
+  ['Vamos instalar um painel solar para a base funcionar.'] as const,
 ] as const
+
+export const INTRO_HIGHLIGHT_WORDS = ['painel solar'] as const
 
 export function isOutdoorMission1Step(step: Mission1Step): boolean {
   return step === 'step1_location' || step === 'step2_solar_calc' || step === 'step3_storm_test'

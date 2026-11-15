@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
-import { INTRO_HIGHLIGHT_WORDS_M2, INTRO_LINES_M2_A, INTRO_LINES_M2_B } from '../../../data/mission2Data'
+import { INTRO_HIGHLIGHT_WORDS_M2, INTRO_PARTS_M2 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { PixelDialogBox } from '../../../opening/PixelDialogBox'
 import { SciTermM2 } from '../SciTermM2'
@@ -10,11 +10,12 @@ interface Props {
 }
 
 export function IntroStep({ onContinue }: Props) {
-  const [part, setPart] = useState<1 | 2>(1)
+  const [part, setPart] = useState(0)
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
 
-  const lines = part === 1 ? INTRO_LINES_M2_A : INTRO_LINES_M2_B
+  const lines = INTRO_PARTS_M2[part]!
+  const isLast = part >= INTRO_PARTS_M2.length - 1
 
   return (
     <>
@@ -32,12 +33,12 @@ export function IntroStep({ onContinue }: Props) {
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
-        highlightWords={part === 2 ? INTRO_HIGHLIGHT_WORDS_M2 : undefined}
+        highlightWords={INTRO_HIGHLIGHT_WORDS_M2}
         onTypingComplete={() => setReady(true)}
         onClosed={() => {
-          if (part === 1) {
+          if (!isLast) {
             setReady(false)
-            setPart(2)
+            setPart((p) => p + 1)
             setOpen(true)
             return
           }
@@ -50,7 +51,7 @@ export function IntroStep({ onContinue }: Props) {
               style={{ touchAction: 'manipulation' }}
               onClick={() => setOpen(false)}
             >
-              {part === 1 ? 'Continuar' : 'Começar o dia'}
+              {isLast ? 'Começar o dia' : 'Continuar'}
             </McButton>
           ) : null
         }

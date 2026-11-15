@@ -6,7 +6,6 @@ import {
   type ExerciseId,
 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
-import { PixelDialogBox } from '../../../opening/PixelDialogBox'
 import { soundEngine } from '../../../services/soundEngine'
 import { ActivityCard, ActivityCardGrid, StageCostBadge } from '../ActivityCard'
 import { SciTermM2 } from '../SciTermM2'
@@ -34,7 +33,6 @@ export function ExerciseStep({
   onContinue,
 }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null)
-  const [capiOpen, setCapiOpen] = useState(false)
 
   const doneSet = useMemo(() => new Set(completedIds), [completedIds])
   const energySpent = useMemo(
@@ -56,9 +54,6 @@ export function ExerciseStep({
       if (completedIds.length >= EXERCISE_REQUIRED_COUNT) return
       if (ex.energyCost > energyPct || ex.waterCostL > waterL) return
       onCompleteOne(ex.id, ex.energyCost, ex.waterCostL, ex.wellbeingGain)
-      if (completedIds.length + 1 >= EXERCISE_REQUIRED_COUNT) {
-        window.setTimeout(() => setCapiOpen(true), 180)
-      }
     },
     [completedIds.length, doneSet, energyPct, onCompleteOne, waterL],
   )
@@ -119,20 +114,6 @@ export function ExerciseStep({
           Continuar
         </McButton>
       </div>
-
-      <PixelDialogBox
-        open={capiOpen}
-        lines={['Muito bem! Vou registrar os 2 exercícios no diário.']}
-        title="Capi"
-        characterSrc={MEDIA.capi.excited2}
-        characterAlt="Capi"
-        onClosed={() => setCapiOpen(false)}
-        footer={
-          <McButton className="min-h-12 px-6 font-pixel font-bold" onClick={() => setCapiOpen(false)}>
-            Ok
-          </McButton>
-        }
-      />
     </div>
   )
 }
