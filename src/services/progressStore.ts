@@ -47,6 +47,8 @@ export interface PlayerProgress {
   mission1Panel: Mission1PanelSave | null
   /** Dialog ids the player has already finished, across every mission. */
   seenDialogIds: string[]
+  /** Mission dialog groups closed with Pular. Later dialogs in that group stay hidden. */
+  skippedDialogGroups: string[]
 }
 
 const DEFAULT_PROGRESS: PlayerProgress = {
@@ -67,6 +69,7 @@ const DEFAULT_PROGRESS: PlayerProgress = {
   baseStats: { ...DEFAULT_BASE_STATS },
   mission1Panel: null,
   seenDialogIds: [],
+  skippedDialogGroups: [],
 }
 
 function canUseStorage(): boolean {
@@ -93,6 +96,9 @@ export function loadProgress(): PlayerProgress {
     const seenDialogIds = Array.isArray(parsed.seenDialogIds)
       ? parsed.seenDialogIds.filter((id): id is string => typeof id === 'string')
       : []
+    const skippedDialogGroups = Array.isArray(parsed.skippedDialogGroups)
+      ? parsed.skippedDialogGroups.filter((id): id is string => typeof id === 'string')
+      : []
     const progress: PlayerProgress = {
       ...DEFAULT_PROGRESS,
       ...parsed,
@@ -100,6 +106,7 @@ export function loadProgress(): PlayerProgress {
       baseStats,
       mission1Panel,
       seenDialogIds,
+      skippedDialogGroups,
     }
     // Persist firstInstalledAt once for legacy panel saves.
     if (parsedPanel?.migrated && mission1Panel) {
@@ -130,6 +137,25 @@ export function markDialogSeen(id: string): void {
   const current = loadProgress()
   if (current.seenDialogIds.includes(id)) return
   updateProgress({ seenDialogIds: [...current.seenDialogIds, id] })
+}
+
+/** Group for Pular: m1, m2, m3 or the missions map. */
+export function dialogGroupOf(dialogId: string): string | null {
+  if (dialogId.startsWith('m1')) return 'm1'
+  if (dialogId.startsWith('m2')) return 'm2'
+  if (dialogId.startsWith('m3')) return 'm3'
+  if (dialogId.startsWith('map')) return 'map'
+  return null
+}
+
+export function isDialogGroupSkipped(group: string): boolean {
+  return loadProgress().skippedDialogGroups.includes(group)
+}
+
+export function markDialogGroupSkipped(group: string): void {
+  const current = loadProgress()
+  if (current.skippedDialogGroups.includes(group)) return
+  updateProgress({ skippedDialogGroups: [...current.skippedDialogGroups, group] })
 }
 
 function parseMission1Panel(raw: unknown): { panel: Mission1PanelSave; migrated: boolean } | null {

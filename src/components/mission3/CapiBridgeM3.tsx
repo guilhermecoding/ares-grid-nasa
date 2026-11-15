@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
+import { dialogGroupOf, isDialogGroupSkipped } from '../../services/progressStore'
 
 interface Props {
   lines: string[]
@@ -14,6 +15,19 @@ interface Props {
 export function CapiBridgeM3({ lines, highlightWords, onDone, dialogId }: Props) {
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
+  const onDoneRef = useRef(onDone)
+  const group = dialogId ? dialogGroupOf(dialogId) : null
+  const skipped = Boolean(group && isDialogGroupSkipped(group))
+
+  useEffect(() => {
+    onDoneRef.current = onDone
+  })
+
+  useEffect(() => {
+    if (skipped) onDoneRef.current()
+  }, [skipped])
+
+  if (skipped) return null
 
   return (
     <PixelDialogBox

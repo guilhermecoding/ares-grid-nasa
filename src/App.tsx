@@ -10,7 +10,7 @@ import { McButton } from './opening/McButton'
 import { OpeningFlow } from './opening/OpeningFlow'
 import { PixelDialogBox } from './opening/PixelDialogBox'
 import { fetchDonkiBundle } from './services/donkiService'
-import { loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
+import { isDialogGroupSkipped, loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
 import { setMuted, soundEngine, unlockAudio } from './services/soundEngine'
 import type { DonkiBundle } from './types/nasa'
 import type { BaseStats, ScreenId, WorldState } from './types/game'
@@ -334,13 +334,13 @@ export default function App() {
             characterAlt="Capi"
             onTypingComplete={() => setTutorialReady(true)}
             onClosed={() => {
-              if (tutorialStep < TUTORIAL_STEPS.length - 1) {
-                setTutorialReady(false)
-                setTutorialStep((step) => step + 1)
-                setTutorialBoxOpen(true)
+              if (isDialogGroupSkipped('map') || tutorialStep >= TUTORIAL_STEPS.length - 1) {
+                finishTutorial()
                 return
               }
-              finishTutorial()
+              setTutorialReady(false)
+              setTutorialStep((step) => step + 1)
+              setTutorialBoxOpen(true)
             }}
             footer={
               tutorialReady ? (

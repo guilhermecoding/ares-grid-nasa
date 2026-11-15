@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { hasSeenDialog, markDialogSeen } from '../services/progressStore'
+import { dialogGroupOf, hasSeenDialog, markDialogGroupSkipped, markDialogSeen } from '../services/progressStore'
 import { soundEngine } from '../services/soundEngine'
 
 const CHAR_MS = 10
@@ -179,8 +179,13 @@ export function PixelDialogBox({
 
   const skipDialog = (event: { stopPropagation: () => void }) => {
     event.stopPropagation()
-    if (onSkip) onSkip()
-    else skipTyping()
+    if (onSkip) {
+      const group = dialogId ? dialogGroupOf(dialogId) : null
+      if (group) markDialogGroupSkipped(group)
+      onSkip()
+      return
+    }
+    skipTyping()
   }
 
   if (!visible) return null

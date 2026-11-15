@@ -3,6 +3,7 @@ import { MEDIA } from '../../constants/mediaAssets'
 import { RISK_HIGHLIGHT_WORDS, RISK_WARNING_PARTS } from '../../data/mission1Data'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
+import { useHideFollowingDialogs } from '../../opening/useHideFollowingDialogs'
 
 interface Props {
   onContinue: () => void
@@ -16,6 +17,9 @@ export function RiskWarningHud({ onContinue }: Props) {
 
   const lines = RISK_WARNING_PARTS[part]!
   const isLast = part >= RISK_WARNING_PARTS.length - 1
+  const { blocked, hideDialog, afterClose } = useHideFollowingDialogs('m1', onContinue)
+
+  if (blocked) return null
 
   return (
     <PixelDialogBox
@@ -24,19 +28,20 @@ export function RiskWarningHud({ onContinue }: Props) {
       lines={[...lines]}
       title="Capi"
       dialogId={`m1-risk-${part}`}
-      onSkip={() => setOpen(false)}
+      onSkip={() => {
+        hideDialog()
+        setOpen(false)
+      }}
       characterSrc={MEDIA.capi.duvida}
       characterAlt="Capi"
       highlightWords={part === 1 ? RISK_HIGHLIGHT_WORDS : undefined}
       onTypingComplete={() => setReady(true)}
       onClosed={() => {
-        if (!isLast) {
+        afterClose(isLast, () => {
           setReady(false)
           setPart((p) => p + 1)
           setOpen(true)
-          return
-        }
-        onContinue()
+        })
       }}
       footer={
         ready ? (

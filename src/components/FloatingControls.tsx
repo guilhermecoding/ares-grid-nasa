@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { FullscreenButton } from './FullscreenButton'
 import {
   ArrowDown,
   ArrowLeft,
@@ -86,6 +87,7 @@ export function FloatingControls({
             NASA
           </HintLabel>
         </button>
+        {mapMode ? <FullscreenButton className={`pointer-events-auto ${btn} ${pad}`} /> : null}
         <button
           type="button"
           onClick={onHome}

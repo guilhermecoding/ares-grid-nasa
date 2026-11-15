@@ -1,5 +1,5 @@
 import { animate, useMotionValue, useTransform } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ScrollHintArea } from '../../components/ScrollHintArea'
 import { MEDIA } from '../../constants/mediaAssets'
 import {
@@ -14,6 +14,7 @@ import {
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
 import { soundEngine } from '../../services/soundEngine'
+import { isDialogGroupSkipped } from '../../services/progressStore'
 
 function sentence(text: string): string {
   return /[.!?]$/.test(text) ? text : `${text}.`
@@ -57,6 +58,18 @@ export function PanelConditionDialog({ baseEfficiency, onDone }: Props) {
     const unsub = effDisplay.on('change', (v) => setEffLabel(v))
     return unsub
   }, [effDisplay])
+
+  const onDoneRef = useRef(onDone)
+
+  useEffect(() => {
+    onDoneRef.current = onDone
+  })
+
+  useEffect(() => {
+    if (!isDialogGroupSkipped('m1')) return
+    if (phase === 'dust-ask' || phase === 'dust-why') onDoneRef.current('dust')
+    else if (phase === 'clean-note') onDoneRef.current('clean')
+  }, [phase])
 
   useEffect(() => {
     if (phase !== 'dust-fall') return
@@ -226,7 +239,7 @@ export function PanelConditionDialog({ baseEfficiency, onDone }: Props) {
         position="center"
         title="Capi"
         dialogId="m1-dust-ask"
-        onSkip={() => setPhase('dust-why')}
+        onSkip={() => onDoneRef.current('dust')}
         lines={[...DUST_DROP_PARTS[0]]}
         characterSrc={MEDIA.capi.duvida}
         onTypingComplete={() => setAskReady(true)}

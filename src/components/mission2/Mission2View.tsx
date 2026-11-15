@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { FullscreenButton } from '../FullscreenButton'
 import { StatusIndicators } from '../StatusIndicators'
 import {
   BRIDGE_TO_HYGIENE,
@@ -225,7 +226,8 @@ export default function Mission2View({
         <StatusIndicators stats={hudStats} placement="mission" />
       )}
 
-      <div className="absolute top-3 right-3 z-50">
+      <div className="absolute top-3 right-3 z-50 flex items-center gap-2">
+        <FullscreenButton className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud" />
         <button
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
