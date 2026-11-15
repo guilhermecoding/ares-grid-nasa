@@ -284,28 +284,53 @@ export function SwipeDeck({
 
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-md flex-col items-center justify-center px-3 sm:px-4">
-      <div className="flex w-full items-center justify-center gap-3 sm:gap-4">
-        <div className="relative h-[min(34dvh,14.5rem)] w-[min(58vw,11.5rem)] shrink-0 sm:h-[min(36dvh,15.5rem)] sm:w-[min(48vw,12.5rem)]">
-          {stack.length === 0 ? (
-            <div className="flex h-full items-center justify-center rounded-xl border-2 border-dashed border-cyan-hud/40 bg-[#0a1628]/60 px-4 text-center font-pixel text-xs text-void-200">
-              {emptyMessage}
-            </div>
-          ) : (
-            <AnimatePresence>
-              {stack.map(({ card, selected }, i) => (
-                <SwipeCard
-                  key={card.id}
-                  card={card}
-                  active={i === 0}
-                  selected={selected}
-                  stackIndex={i}
-                  exitDir={i === 0 ? exitDir : null}
-                  onDragDecision={handleDragDecision}
-                  dragX={dragX}
-                />
-              ))}
-            </AnimatePresence>
-          )}
+      <div className="flex w-full items-start justify-center gap-3 sm:gap-4">
+        <div className="flex w-[min(58vw,11.5rem)] shrink-0 flex-col items-center sm:w-[min(48vw,12.5rem)]">
+          <div className="relative h-[min(34dvh,14.5rem)] w-full sm:h-[min(36dvh,15.5rem)]">
+            {stack.length === 0 ? (
+              <div className="flex h-full items-center justify-center rounded-xl border-2 border-dashed border-cyan-hud/40 bg-[#0a1628]/60 px-4 text-center font-pixel text-xs text-void-200">
+                {emptyMessage}
+              </div>
+            ) : (
+              <AnimatePresence>
+                {stack.map(({ card, selected }, i) => (
+                  <SwipeCard
+                    key={card.id}
+                    card={card}
+                    active={i === 0}
+                    selected={selected}
+                    stackIndex={i}
+                    exitDir={i === 0 ? exitDir : null}
+                    onDragDecision={handleDragDecision}
+                    dragX={dragX}
+                  />
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+
+          <div className="relative z-50 mt-6 flex shrink-0 items-center justify-center gap-8 sm:mt-8">
+            <button
+              type="button"
+              aria-label="Descartar card"
+              disabled={!top || !!exitDir}
+              onClick={trySkip}
+              className="flex size-12 items-center justify-center rounded-full border-2 border-[#e11d48] bg-[#fff1f2] text-[#e11d48] shadow-md transition hover:bg-[#ffe4e6] disabled:opacity-40"
+              style={{ touchAction: 'manipulation' }}
+            >
+              <X className="size-6 sm:size-7" strokeWidth={2.5} />
+            </button>
+            <button
+              type="button"
+              aria-label="Aceitar card"
+              disabled={!top || !!exitDir}
+              onClick={tryAccept}
+              className="flex size-12 items-center justify-center rounded-full border-2 border-[#1f8a52] bg-[#ecfdf5] text-[#1f8a52] shadow-md transition hover:bg-[#d1fae5] disabled:opacity-40"
+              style={{ touchAction: 'manipulation' }}
+            >
+              <Check className="size-6 sm:size-7" strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
 
         {/* Selected queue on the empty right side */}
@@ -334,29 +359,6 @@ export function SwipeDeck({
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="relative z-50 mt-6 flex w-full shrink-0 items-center justify-center gap-8 sm:mt-8">
-        <button
-          type="button"
-          aria-label="Descartar card"
-          disabled={!top || !!exitDir}
-          onClick={trySkip}
-          className="flex size-12 items-center justify-center rounded-full border-2 border-[#e11d48] bg-[#fff1f2] text-[#e11d48] shadow-md transition hover:bg-[#ffe4e6] disabled:opacity-40"
-          style={{ touchAction: 'manipulation' }}
-        >
-          <X className="size-6 sm:size-7" strokeWidth={2.5} />
-        </button>
-        <button
-          type="button"
-          aria-label="Aceitar card"
-          disabled={!top || !!exitDir}
-          onClick={tryAccept}
-          className="flex size-12 items-center justify-center rounded-full border-2 border-[#1f8a52] bg-[#ecfdf5] text-[#1f8a52] shadow-md transition hover:bg-[#d1fae5] disabled:opacity-40"
-          style={{ touchAction: 'manipulation' }}
-        >
-          <Check className="size-6 sm:size-7" strokeWidth={2.5} />
-        </button>
       </div>
     </div>
   )
