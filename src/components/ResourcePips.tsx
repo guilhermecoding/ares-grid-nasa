@@ -10,7 +10,7 @@ function PixelIcon({ color, path }: { color: string; path: string }) {
 }
 
 const BOLT = 'M9 1 L4 9 H8 L7 15 L12 7 H8 Z'
-const LEAF = 'M8 2 C12 3 14 7 13 11 C11 14 8 15 8 15 C8 15 5 14 3 11 C2 7 4 3 8 2 Z'
+const DROP = 'M8 1 C8 1 3 7 3 10 C3 13 5.2 15 8 15 C10.8 15 13 13 13 10 C13 7 8 1 8 1 Z'
 const SHIELD = 'M8 1 L14 4 V8 C14 12 10 15 8 15 C6 15 2 12 2 8 V4 Z'
 
 function StatPip({
@@ -46,15 +46,15 @@ interface Props {
   className?: string
 }
 
-/** Energy / life / shield — one icon each, value under the icon. */
+/** Energy / water / wellbeing — one icon each, value under the icon. */
 export function ResourcePips({ stats, className = '' }: Props) {
   return (
     <div
       className={`flex flex-row flex-nowrap items-end gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] sm:gap-2.5 ${className}`}
     >
       <StatPip label="Energia" value={stats.energy} color="var(--color-energy)" path={BOLT} />
-      <StatPip label="Vida" value={stats.lifeSupport} color="var(--color-life)" path={LEAF} />
-      <StatPip label="Escudo" value={stats.shield} color="var(--color-shield)" path={SHIELD} />
+      <StatPip label="Água" value={stats.water} color="var(--color-life)" path={DROP} />
+      <StatPip label="Bem-estar" value={stats.wellbeing} color="var(--color-shield)" path={SHIELD} />
     </div>
   )
 }

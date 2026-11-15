@@ -18,6 +18,7 @@ export const MISSION2_META = {
   solLabel: 'Sol 02',
   location: 'Arcadia Planitia',
   marsGravityPct: 38,
+  /** Keep in sync with MAX_WATER_RESERVE_L in types/game. */
   initialWaterReserveL: 40,
   sources: [
     'NASA Spaceflight Standard Measures',
@@ -37,12 +38,17 @@ export const SCI_TERMS_M2: Record<string, string> = {
   'Arcadia Planitia': 'Uma planície grande e relativamente plana em Marte.',
 }
 
-export const INTRO_LINES_M2 = [
+export const INTRO_LINES_M2_A = [
   'Energia solar ligada — ótimo trabalho na Missão 1!',
   'Agora vamos cuidar de VOCÊ: músculos, ossos, comida, água e sono.',
-  `Em Marte a gravidade é só ${MISSION2_META.marsGravityPct}% da Terra. Sem rotina, o corpo enfraquece.`,
-  'Organize o dia: exercício, refeição, higiene e descanso. Cada escolha usa água ou energia da base!',
 ] as const
+
+export const INTRO_LINES_M2_B = [
+  `Em Marte a gravidade é só ${MISSION2_META.marsGravityPct}% da Terra. Sem rotina, o corpo enfraquece.`,
+  'Organize o dia: Exercício, Refeição, Higiene e descanso. Cada escolha usa água ou energia da base!',
+] as const
+
+export const INTRO_HIGHLIGHT_WORDS_M2 = ['Exercício', 'Refeição', 'Higiene', 'descanso'] as const
 
 export type ExerciseId = 'treadmill' | 'resistance' | 'stretch' | 'balance'
 

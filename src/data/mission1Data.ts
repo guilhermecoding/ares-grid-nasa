@@ -2,11 +2,23 @@
 
 export type Mission1Step =
   | 'intro'
+  | 'risk_warning'
   | 'step1_location'
   | 'step2_solar_calc'
   | 'step3_storm_test'
   | 'step4_logbook'
   | 'step5_transmission'
+
+/** Surface EVA: wellbeing drains to 0 over this duration while outdoors. */
+export const EXPOSURE_MS = 180_000
+
+export const RISK_WARNING_LINES = [
+  'Atenção! Lá fora há radiação, poeira e frio extremo.',
+  'Ficar tempo demais na superfície faz o Bem-estar cair.',
+  'Você tem cerca de 3 minutos ao ar livre. Escolha o local e trabalhe rápido!',
+] as const
+
+export const RISK_HIGHLIGHT_WORDS = ['Bem-estar'] as const
 
 export const MISSION1_META = {
   number: 1,
@@ -33,6 +45,10 @@ export const INTRO_LINES = [
   'Mas a energia externa ainda NÃO está instalada.',
   'Missão 1: instalar painéis solares para a base ter luz e força!',
 ] as const
+
+export function isOutdoorMission1Step(step: Mission1Step): boolean {
+  return step === 'step1_location' || step === 'step2_solar_calc' || step === 'step3_storm_test'
+}
 
 export type SiteId = 'A' | 'B' | 'C'
 

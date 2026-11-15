@@ -30,13 +30,16 @@ export interface RoverState {
   sheltered: boolean
 }
 
+/** Reference tank size (liters) for converting BaseStats.water % ↔ L. */
+export const MAX_WATER_RESERVE_L = 40
+
 export interface BaseStats {
-  /** Stamina — primary Stardew-like meter (0–100). */
+  /** Stamina / base power (0–100). */
   energy: number
-  /** Soft habitat health / life support (0–100). */
-  lifeSupport: number
-  /** Soft radiation shield (0–100). */
-  shield: number
+  /** Water reserve as % of MAX_WATER_RESERVE_L (0–100). */
+  water: number
+  /** Crew wellbeing — reduced by radiation/storms, restored by care (0–100). */
+  wellbeing: number
 }
 
 export interface QuestProgress {

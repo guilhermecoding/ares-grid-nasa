@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { StatusIndicators } from '../StatusIndicators'
 import {
-  MISSION2_META,
   computeMission2Scores,
   exerciseCosts,
   foodCosts,
@@ -13,9 +13,8 @@ import {
   type Mission2Choices,
   type Mission2Step,
 } from '../../data/mission2Data'
-import type { BaseStats } from '../../types/game'
+import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { HabitatInteriorBackground } from './HabitatInteriorBackground'
-import { Mission2Hud } from './Mission2Hud'
 import { NightReportModal } from './NightReportModal'
 import { ExerciseStep } from './steps/ExerciseStep'
 import { HygieneStep } from './steps/HygieneStep'
@@ -24,7 +23,7 @@ import { MorningWakeupStep } from './steps/MorningWakeupStep'
 import { NutritionStep } from './steps/NutritionStep'
 import { SleepPrepStep } from './steps/SleepPrepStep'
 
-const DEFAULT_STATS: BaseStats = { energy: 68, lifeSupport: 85, shield: 70 }
+const DEFAULT_STATS: BaseStats = { energy: 68, water: 85, wellbeing: 70 }
 
 interface Props {
   onComplete: () => void
@@ -38,6 +37,14 @@ function clamp(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)))
 }
 
+function pctToLiters(waterPct: number) {
+  return Math.round(((waterPct / 100) * MAX_WATER_RESERVE_L) * 10) / 10
+}
+
+function litersToPct(liters: number) {
+  return clamp((liters / MAX_WATER_RESERVE_L) * 100)
+}
+
 /** Mission 02 orchestrator — daily astronaut care routine. */
 export default function Mission2View({
   onComplete,
@@ -48,7 +55,7 @@ export default function Mission2View({
 }: Props) {
   const [step, setStep] = useState<Mission2Step>('intro')
   const [baseEnergy, setBaseEnergy] = useState(() => clamp(stats.energy))
-  const [waterL, setWaterL] = useState<number>(MISSION2_META.initialWaterReserveL)
+  const [waterL, setWaterL] = useState(() => pctToLiters(stats.water))
   const [contaminationRisk, setContaminationRisk] = useState(100)
   const [exercises, setExercises] = useState<ExerciseId[]>([])
   const [foods, setFoods] = useState<string[]>([])
@@ -67,11 +74,22 @@ export default function Mission2View({
   )
 
   const wellbeingLive = useMemo(() => {
-    if (step === 'intro' || step === 'step2_1_exercise') return clamp(48 + baseEnergy * 0.15)
-    if (step === 'step2_2_nutrition') return clamp(52 + exercises.length * 6)
+    if (step === 'intro' || step === 'step2_1_exercise') {
+      return clamp(stats.wellbeing * 0.55 + baseEnergy * 0.15)
+    }
+    if (step === 'step2_2_nutrition') return clamp(52 + exercises.length * 6 + stats.wellbeing * 0.2)
     if (step === 'step2_3_hygiene') return clamp(58 + nutritionBalanceProxy(foods) * 0.2)
     return scores.wellbeing
-  }, [step, baseEnergy, exercises.length, foods, scores.wellbeing])
+  }, [step, baseEnergy, exercises.length, foods, scores.wellbeing, stats.wellbeing])
+
+  const hudStats: BaseStats = useMemo(
+    () => ({
+      energy: baseEnergy,
+      water: litersToPct(waterL),
+      wellbeing: wellbeingLive,
+    }),
+    [baseEnergy, waterL, wellbeingLive],
+  )
 
   const lighting = lightingForStep(step)
   const room = roomAccentForStep(step)
@@ -138,9 +156,7 @@ export default function Mission2View({
         />
       )}
 
-      {step !== 'morning_wakeup' && (
-        <Mission2Hud energyPct={baseEnergy} waterL={waterL} wellbeingPct={wellbeingLive} />
-      )}
+      {step !== 'morning_wakeup' && <StatusIndicators stats={hudStats} placement="mission" />}
 
       <div className="absolute top-3 right-3 z-50">
         <button

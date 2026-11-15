@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
-import { INTRO_LINES_M2 } from '../../../data/mission2Data'
+import { INTRO_HIGHLIGHT_WORDS_M2, INTRO_LINES_M2_A, INTRO_LINES_M2_B } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { PixelDialogBox } from '../../../opening/PixelDialogBox'
 import { SciTermM2 } from '../SciTermM2'
@@ -10,8 +10,11 @@ interface Props {
 }
 
 export function IntroStep({ onContinue }: Props) {
+  const [part, setPart] = useState<1 | 2>(1)
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
+
+  const lines = part === 1 ? INTRO_LINES_M2_A : INTRO_LINES_M2_B
 
   return (
     <>
@@ -23,13 +26,23 @@ export function IntroStep({ onContinue }: Props) {
       </div>
 
       <PixelDialogBox
+        key={`m2-intro-${part}`}
         open={open}
-        lines={[...INTRO_LINES_M2]}
+        lines={[...lines]}
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
+        highlightWords={part === 2 ? INTRO_HIGHLIGHT_WORDS_M2 : undefined}
         onTypingComplete={() => setReady(true)}
-        onClosed={onContinue}
+        onClosed={() => {
+          if (part === 1) {
+            setReady(false)
+            setPart(2)
+            setOpen(true)
+            return
+          }
+          onContinue()
+        }}
         footer={
           ready ? (
             <McButton
@@ -37,7 +50,7 @@ export function IntroStep({ onContinue }: Props) {
               style={{ touchAction: 'manipulation' }}
               onClick={() => setOpen(false)}
             >
-              Começar o dia
+              {part === 1 ? 'Continuar' : 'Começar o dia'}
             </McButton>
           ) : null
         }
