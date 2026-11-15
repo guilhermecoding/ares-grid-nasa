@@ -28,15 +28,24 @@ const FLY_MS = 280
 
 type ExitDir = 'left' | 'right' | null
 
-function CardFace({ card }: { card: ActivityCardModel }) {
+function CardFace({ card, selected = false }: { card: ActivityCardModel; selected?: boolean }) {
   return (
     <div
-      className="flex h-full w-full flex-col overflow-hidden rounded-xl p-3 shadow-[0_10px_22px_rgba(0,0,0,0.35)] sm:p-3.5"
+      className="relative flex h-full w-full flex-col overflow-hidden rounded-xl p-3 shadow-[0_10px_22px_rgba(0,0,0,0.35)] sm:p-3.5"
       style={{
-        border: `3px solid ${card.color}`,
+        border: `3px solid ${selected ? '#1f8a52' : card.color}`,
         background: '#f7f4ee',
       }}
     >
+      {selected ? (
+        <span
+          className="absolute top-2 left-2 z-10 flex size-6 items-center justify-center rounded-full bg-[#1f8a52] shadow-sm"
+          aria-label="Selecionado"
+        >
+          <Check className="size-3.5 text-[#e8ffe8]" strokeWidth={3} />
+        </span>
+      ) : null}
+
       <div
         className="mx-auto flex size-16 items-center justify-center rounded-lg sm:size-[4.5rem]"
         style={{ background: `${card.color}40`, border: `2px solid ${card.color}` }}
@@ -74,6 +83,7 @@ function CardFace({ card }: { card: ActivityCardModel }) {
 interface SwipeCardProps {
   card: ActivityCardModel
   active: boolean
+  selected?: boolean
   stackIndex: number
   exitDir: ExitDir
   onDragDecision: (dir: 'left' | 'right') => void
@@ -83,6 +93,7 @@ interface SwipeCardProps {
 function SwipeCard({
   card,
   active,
+  selected = false,
   stackIndex,
   exitDir,
   onDragDecision,
@@ -95,13 +106,15 @@ function SwipeCard({
   const behind = !active
   const scale = 1 - stackIndex * 0.04
   const yOffset = stackIndex * 10
+  const showSelected = selected || exitDir === 'right'
+  const canDrag = active && !exitDir && !selected
 
   return (
     <motion.div
       className="absolute inset-0"
       style={{
         zIndex: 20 - stackIndex,
-        ...(active && !exitDir ? { x: dragX, rotate } : {}),
+        ...(canDrag ? { x: dragX, rotate } : {}),
       }}
       animate={
         exitDir === 'right'
@@ -111,11 +124,11 @@ function SwipeCard({
             : { scale, y: behind ? yOffset : 0, opacity: 1, x: 0, rotate: 0 }
       }
       transition={exitDir ? { duration: FLY_MS / 1000, ease: 'easeIn' } : { type: 'spring', stiffness: 320, damping: 26 }}
-      drag={active && !exitDir ? 'x' : false}
+      drag={canDrag ? 'x' : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.92}
       onDragEnd={(_, info: PanInfo) => {
-        if (!active || exitDir) return
+        if (!canDrag) return
         const { offset, velocity } = info
         if (offset.x > SWIPE_OFFSET || velocity.x > SWIPE_VELOCITY) {
           onDragDecision('right')
@@ -126,9 +139,9 @@ function SwipeCard({
         }
       }}
     >
-      <CardFace card={card} />
+      <CardFace card={card} selected={showSelected} />
 
-      {active && !exitDir ? (
+      {canDrag ? (
         <>
           <motion.div
             className="pointer-events-none absolute top-3 left-3 rounded border-[3px] border-[#1f8a52] px-2 py-0.5 font-pixel text-sm font-bold text-[#1f8a52] sm:text-base"
@@ -168,6 +181,8 @@ export function StageHeader({ title, subtitle }: { title: string; subtitle?: Rea
 
 interface SwipeDeckProps {
   cards: ActivityCardModel[]
+  /** Ids already accepted — stay visible with a green check, not swipeable. */
+  selectedIds?: string[]
   canAccept?: (id: string) => boolean
   onAccept: (id: string) => void
   emptyMessage?: string
@@ -176,36 +191,44 @@ interface SwipeDeckProps {
 /** Tinder-style vertical card stack: right/check accepts, left/X sends to back. */
 export function SwipeDeck({
   cards,
+  selectedIds = [],
   canAccept,
   onAccept,
   emptyMessage = 'Etapa completa — continue quando quiser.',
 }: SwipeDeckProps) {
-  const [order, setOrder] = useState(() => cards.map((c) => c.id))
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
+  const [order, setOrder] = useState(() => cards.map((c) => c.id).filter((id) => !selectedSet.has(id)))
   const [exitDir, setExitDir] = useState<ExitDir>(null)
   const pendingAction = useRef<'accept' | 'skip' | null>(null)
   const dragX = useMotionValue(0)
 
   const cardIdsKey = cards.map((c) => c.id).join('|')
+  const selectedKey = selectedIds.join('|')
 
   useEffect(() => {
-    const ids = new Set(cards.map((c) => c.id))
+    const availableIds = new Set(cards.map((c) => c.id).filter((id) => !selectedSet.has(id)))
     setOrder((prev) => {
-      const kept = prev.filter((id) => ids.has(id))
-      const missing = cards.map((c) => c.id).filter((id) => !kept.includes(id))
+      const kept = prev.filter((id) => availableIds.has(id))
+      const missing = [...availableIds].filter((id) => !kept.includes(id))
       return [...kept, ...missing]
     })
     setExitDir(null)
     pendingAction.current = null
     dragX.set(0)
-  }, [cardIdsKey, cards, dragX])
+  }, [cardIdsKey, selectedKey, cards, selectedSet, dragX])
 
   const byId = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards])
   const queue = order.flatMap((id) => {
+    if (selectedSet.has(id)) return []
+    const c = byId.get(id)
+    return c ? [c] : []
+  })
+  const selectedCards = selectedIds.flatMap((id) => {
     const c = byId.get(id)
     return c ? [c] : []
   })
   const top = queue[0] ?? null
-  const stack = queue.slice(0, 3)
+  const stack = queue.slice(0, 3).map((card) => ({ card, selected: false as const }))
 
   const finishExitRef = useRef<() => void>(() => {})
   finishExitRef.current = () => {
@@ -260,27 +283,57 @@ export function SwipeDeck({
   }
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-sm flex-col items-center justify-center px-3 sm:px-4">
-      <div className="relative h-[min(34dvh,14.5rem)] w-[min(70vw,11.5rem)] shrink-0 sm:h-[min(36dvh,15.5rem)] sm:w-[min(58vw,12.5rem)]">
-        {stack.length === 0 ? (
-          <div className="flex h-full items-center justify-center rounded-xl border-2 border-dashed border-cyan-hud/40 bg-[#0a1628]/60 px-4 text-center font-pixel text-xs text-void-200">
-            {emptyMessage}
-          </div>
-        ) : (
-          <AnimatePresence>
-            {stack.map((card, i) => (
-              <SwipeCard
-                key={card.id}
-                card={card}
-                active={i === 0}
-                stackIndex={i}
-                exitDir={i === 0 ? exitDir : null}
-                onDragDecision={handleDragDecision}
-                dragX={dragX}
-              />
-            ))}
-          </AnimatePresence>
-        )}
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-md flex-col items-center justify-center px-3 sm:px-4">
+      <div className="flex w-full items-center justify-center gap-3 sm:gap-4">
+        <div className="relative h-[min(34dvh,14.5rem)] w-[min(58vw,11.5rem)] shrink-0 sm:h-[min(36dvh,15.5rem)] sm:w-[min(48vw,12.5rem)]">
+          {stack.length === 0 ? (
+            <div className="flex h-full items-center justify-center rounded-xl border-2 border-dashed border-cyan-hud/40 bg-[#0a1628]/60 px-4 text-center font-pixel text-xs text-void-200">
+              {emptyMessage}
+            </div>
+          ) : (
+            <AnimatePresence>
+              {stack.map(({ card, selected }, i) => (
+                <SwipeCard
+                  key={card.id}
+                  card={card}
+                  active={i === 0}
+                  selected={selected}
+                  stackIndex={i}
+                  exitDir={i === 0 ? exitDir : null}
+                  onDragDecision={handleDragDecision}
+                  dragX={dragX}
+                />
+              ))}
+            </AnimatePresence>
+          )}
+        </div>
+
+        {/* Selected queue on the empty right side */}
+        <div
+          className="flex h-[min(34dvh,14.5rem)] w-12 shrink-0 flex-col items-center justify-start gap-2 overflow-y-auto sm:h-[min(36dvh,15.5rem)] sm:w-14"
+          aria-label="Cards selecionados"
+        >
+          {selectedCards.map((card, i) => (
+            <div
+              key={card.id}
+              className="relative flex size-11 shrink-0 items-center justify-center rounded-lg bg-[#f7f4ee] shadow-md sm:size-12"
+              style={{
+                border: '2px solid #1f8a52',
+                zIndex: selectedCards.length - i,
+              }}
+              title={card.title}
+            >
+              <span className="absolute -top-1 -left-1 z-10 flex size-4 items-center justify-center rounded-full bg-[#1f8a52]">
+                <Check className="size-2.5 text-[#e8ffe8]" strokeWidth={3} />
+              </span>
+              {card.iconSrc ? (
+                <img src={card.iconSrc} alt="" className="size-7 object-contain" draggable={false} />
+              ) : (
+                <span className="scale-75">{card.iconNode}</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="relative z-50 mt-6 flex w-full shrink-0 items-center justify-center gap-8 sm:mt-8">

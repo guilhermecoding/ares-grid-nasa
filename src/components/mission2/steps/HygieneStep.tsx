@@ -83,12 +83,13 @@ export function HygieneStep({
   const requiredDone = completedIds.length >= HYGIENE_ACTIONS.length
   const ready = requiredDone
 
+  const selectedIds = useMemo(() => [...doneSet], [doneSet])
+
   const deckCards: ActivityCardModel[] = useMemo(
     () =>
       HYGIENE_CARDS.filter((card) => {
-        if (doneSet.has(card.id)) return false
-        // Bonus only enters the deck after required actions are done
-        if (card.isBonus && !requiredDone) return false
+        // Bonus only enters after required actions (or if already selected)
+        if (card.isBonus && !requiredDone && !doneSet.has(card.id)) return false
         return true
       }).map((card) => ({
         id: card.id,
@@ -154,6 +155,7 @@ export function HygieneStep({
       <div className="flex min-h-0 flex-1 flex-col pt-16 pb-[4.75rem] sm:pt-[4.5rem]">
         <SwipeDeck
           cards={deckCards}
+          selectedIds={selectedIds}
           canAccept={canAccept}
           onAccept={handleAccept}
           emptyMessage={requiredDone ? 'Higiene ok — continue (bônus opcional).' : 'Higiene completa — continue.'}

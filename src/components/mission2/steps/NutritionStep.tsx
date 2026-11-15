@@ -80,7 +80,7 @@ export function NutritionStep({
 
   const deckCards: ActivityCardModel[] = useMemo(
     () =>
-      NUTRITION_CARDS.filter((card) => !doneSet.has(card.id)).map((card) => ({
+      NUTRITION_CARDS.map((card) => ({
         id: card.id,
         title: card.title,
         detail: card.detail,
@@ -90,7 +90,7 @@ export function NutritionStep({
         wellbeingGain: card.wellbeingGain,
         iconNode: <NutritionIcon id={card.id} />,
       })),
-    [doneSet],
+    [],
   )
 
   const canAccept = useCallback(
@@ -142,6 +142,7 @@ export function NutritionStep({
       <div className="flex min-h-0 flex-1 flex-col pt-16 pb-[4.75rem] sm:pt-[4.5rem]">
         <SwipeDeck
           cards={deckCards}
+          selectedIds={completedIds}
           canAccept={canAccept}
           onAccept={handleAccept}
           emptyMessage="Refeição completa — continue."

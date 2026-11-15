@@ -47,7 +47,7 @@ export function ExerciseStep({
 
   const deckCards: ActivityCardModel[] = useMemo(
     () =>
-      EXERCISES.filter((ex) => !doneSet.has(ex.id)).map((ex) => ({
+      EXERCISES.map((ex) => ({
         id: ex.id,
         title: ex.title,
         detail: ex.focus,
@@ -57,7 +57,7 @@ export function ExerciseStep({
         wellbeingGain: ex.wellbeingGain,
         iconSrc: ICONS[ex.id],
       })),
-    [doneSet],
+    [],
   )
 
   const canAccept = useCallback(
@@ -96,6 +96,7 @@ export function ExerciseStep({
       <div className="flex min-h-0 flex-1 flex-col pt-16 pb-[4.75rem] sm:pt-[4.5rem]">
         <SwipeDeck
           cards={deckCards}
+          selectedIds={completedIds}
           canAccept={canAccept}
           onAccept={handleAccept}
           emptyMessage="2 exercícios feitos — continue."
