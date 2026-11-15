@@ -1,6 +1,7 @@
 /** Centralized media paths for the opening sequence and shared UI. */
 
 import emblem from '../assets/image/artefacts/arcadia_emblema_capivara.png'
+import astronautaCabeca from '../assets/image/artefacts/astronauta_cabeca.png'
 import capiDuvida from '../assets/image/artefacts/capi-duvida.png'
 import capiExcited2 from '../assets/image/artefacts/capi-excited2.png'
 import capiNeutral from '../assets/image/artefacts/capi-neutral.png'
@@ -11,6 +12,10 @@ import pointC from '../assets/image/mission1/point-c.svg'
 import solarPanel from '../assets/image/mission1/solar-panel.svg'
 
 export const MEDIA = {
+  player: {
+    /** Head portrait used as map marker / hover character */
+    head: astronautaCabeca,
+  },
   capi: {
     /** Emblem for title / ready gate */
     emblem,

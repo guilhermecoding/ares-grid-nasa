@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { MEDIA } from '../constants/mediaAssets'
 import { ARCADIA_MAP_SRC } from '../data/mapPois'
 import { getMissionNode, isPlayableMission, MISSION_NODES, missionPathD } from '../data/missionNodes'
-import { LOCK_SPRITE, ROVER_SPRITE } from '../data/tileSprites'
+import { LOCK_SPRITE } from '../data/tileSprites'
 import { McButton } from '../opening/McButton'
 import { PixelDialogBox } from '../opening/PixelDialogBox'
 import type { WorldState } from '../types/game'
@@ -194,11 +194,11 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         style={{ left: `${current.leftPct}%`, top: `${current.topPct}%` }}
       >
         <img
-          src={ROVER_SPRITE}
-          alt="Seu rover"
+          src={MEDIA.player.head}
+          alt="Seu astronauta"
           draggable={false}
-          className="rover-bob size-[min(14vw,72px)] object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.65)]"
-          style={{ imageRendering: 'pixelated' }}
+          className="rover-bob size-[min(16vw,80px)] object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.75)]"
+          style={{ mixBlendMode: 'lighten' }}
         />
       </div>
 

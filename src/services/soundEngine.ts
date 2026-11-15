@@ -241,6 +241,62 @@ export const soundEngine = {
     setTimeout(() => beep(1319, 0.4, 'sine', 0.08), 1520)
     setTimeout(() => beep(1568, 0.45, 'sine', 0.06), 1750)
   },
+  /** Long celebratory fanfare when a mission is completed. */
+  missionComplete: () => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+    const t0 = audio.currentTime
+
+    // Bright shimmer sweep
+    const shimmer = audio.createOscillator()
+    const sg = audio.createGain()
+    shimmer.type = 'sawtooth'
+    shimmer.frequency.setValueAtTime(220, t0)
+    shimmer.frequency.exponentialRampToValueAtTime(1320, t0 + 0.55)
+    sg.gain.setValueAtTime(0.001, t0)
+    sg.gain.exponentialRampToValueAtTime(0.1, t0 + 0.08)
+    sg.gain.exponentialRampToValueAtTime(0.001, t0 + 0.7)
+    shimmer.connect(sg)
+    sg.connect(audio.destination)
+    shimmer.start(t0)
+    shimmer.stop(t0 + 0.75)
+
+    // Warm victory pad
+    const pad = audio.createOscillator()
+    const pg = audio.createGain()
+    pad.type = 'triangle'
+    pad.frequency.setValueAtTime(262, t0 + 0.15)
+    pad.frequency.setValueAtTime(330, t0 + 0.9)
+    pad.frequency.setValueAtTime(392, t0 + 1.5)
+    pg.gain.setValueAtTime(0.001, t0 + 0.15)
+    pg.gain.exponentialRampToValueAtTime(0.07, t0 + 0.35)
+    pg.gain.setValueAtTime(0.05, t0 + 1.4)
+    pg.gain.exponentialRampToValueAtTime(0.001, t0 + 2.2)
+    pad.connect(pg)
+    pg.connect(audio.destination)
+    pad.start(t0 + 0.15)
+    pad.stop(t0 + 2.25)
+
+    // Confetti-like sparkle blips
+    const sparkles = [880, 1175, 1480, 1760, 2093, 1568, 2349]
+    sparkles.forEach((freq, i) => {
+      setTimeout(() => beep(freq, 0.08 + (i % 3) * 0.02, 'sine', 0.045), 60 + i * 90)
+    })
+
+    // Ascending victory arpeggio
+    setTimeout(() => beep(392, 0.14, 'square', 0.08), 100)
+    setTimeout(() => beep(494, 0.14, 'square', 0.085), 220)
+    setTimeout(() => beep(587, 0.15, 'square', 0.09), 360)
+    setTimeout(() => beep(784, 0.18, 'square', 0.1), 520)
+    setTimeout(() => beep(988, 0.22, 'square', 0.11), 700)
+    setTimeout(() => beep(1175, 0.35, 'sine', 0.1), 920)
+    // Final resolving chord tones
+    setTimeout(() => beep(523, 0.55, 'triangle', 0.07), 1100)
+    setTimeout(() => beep(659, 0.55, 'sine', 0.08), 1120)
+    setTimeout(() => beep(784, 0.7, 'sine', 0.09), 1140)
+    setTimeout(() => beep(1046, 0.85, 'sine', 0.07), 1300)
+  },
   /** CRT / pixel-dialog power-off. */
   dialogClose: () => {
     if (muted) return

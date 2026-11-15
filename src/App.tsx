@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { ConfettiBurst } from './components/ConfettiBurst'
 import { DialogBox } from './components/DialogBox'
 import { MissionGateTransition } from './components/MissionGateTransition'
 import { NasaDataModal } from './components/NasaDataModal'
@@ -13,6 +14,13 @@ import type { DonkiBundle } from './types/nasa'
 import type { ScreenId, WorldState } from './types/game'
 
 const Mission01Screen = lazy(() => import('./mission1/Mission01Screen'))
+
+type GateState = {
+  missionId: number
+  title: string
+  direction: 'enter' | 'exit'
+  completed?: boolean
+}
 
 const TUTORIAL_STEPS = [
   {
@@ -38,12 +46,17 @@ export default function App() {
   const [tutorialStep, setTutorialStep] = useState(0)
   const [tutorialOpen, setTutorialOpen] = useState(false)
   const [activeMission, setActiveMission] = useState<number | null>(null)
-  const [gate, setGate] = useState<{ missionId: number; title: string } | null>(null)
+  const [gate, setGate] = useState<GateState | null>(null)
   const [missionReady, setMissionReady] = useState(false)
+  const [celebrate, setCelebrate] = useState(false)
   const gateRef = useRef(gate)
+  const worldRef = useRef(world)
   useEffect(() => {
     gateRef.current = gate
   }, [gate])
+  useEffect(() => {
+    worldRef.current = world
+  }, [world])
   const [muted, setMutedState] = useState(() => {
     setMuted(progress.muted)
     return progress.muted
@@ -56,6 +69,22 @@ export default function App() {
         xp: w.xp,
         unlockedTools: w.unlockedTools,
         solsPlayed: Math.max(loadProgress().solsPlayed, w.sol - 1),
+      }),
+    )
+  }, [])
+
+  const applyMissionComplete = useCallback((completed: boolean) => {
+    const w = worldRef.current
+    if (!completed || !w) return
+    const nextLevel = Math.max(w.level, 2)
+    const nextXp = w.xp + 40
+    const next = { ...w, level: nextLevel, xp: nextXp, message: 'Missão 1 concluída! Nova ilha no mapa.' }
+    setWorld(next)
+    setProgress(
+      updateProgress({
+        level: nextLevel,
+        xp: nextXp,
+        unlockedTools: next.unlockedTools,
       }),
     )
   }, [])
@@ -84,41 +113,55 @@ export default function App() {
     void unlockAudio()
     soundEngine.missionOpen()
     setMissionReady(false)
-    setGate({ missionId: level, title: node.gateTitle })
+    setGate({ missionId: level, title: node.gateTitle, direction: 'enter' })
+  }
+
+  const leaveMission = (completed: boolean) => {
+    const missionId = activeMission ?? 1
+    const node = getMissionNode(missionId)
+    void unlockAudio()
+    setMissionReady(false)
+    setGate({
+      missionId,
+      title: node.gateTitle,
+      direction: 'exit',
+      completed,
+    })
   }
 
   const handleGateClosed = useCallback(() => {
     const g = gateRef.current
     if (!g) return
+
+    if (g.direction === 'exit') {
+      applyMissionComplete(!!g.completed)
+      setActiveMission(null)
+      setScreen('world')
+      // World paints under closed shutters, then open.
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => setMissionReady(true))
+      })
+      return
+    }
+
     setMissionReady(false)
     setActiveMission(g.missionId)
     setScreen('mission')
-  }, [])
+  }, [applyMissionComplete])
 
   const handleGateOpened = useCallback(() => {
+    const g = gateRef.current
+    const celebrateExit = g?.direction === 'exit' && !!g.completed
     setGate(null)
     setMissionReady(false)
+    if (celebrateExit) setCelebrate(true)
   }, [])
 
-  const leaveMission = (completed: boolean) => {
-    setMissionReady(false)
-    if (completed && world) {
-      const nextLevel = Math.max(world.level, 2)
-      const nextXp = world.xp + 40
-      const next = { ...world, level: nextLevel, xp: nextXp, message: 'Missão 1 concluída! Nova ilha no mapa.' }
-      setWorld(next)
-      setProgress(
-        updateProgress({
-          level: nextLevel,
-          xp: nextXp,
-          unlockedTools: next.unlockedTools,
-        }),
-      )
-      soundEngine.success()
-    }
-    setActiveMission(null)
-    setScreen('world')
-  }
+  useEffect(() => {
+    if (!celebrate) return
+    const id = window.setTimeout(() => setCelebrate(false), 3200)
+    return () => window.clearTimeout(id)
+  }, [celebrate])
 
   const finishTutorial = () => {
     setTutorialOpen(false)
@@ -196,6 +239,8 @@ export default function App() {
       />
 
       <NasaDataModal open={nasaOpen} weather={world?.weather ?? null} onClose={() => setNasaOpen(false)} />
+
+      {celebrate && <ConfettiBurst />}
 
       <DialogBox
         open={tutorialOpen}
