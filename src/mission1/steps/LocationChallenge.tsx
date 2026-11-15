@@ -44,12 +44,14 @@ function placePanel(
   const spaceAbove = ay - anchor.height / 2 - pad - safeTop
 
   type Side = PanelPos['side']
-  const ranked: { side: Side; space: number }[] = [
-    { side: 'right', space: spaceRight },
-    { side: 'left', space: spaceLeft },
-    { side: 'below', space: spaceBelow },
-    { side: 'above', space: spaceAbove },
-  ].sort((a, b) => b.space - a.space)
+  const ranked = (
+    [
+      { side: 'right', space: spaceRight },
+      { side: 'left', space: spaceLeft },
+      { side: 'below', space: spaceBelow },
+      { side: 'above', space: spaceAbove },
+    ] as { side: Side; space: number }[]
+  ).toSorted((a, b) => b.space - a.space)
 
   const side = ranked.find((r) => r.space >= panelW * 0.55)?.side ?? ranked[0]!.side
 
