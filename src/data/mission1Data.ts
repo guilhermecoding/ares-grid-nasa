@@ -2,6 +2,8 @@
 
 export type Mission1Step =
   | 'intro'
+  | 'replay_intro'
+  | 'replay_idle'
   | 'risk_warning'
   | 'step1_location'
   | 'step2_solar_calc'
@@ -47,6 +49,20 @@ export const INTRO_PARTS = [
 ] as const
 
 export const INTRO_HIGHLIGHT_WORDS = ['painel solar'] as const
+
+/** Shown when re-entering Missão 01 after the panel was already set up. */
+export const REPLAY_INTRO_PARTS = [
+  ['Você esteve aqui há pouco tempo.'] as const,
+  ['O painel solar já está configurado.'] as const,
+] as const
+
+export const REPLAY_INTRO_HIGHLIGHT_WORDS = ['painel solar'] as const
+
+/** Cooldown between panel cleans on Missão 01 replay visits. */
+export const PANEL_CLEAN_COOLDOWN_MS = 5 * 60_000
+export const PANEL_CLEAN_EFFICIENCY_GAIN = 4
+export const PANEL_CLEAN_ENERGY_GAIN = 10
+export const PANEL_CLEAN_EFFICIENCY_CAP = 98
 
 export function isOutdoorMission1Step(step: Mission1Step): boolean {
   return step === 'step1_location' || step === 'step2_solar_calc' || step === 'step3_storm_test'

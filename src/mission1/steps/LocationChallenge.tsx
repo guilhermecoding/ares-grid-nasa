@@ -8,6 +8,8 @@ import { PixelDialogBox } from '../../opening/PixelDialogBox'
 
 interface Props {
   onConfirm: (site: SiteId) => void
+  /** Pre-select last saved site when replaying. */
+  initialSite?: SiteId
 }
 
 interface PanelPos {
@@ -83,8 +85,8 @@ function placePanel(
   return { left, top, side }
 }
 
-export function LocationChallenge({ onConfirm }: Props) {
-  const [selected, setSelected] = useState<SiteId | null>(null)
+export function LocationChallenge({ onConfirm, initialSite }: Props) {
+  const [selected, setSelected] = useState<SiteId | null>(initialSite ?? null)
   const [panelPos, setPanelPos] = useState<PanelPos | null>(null)
   const [capiOpen, setCapiOpen] = useState(false)
   const [capiLines, setCapiLines] = useState<string[]>([])

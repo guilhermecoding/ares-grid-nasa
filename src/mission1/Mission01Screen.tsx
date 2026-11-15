@@ -4,16 +4,22 @@ import {
   EXPOSURE_MS,
   INSTALL_SITES,
   isOutdoorMission1Step,
+  PANEL_CLEAN_EFFICIENCY_CAP,
+  PANEL_CLEAN_EFFICIENCY_GAIN,
+  PANEL_CLEAN_ENERGY_GAIN,
   type Mission1Step,
   type SeasonId,
   type SiteId,
 } from '../data/mission1Data'
+import { loadProgress, updateProgress, type Mission1PanelSave } from '../services/progressStore'
 import type { BaseStats } from '../types/game'
 import { MarsBackground } from './MarsBackground'
 import { GameOverOverlay } from './steps/GameOverOverlay'
 import { IntroHud } from './steps/IntroHud'
 import { LocationChallenge } from './steps/LocationChallenge'
 import { LogbookModal } from './steps/LogbookModal'
+import { PanelCleanSuccessDialog } from './steps/PanelCleanSuccessDialog'
+import { ReplayIntroHud } from './steps/ReplayIntroHud'
 import { RiskWarningHud } from './steps/RiskWarningHud'
 import { SolarCalcChallenge } from './steps/SolarCalcChallenge'
 import { StormTestChallenge } from './steps/StormTestChallenge'
@@ -76,20 +82,52 @@ interface Props {
   stats?: BaseStats
 }
 
+function persistPanel(config: Mission1PanelSave) {
+  updateProgress({ mission1Panel: config })
+}
+
 export default function Mission01Screen({
   onComplete,
   onExit,
   onReady,
   stats = DEFAULT_STATS,
 }: Props) {
-  const [step, setStep] = useState<Mission1Step>('intro')
-  const [site, setSite] = useState<SiteId>('B')
-  const [season, setSeason] = useState<SeasonId>('summer_n')
-  const [tilt, setTilt] = useState(30)
-  const [efficiency, setEfficiency] = useState(0)
-  const [panelInstalled, setPanelInstalled] = useState(false)
-  const [stormChoice, setStormChoice] = useState<'save' | 'max' | null>(null)
+  const savedPanel = useMemo(() => loadProgress().mission1Panel, [])
+  const hasSavedPanel = !!savedPanel
+
+  const [step, setStep] = useState<Mission1Step>(() => (hasSavedPanel ? 'replay_intro' : 'intro'))
+  const [site, setSite] = useState<SiteId>(() => savedPanel?.site ?? 'B')
+  const [season, setSeason] = useState<SeasonId>(() => savedPanel?.season ?? 'summer_n')
+  const [tilt, setTilt] = useState(() => savedPanel?.tilt ?? 30)
+  const [azimuth, setAzimuth] = useState(() => savedPanel?.azimuth ?? 0)
+  const [efficiency, setEfficiency] = useState(() => savedPanel?.efficiency ?? 0)
+  const [panelInstalled, setPanelInstalled] = useState(() => hasSavedPanel)
+  const [stormChoice, setStormChoice] = useState<'save' | 'max' | null>(
+    () => savedPanel?.stormChoice ?? (hasSavedPanel ? 'save' : null),
+  )
+  const [firstInstalledAt, setFirstInstalledAt] = useState(
+    () => savedPanel?.firstInstalledAt ?? Date.now(),
+  )
+  const [lastCleanedAt, setLastCleanedAt] = useState<number | null>(
+    () => savedPanel?.lastCleanedAt ?? null,
+  )
+  const [cleanSuccessOpen, setCleanSuccessOpen] = useState(false)
   const [hour] = useState(12)
+
+  const buildPanelSave = useCallback(
+    (overrides: Partial<Mission1PanelSave> = {}): Mission1PanelSave => ({
+      site,
+      season,
+      tilt,
+      azimuth,
+      efficiency,
+      stormChoice: stormChoice ?? 'save',
+      firstInstalledAt,
+      lastCleanedAt,
+      ...overrides,
+    }),
+    [azimuth, efficiency, firstInstalledAt, lastCleanedAt, season, site, stormChoice, tilt],
+  )
 
   const wellbeingStart = useRef(Math.max(1, stats.wellbeing))
   const outdoorElapsedMs = useRef(0)
@@ -110,8 +148,32 @@ export default function Mission01Screen({
   )
 
   const finish = useCallback(() => {
+    if (panelInstalled && efficiency > 0) {
+      persistPanel(buildPanelSave())
+    }
     onComplete(hudStats)
-  }, [onComplete, hudStats])
+  }, [buildPanelSave, efficiency, hudStats, onComplete, panelInstalled])
+
+  const handleCleanPanel = useCallback(() => {
+    const now = Date.now()
+    const nextEfficiency = Math.min(PANEL_CLEAN_EFFICIENCY_CAP, efficiency + PANEL_CLEAN_EFFICIENCY_GAIN)
+    setEfficiency(nextEfficiency)
+    setLastCleanedAt(now)
+
+    const progress = loadProgress()
+    const nextEnergy = clampStat(progress.baseStats.energy + PANEL_CLEAN_ENERGY_GAIN)
+    updateProgress({
+      mission1Panel: buildPanelSave({
+        efficiency: nextEfficiency,
+        lastCleanedAt: now,
+      }),
+      baseStats: {
+        ...progress.baseStats,
+        energy: nextEnergy,
+      },
+    })
+    setCleanSuccessOpen(true)
+  }, [buildPanelSave, efficiency])
 
   const beginExposure = useCallback(() => {
     outdoorElapsedMs.current = 0
@@ -205,6 +267,27 @@ export default function Mission01Screen({
         <IntroHud onContinue={() => setStep('risk_warning')} />
       )}
 
+      {!gameOver && (step === 'replay_intro' || step === 'replay_idle') && (
+        <ReplayIntroHud
+          tilt={tilt}
+          azimuth={azimuth}
+          efficiency={efficiency}
+          firstInstalledAt={firstInstalledAt}
+          lastCleanedAt={lastCleanedAt}
+          idle={step === 'replay_idle'}
+          onContinue={() => setStep('replay_idle')}
+          onCleanPanel={handleCleanPanel}
+        />
+      )}
+
+      <PanelCleanSuccessDialog
+        open={cleanSuccessOpen}
+        tilt={tilt}
+        azimuth={azimuth}
+        efficiency={efficiency}
+        onClose={() => setCleanSuccessOpen(false)}
+      />
+
       {!gameOver && step === 'risk_warning' && <RiskWarningHud onContinue={beginExposure} />}
 
       {!gameOver && step === 'step1_location' && (
@@ -221,10 +304,23 @@ export default function Mission01Screen({
           site={site}
           onSeasonChange={setSeason}
           onConfirm={(opts) => {
+            const installedAt = Date.now()
             setSeason(opts.season)
             setTilt(opts.tilt)
+            setAzimuth(opts.azimuth)
             setEfficiency(opts.efficiency)
             setPanelInstalled(true)
+            setFirstInstalledAt(installedAt)
+            persistPanel(
+              buildPanelSave({
+                season: opts.season,
+                tilt: opts.tilt,
+                azimuth: opts.azimuth,
+                efficiency: opts.efficiency,
+                firstInstalledAt: installedAt,
+                lastCleanedAt: null,
+              }),
+            )
             setStep('step3_storm_test')
           }}
         />
@@ -235,6 +331,7 @@ export default function Mission01Screen({
           baseEfficiency={efficiency}
           onDone={(choice) => {
             setStormChoice(choice)
+            persistPanel(buildPanelSave({ stormChoice: choice }))
             setStep('step4_logbook')
           }}
         />

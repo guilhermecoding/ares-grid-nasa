@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
 import {
   NUTRITION_CARDS,
@@ -7,7 +7,7 @@ import {
 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
-import { ActivityCard, ActivityCardGrid, StageCostBadge } from '../ActivityCard'
+import { StageCostBadge, SwipeDeck, type ActivityCardModel } from '../ActivityCard'
 import { SciTermM2 } from '../SciTermM2'
 
 function NutritionIcon({ id }: { id: NutritionCardId }) {
@@ -64,7 +64,6 @@ export function NutritionStep({
   onCompleteOne,
   onContinue,
 }: Props) {
-  const [busyId, setBusyId] = useState<string | null>(null)
   const doneSet = useMemo(() => new Set(completedIds), [completedIds])
 
   const energySpent = useMemo(
@@ -79,9 +78,32 @@ export function NutritionStep({
   const hasHydrate = doneSet.has('hydrate')
   const ready = completedIds.length >= NUTRITION_REQUIRED_COUNT && hasHydrate
 
-  const handleActivate = useCallback(
+  const deckCards: ActivityCardModel[] = useMemo(
+    () =>
+      NUTRITION_CARDS.filter((card) => !doneSet.has(card.id)).map((card) => ({
+        id: card.id,
+        title: card.title,
+        detail: card.detail,
+        color: card.color,
+        energyCost: card.energyCost,
+        waterCostL: card.waterCostL,
+        wellbeingGain: card.wellbeingGain,
+        iconNode: <NutritionIcon id={card.id} />,
+      })),
+    [doneSet],
+  )
+
+  const canAccept = useCallback(
     (id: string) => {
-      setBusyId(null)
+      const card = NUTRITION_CARDS.find((c) => c.id === id)
+      if (!card) return false
+      return card.energyCost <= energyPct && card.waterCostL <= waterL
+    },
+    [energyPct, waterL],
+  )
+
+  const handleAccept = useCallback(
+    (id: string) => {
       const card = NUTRITION_CARDS.find((c) => c.id === id)
       if (!card || doneSet.has(card.id)) return
       if (card.energyCost > energyPct || card.waterCostL > waterL) return
@@ -99,10 +121,10 @@ export function NutritionStep({
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
-      <div className="pointer-events-none h-[7.5rem] shrink-0 sm:h-32" />
+      <div className="pointer-events-none h-[6.5rem] shrink-0 sm:h-28" />
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center pb-28">
-        <ActivityCardGrid
+      <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-24">
+        <SwipeDeck
           title="Etapa — Alimentação"
           subtitle={
             <span className="inline-flex items-center gap-2">
@@ -113,32 +135,11 @@ export function NutritionStep({
               </span>
             </span>
           }
-        >
-          {NUTRITION_CARDS.map((card) => {
-            const done = doneSet.has(card.id)
-            const cannotAfford = card.energyCost > energyPct || card.waterCostL > waterL
-            return (
-              <ActivityCard
-                key={card.id}
-                card={{
-                  id: card.id,
-                  title: card.title,
-                  detail: card.detail,
-                  color: card.color,
-                  energyCost: card.energyCost,
-                  waterCostL: card.waterCostL,
-                  wellbeingGain: card.wellbeingGain,
-                  iconNode: <NutritionIcon id={card.id} />,
-                }}
-                done={done}
-                disabled={cannotAfford}
-                busy={busyId !== null && busyId !== card.id}
-                onStart={setBusyId}
-                onActivate={handleActivate}
-              />
-            )
-          })}
-        </ActivityCardGrid>
+          cards={deckCards}
+          canAccept={canAccept}
+          onAccept={handleAccept}
+          emptyMessage="Refeição completa — continue."
+        />
       </div>
 
       <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo da refeição" />
@@ -146,7 +147,7 @@ export function NutritionStep({
       <div className="absolute inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-end px-3 sm:px-4">
         <McButton
           className="min-h-12 min-w-[10rem] font-pixel text-lg font-bold disabled:opacity-40"
-          disabled={!ready || busyId !== null}
+          disabled={!ready}
           onClick={() => {
             soundEngine.harvest()
             onContinue()

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
 import {
   EXERCISES,
@@ -7,7 +7,7 @@ import {
 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
-import { ActivityCard, ActivityCardGrid, StageCostBadge } from '../ActivityCard'
+import { StageCostBadge, SwipeDeck, type ActivityCardModel } from '../ActivityCard'
 import { SciTermM2 } from '../SciTermM2'
 
 const ICONS: Record<ExerciseId, string> = {
@@ -32,8 +32,6 @@ export function ExerciseStep({
   onCompleteOne,
   onContinue,
 }: Props) {
-  const [busyId, setBusyId] = useState<string | null>(null)
-
   const doneSet = useMemo(() => new Set(completedIds), [completedIds])
   const energySpent = useMemo(
     () => EXERCISES.filter((e) => doneSet.has(e.id)).reduce((s, e) => s + e.energyCost, 0),
@@ -45,10 +43,35 @@ export function ExerciseStep({
   )
 
   const ready = completedIds.length >= EXERCISE_REQUIRED_COUNT
+  const quotaFull = completedIds.length >= EXERCISE_REQUIRED_COUNT
 
-  const handleActivate = useCallback(
+  const deckCards: ActivityCardModel[] = useMemo(
+    () =>
+      EXERCISES.filter((ex) => !doneSet.has(ex.id)).map((ex) => ({
+        id: ex.id,
+        title: ex.title,
+        detail: ex.focus,
+        color: ex.color,
+        energyCost: ex.energyCost,
+        waterCostL: ex.waterCostL,
+        wellbeingGain: ex.wellbeingGain,
+        iconSrc: ICONS[ex.id],
+      })),
+    [doneSet],
+  )
+
+  const canAccept = useCallback(
     (id: string) => {
-      setBusyId(null)
+      if (quotaFull) return false
+      const ex = EXERCISES.find((e) => e.id === id)
+      if (!ex) return false
+      return ex.energyCost <= energyPct && ex.waterCostL <= waterL
+    },
+    [energyPct, quotaFull, waterL],
+  )
+
+  const handleAccept = useCallback(
+    (id: string) => {
       const ex = EXERCISES.find((e) => e.id === id)
       if (!ex || doneSet.has(ex.id)) return
       if (completedIds.length >= EXERCISE_REQUIRED_COUNT) return
@@ -60,10 +83,10 @@ export function ExerciseStep({
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
-      <div className="pointer-events-none h-[7.5rem] shrink-0 sm:h-32" />
+      <div className="pointer-events-none h-[6.5rem] shrink-0 sm:h-28" />
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center pb-28">
-        <ActivityCardGrid
+      <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-24">
+        <SwipeDeck
           title="Etapa — Exercícios"
           subtitle={
             <>
@@ -71,33 +94,11 @@ export function ExerciseStep({
               <SciTermM2 term="Microgravidade" />. Feitos: {completedIds.length}/{EXERCISE_REQUIRED_COUNT}
             </>
           }
-        >
-          {EXERCISES.map((ex) => {
-            const done = doneSet.has(ex.id)
-            const cannotAfford = ex.energyCost > energyPct || ex.waterCostL > waterL
-            const maxed = !done && completedIds.length >= EXERCISE_REQUIRED_COUNT
-            return (
-              <ActivityCard
-                key={ex.id}
-                card={{
-                  id: ex.id,
-                  title: ex.title,
-                  detail: ex.focus,
-                  color: ex.color,
-                  energyCost: ex.energyCost,
-                  waterCostL: ex.waterCostL,
-                  wellbeingGain: ex.wellbeingGain,
-                  iconSrc: ICONS[ex.id],
-                }}
-                done={done}
-                disabled={cannotAfford || maxed}
-                busy={busyId !== null && busyId !== ex.id}
-                onStart={setBusyId}
-                onActivate={handleActivate}
-              />
-            )
-          })}
-        </ActivityCardGrid>
+          cards={deckCards}
+          canAccept={canAccept}
+          onAccept={handleAccept}
+          emptyMessage="2 exercícios feitos — continue."
+        />
       </div>
 
       <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo dos exercícios" />
@@ -105,7 +106,7 @@ export function ExerciseStep({
       <div className="absolute inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-end px-3 sm:px-4">
         <McButton
           className="min-h-12 min-w-[10rem] font-pixel text-lg font-bold disabled:opacity-40"
-          disabled={!ready || busyId !== null}
+          disabled={!ready}
           onClick={() => {
             soundEngine.harvest()
             onContinue()
