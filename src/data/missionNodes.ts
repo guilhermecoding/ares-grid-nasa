@@ -13,7 +13,7 @@ export interface MissionNode {
 }
 
 /** Missions that currently have a dedicated playable screen. */
-export const PLAYABLE_MISSION_LEVELS = [1] as const
+export const PLAYABLE_MISSION_LEVELS = [1, 2] as const
 
 export function isPlayableMission(level: number): boolean {
   return (PLAYABLE_MISSION_LEVELS as readonly number[]).includes(level)
@@ -28,7 +28,7 @@ export const MISSION_NODES: readonly MissionNode[] = [
     id: 'm1-energia',
     level: 1,
     title: 'Energia Solar',
-    gateTitle: 'ENERGIA PARA EXPLORAR MARTE',
+    gateTitle: 'Energia para explorar Marte',
     lockedHint: 'Complete a missão anterior!',
     soonHint: 'Em breve!',
     leftPct: 16,
@@ -39,9 +39,9 @@ export const MISSION_NODES: readonly MissionNode[] = [
     id: 'm2-saude',
     level: 2,
     title: 'Saúde',
-    gateTitle: 'CUIDANDO DO ASTRONAUTA',
+    gateTitle: 'Cuidando do astronauta',
     lockedHint: 'Missão bloqueada',
-    soonHint: 'Em breve!',
+    soonHint: 'Complete a Missão 1 primeiro!',
     leftPct: 30,
     topPct: 58,
     anchor: { x: 0, y: 0 },

@@ -52,12 +52,25 @@ export function createWorldState(
   level: number,
   xp: number,
   weather?: WeatherState,
+  baseStats?: BaseStats,
 ): WorldState {
   const def = getLevelDef(level)
+  const stats: BaseStats = baseStats
+    ? {
+        energy: clamp(baseStats.energy),
+        water: clamp(baseStats.water),
+        wellbeing: clamp(baseStats.wellbeing),
+      }
+    : {
+        // No solar until Mission 01 — energy stays empty.
+        energy: level >= 2 ? 70 : 0,
+        water: 85,
+        wellbeing: 70,
+      }
   return {
     grid: createArcadiaGrid(level),
     rover: { x: 0, y: 0, cargo: 'none', sheltered: true },
-    stats: { energy: MAX_ENERGY, lifeSupport: 85, shield: 70 },
+    stats,
     sol: 1,
     hour: WAKE_HOUR,
     level,
@@ -123,8 +136,8 @@ function tryLevelUp(state: WorldState): WorldState {
 
 function applyPassiveHour(state: WorldState): WorldState {
   const grid = cloneGrid(state.grid)
-  let life = state.stats.lifeSupport
-  let shield = state.stats.shield
+  let water = state.stats.water
+  let wellbeing = state.stats.wellbeing
 
   // Dust accumulates slowly on panels.
   for (const row of grid) {
@@ -139,32 +152,43 @@ function applyPassiveHour(state: WorldState): WorldState {
     }
   }
 
-  // Clean panels boost life a little during day.
+  // Clean panels help recycling / morale a little during day.
   let cleanPanels = 0
   for (const row of grid) {
     for (const tile of row) {
       if (tile.type === 'SOLAR_PANEL' && !tile.locked && tile.dust < 40) cleanPanels++
     }
   }
-  if (state.hour >= 6 && state.hour < 18) life = clamp(life + cleanPanels * 0.4)
-  else life = clamp(life - 0.6)
+  if (state.hour >= 6 && state.hour < 18) {
+    water = clamp(water + cleanPanels * 0.25)
+    wellbeing = clamp(wellbeing + cleanPanels * 0.15)
+  } else {
+    water = clamp(water - 0.45)
+  }
 
-  if (state.iceStored > 0) life = clamp(life + 0.3)
+  if (state.iceStored > 0) water = clamp(water + 0.35)
 
   const storm = isStorm(state.weather.kind)
   if (storm) {
+    // Radiation / dust storms cut crew wellbeing over time; shelter helps.
     const exposure = state.rover.sheltered ? 0.25 : 1
-    const shieldFactor = shield / 100
-    life = clamp(life - (state.weather.intensity / 40) * exposure * (1 - shieldFactor * 0.7))
-    shield = clamp(shield - state.weather.intensity * 0.04 * (state.rover.sheltered ? 0.35 : 1))
+    wellbeing = clamp(
+      wellbeing - (state.weather.intensity / 28) * exposure,
+    )
+    // Stress on life-support recycling drains a little water.
+    water = clamp(water - (state.weather.intensity / 90) * exposure)
+  } else if (state.weather.kind === 'flare' || state.weather.intensity > 20) {
+    // Mild background radiation still nicks wellbeing when not sheltered.
+    const exposure = state.rover.sheltered ? 0.2 : 1
+    wellbeing = clamp(wellbeing - 0.2 * exposure)
   } else {
-    shield = clamp(shield - 0.15)
+    wellbeing = clamp(wellbeing - 0.08)
   }
 
   return {
     ...state,
     grid,
-    stats: { ...state.stats, lifeSupport: life, shield },
+    stats: { ...state.stats, water, wellbeing },
   }
 }
 
@@ -251,8 +275,9 @@ export function interact(state: WorldState): WorldState {
       stats = spendEnergy(stats, ACTION_COST)!
       rover.cargo = 'ice'
       iceStored += 1
-      stats.lifeSupport = clamp(stats.lifeSupport + 10)
-      message = 'Gelo SWIM extraído! +água e ar para a base.'
+      stats.water = clamp(stats.water + 10)
+      stats.wellbeing = clamp(stats.wellbeing + 3)
+      message = 'Gelo SWIM extraído! +água para a base.'
       next = bumpQuest({ ...next, stats, rover, iceStored, message, grid }, 'drill_ice')
       return tryLevelUp(applyPassiveHour({ ...next, hour: Math.min(23, next.hour + 1) }))
     }
@@ -269,10 +294,11 @@ export function interact(state: WorldState): WorldState {
         break
       }
       stats = spendEnergy(stats, ACTION_COST)!
-      stats.lifeSupport = clamp(stats.lifeSupport + crop.lifeSupportReturn * 0.7)
+      stats.water = clamp(stats.water + crop.lifeSupportReturn * 0.45)
+      stats.wellbeing = clamp(stats.wellbeing + crop.lifeSupportReturn * 0.35)
       tile.growth = 0
       tile.cropId = tile.cropId === 'radish' ? 'spirulina' : tile.cropId === 'spirulina' ? 'romaine' : 'radish'
-      message = `Colheita de ${crop.name}! A base agradece.`
+      message = `Colheita de ${crop.name}! Água e saúde sobem.`
       next = bumpQuest({ ...next, stats, rover, iceStored, message, grid }, 'harvest')
       return tryLevelUp(applyPassiveHour({ ...next, hour: Math.min(23, next.hour + 1) }))
     }
@@ -301,8 +327,8 @@ export function interact(state: WorldState): WorldState {
       }
       stats = spendEnergy(stats, ACTION_COST)!
       rover.cargo = 'none'
-      stats.shield = clamp(stats.shield + 16)
-      message = 'Escudo reforçado! Mais seguro nas tempestades.'
+      stats.wellbeing = clamp(stats.wellbeing + 16)
+      message = 'Proteção reforçada! A tripulação se sente mais segura.'
       next = bumpQuest({ ...next, stats, rover, iceStored, message, grid }, 'deposit_shield')
       return tryLevelUp(applyPassiveHour({ ...next, hour: Math.min(23, next.hour + 1) }))
     }
@@ -345,9 +371,10 @@ export function sleep(state: WorldState, bundle: DonkiBundle | null): WorldState
     sol: nextSol,
     hour: WAKE_HOUR,
     stats: {
-      energy: MAX_ENERGY,
-      lifeSupport: clamp(state.stats.lifeSupport + 6),
-      shield: clamp(state.stats.shield + (isStorm(weather.kind) ? 0 : 4)),
+      // Solar recharge overnight only after Mission 01 panels are online.
+      energy: state.level >= 2 ? MAX_ENERGY : state.stats.energy,
+      water: clamp(state.stats.water + 4),
+      wellbeing: clamp(state.stats.wellbeing + (isStorm(weather.kind) ? 2 : 8)),
     },
     rover: { ...state.rover, sheltered: true, cargo: state.rover.cargo },
     weather,

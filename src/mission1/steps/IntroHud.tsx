@@ -1,17 +1,21 @@
-import { PixelDialogBox } from '../../opening/PixelDialogBox'
-import { McButton } from '../../opening/McButton'
-import { MEDIA } from '../../constants/mediaAssets'
-import { INTRO_LINES } from '../../data/mission1Data'
-import { SciTerm } from '../SciTerm'
 import { useState } from 'react'
+import { MEDIA } from '../../constants/mediaAssets'
+import { INTRO_HIGHLIGHT_WORDS, INTRO_PARTS } from '../../data/mission1Data'
+import { McButton } from '../../opening/McButton'
+import { PixelDialogBox } from '../../opening/PixelDialogBox'
+import { SciTerm } from '../SciTerm'
 
 interface Props {
   onContinue: () => void
 }
 
 export function IntroHud({ onContinue }: Props) {
+  const [part, setPart] = useState(0)
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
+
+  const lines = INTRO_PARTS[part]!
+  const isLast = part >= INTRO_PARTS.length - 1
 
   return (
     <>
@@ -26,20 +30,31 @@ export function IntroHud({ onContinue }: Props) {
       </div>
 
       <PixelDialogBox
+        key={`m1-intro-${part}`}
         open={open}
-        lines={INTRO_LINES}
+        lines={[...lines]}
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
+        highlightWords={part === 1 ? INTRO_HIGHLIGHT_WORDS : undefined}
         onTypingComplete={() => setReady(true)}
-        onClosed={onContinue}
+        onClosed={() => {
+          if (!isLast) {
+            setReady(false)
+            setPart((p) => p + 1)
+            setOpen(true)
+            return
+          }
+          onContinue()
+        }}
         footer={
           ready ? (
             <McButton
               className="min-h-12 px-6 font-pixel text-lg font-bold"
+              style={{ touchAction: 'manipulation' }}
               onClick={() => setOpen(false)}
             >
-              Avançar
+              {isLast ? 'Avançar' : 'Continuar'}
             </McButton>
           ) : null
         }

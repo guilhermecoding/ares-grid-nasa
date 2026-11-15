@@ -23,17 +23,31 @@ const FORMULA_LINES = [
 
 interface Props {
   site: SiteId
+  /** Restore last saved panel orientation when replaying Missão 01. */
+  initialSeason?: SeasonId
+  initialAzimuth?: number
+  initialTilt?: number
+  /** If true, open controls immediately so the panel shows as configured. */
+  restoreLayout?: boolean
   onConfirm: (opts: { season: SeasonId; azimuth: number; tilt: number; efficiency: number }) => void
   onSeasonChange?: (season: SeasonId) => void
 }
 
-export function SolarCalcChallenge({ site, onConfirm, onSeasonChange }: Props) {
-  const [season, setSeason] = useState<SeasonId>('summer_n')
-  const [asked, setAsked] = useState(false)
+export function SolarCalcChallenge({
+  site,
+  initialSeason = 'summer_n',
+  initialAzimuth = 0,
+  initialTilt = 30,
+  restoreLayout = false,
+  onConfirm,
+  onSeasonChange,
+}: Props) {
+  const [season, setSeason] = useState<SeasonId>(initialSeason)
+  const [asked, setAsked] = useState(restoreLayout)
   const [formulaOpen, setFormulaOpen] = useState(false)
   const [formulaReady, setFormulaReady] = useState(false)
-  const [azimuth, setAzimuth] = useState(0)
-  const [tilt, setTilt] = useState(30)
+  const [azimuth, setAzimuth] = useState(initialAzimuth)
+  const [tilt, setTilt] = useState(initialTilt)
   const [installed, setInstalled] = useState(false)
 
   const efficiency = useMemo(

@@ -21,8 +21,30 @@ interface PixelDialogBoxProps {
   bodyClassName?: string
   /** Optional per-line class overrides (e.g. formula in normal bold). */
   lineClassNames?: readonly (string | undefined)[]
+  /** Words to paint yellow (case-insensitive) inside typed lines. */
+  highlightWords?: readonly string[]
   /** Where the TV panel anchors (default: bottom). */
   position?: 'bottom' | 'center'
+}
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function renderWithHighlights(text: string, words: readonly string[] | undefined): ReactNode {
+  if (!words?.length || !text) return text
+  const pattern = new RegExp(`(${words.map(escapeRegExp).join('|')})`, 'gi')
+  const parts = text.split(pattern)
+  return parts.map((part, i) => {
+    const hit = words.some((w) => w.toLowerCase() === part.toLowerCase())
+    return hit ? (
+      <span key={i} className="font-bold text-energy">
+        {part}
+      </span>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  })
 }
 
 function CornerRivet({ className }: { className: string }) {
@@ -47,6 +69,7 @@ export function PixelDialogBox({
   className = '',
   bodyClassName = 'font-pixel',
   lineClassNames,
+  highlightWords,
   position = 'bottom',
 }: PixelDialogBoxProps) {
   const [entered, setEntered] = useState(false)
@@ -232,7 +255,7 @@ export function PixelDialogBox({
                             key={i}
                             className={`${i === 0 ? '' : 'mt-1 opacity-95'}${lineClass ? ` ${lineClass}` : ''}`}
                           >
-                            {text}
+                            {renderWithHighlights(text, highlightWords)}
                             {isCurrent && <span className="ml-0.5 inline-block w-2 animate-pulse bg-[#f4fff4]">▌</span>}
                           </p>
                         )

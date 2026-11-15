@@ -90,10 +90,11 @@ export function MissionGateTransition({
   return (
     <AnimatePresence>
       {visible && (
-        <div className="pointer-events-auto fixed inset-0 z-[80]" style={{ imageRendering: 'pixelated' }}>
+        <div className="pointer-events-auto fixed inset-0 z-[80]">
           <motion.div
             className="absolute inset-x-0 top-0 h-1/2 origin-top border-b-4 border-[#f4fff4]"
             style={{
+              imageRendering: 'pixelated',
               background: `
                 repeating-linear-gradient(90deg, #1a1c3a 0 8px, #30346d 8px 16px),
                 linear-gradient(180deg, #0a1628 0%, #30346d 100%)
@@ -107,6 +108,7 @@ export function MissionGateTransition({
           <motion.div
             className="absolute inset-x-0 bottom-0 h-1/2 origin-bottom border-t-4 border-[#f4fff4]"
             style={{
+              imageRendering: 'pixelated',
               background: `
                 repeating-linear-gradient(90deg, #1a1c3a 0 8px, #30346d 8px 16px),
                 linear-gradient(0deg, #0a1628 0%, #30346d 100%)
@@ -120,17 +122,22 @@ export function MissionGateTransition({
 
           <AnimatePresence>
             {showPlaque && (
-              <motion.div
-                className="absolute top-1/2 left-1/2 z-10 w-[min(92vw,28rem)] -translate-x-1/2 -translate-y-1/2 border-4 border-[#1a1c3a] bg-[#f4fff4] px-4 py-3 text-center shadow-[0_0_0_3px_#30346d]"
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.25 }}
-              >
-                <p className="font-pixel text-sm leading-snug text-[#1a1c3a] sm:text-base md:text-lg">
-                  Missão {missionNumber} - {title}
-                </p>
-              </motion.div>
+              <div className="absolute inset-0 z-20 flex items-center justify-center p-4 sm:p-6">
+                <motion.div
+                  className="w-full max-w-xl border-4 border-[#1a1c3a] bg-[#f4fff4] px-4 py-4 text-center shadow-[0_0_0_3px_#30346d] sm:px-6 sm:py-5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <p className="font-pixel text-[11px] tracking-wide text-[#30346d] uppercase sm:text-sm">
+                    Missão {missionNumber}
+                  </p>
+                  <p className="mt-2 max-w-full font-pixel text-sm leading-[1.45] text-[#1a1c3a] whitespace-normal sm:text-base md:text-lg">
+                    {title}
+                  </p>
+                </motion.div>
+              </div>
             )}
           </AnimatePresence>
         </div>

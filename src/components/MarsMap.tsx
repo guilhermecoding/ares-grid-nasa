@@ -169,7 +169,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
               </span>
 
               <span
-                className={`mt-1 max-w-[8rem] truncate rounded px-1.5 py-0.5 text-center font-pixel text-[9px] leading-tight sm:text-[10px] ${
+                className={`mt-1 w-max max-w-[9.5rem] rounded px-1.5 py-0.5 text-center font-pixel text-[9px] leading-snug whitespace-normal sm:max-w-[11rem] sm:text-[10px] ${
                   unlocked ? 'bg-[#0a1628]/9 text-cyan-hud' : 'bg-void-950/85 text-void-300'
                 }`}
               >
@@ -207,7 +207,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         position="center"
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
-        lines={['Quer voltar?', 'Seu progresso não será perdido.']}
+        lines={['Ops, parece que você já passou por aqui.', 'Quer entrar de novo?']}
         onTypingComplete={() => setReplayReady(true)}
         onClosed={() => {
           setReplayLevel(null)
