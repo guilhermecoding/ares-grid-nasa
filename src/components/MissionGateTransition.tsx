@@ -122,22 +122,22 @@ export function MissionGateTransition({
 
           <AnimatePresence>
             {showPlaque && (
-              <motion.div
-                className="absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 justify-center px-3 sm:px-6"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 6 }}
-                transition={{ duration: 0.22 }}
-              >
-                <div className="w-full max-w-[min(36rem,92vw)] overflow-visible border-4 border-[#1a1c3a] bg-[#f4fff4] px-3 py-3 text-center shadow-[0_0_0_3px_#30346d] sm:px-6 sm:py-4">
+              <div className="absolute inset-0 z-20 flex items-center justify-center p-4 sm:p-6">
+                <motion.div
+                  className="w-full max-w-xl border-4 border-[#1a1c3a] bg-[#f4fff4] px-4 py-4 text-center shadow-[0_0_0_3px_#30346d] sm:px-6 sm:py-5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <p className="font-pixel text-[11px] tracking-wide text-[#30346d] uppercase sm:text-sm">
                     Missão {missionNumber}
                   </p>
-                  <p className="mt-2 font-pixel text-sm leading-relaxed text-[#1a1c3a] [overflow-wrap:anywhere] sm:text-lg md:text-xl">
+                  <p className="mt-2 max-w-full font-pixel text-sm leading-[1.45] text-[#1a1c3a] whitespace-normal sm:text-base md:text-lg">
                     {title}
                   </p>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             )}
           </AnimatePresence>
         </div>

@@ -7,7 +7,7 @@ import {
 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
-import { StageCostBadge, SwipeDeck, type ActivityCardModel } from '../ActivityCard'
+import { StageCostBadge, StageHeader, SwipeDeck, type ActivityCardModel } from '../ActivityCard'
 import { SciTermM2 } from '../SciTermM2'
 
 const ICONS: Record<ExerciseId, string> = {
@@ -83,24 +83,23 @@ export function ExerciseStep({
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
-      <div className="pointer-events-none h-[6.5rem] shrink-0 sm:h-28" />
+      <StageHeader
+        title="Etapa — Exercícios"
+        subtitle={
+          <>
+            Recarregue a saúde com <strong>2 exercícios</strong>. Termo:{' '}
+            <SciTermM2 term="Microgravidade" />. Feitos: {completedIds.length}/{EXERCISE_REQUIRED_COUNT}
+          </>
+        }
+      />
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
-        <div className="flex min-h-full flex-col justify-center py-3">
-          <SwipeDeck
-            title="Etapa — Exercícios"
-            subtitle={
-              <>
-                Recarregue a saúde com <strong>2 exercícios</strong>. Termo:{' '}
-                <SciTermM2 term="Microgravidade" />. Feitos: {completedIds.length}/{EXERCISE_REQUIRED_COUNT}
-              </>
-            }
-            cards={deckCards}
-            canAccept={canAccept}
-            onAccept={handleAccept}
-            emptyMessage="2 exercícios feitos — continue."
-          />
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col pt-16 pb-[4.75rem] sm:pt-[4.5rem]">
+        <SwipeDeck
+          cards={deckCards}
+          canAccept={canAccept}
+          onAccept={handleAccept}
+          emptyMessage="2 exercícios feitos — continue."
+        />
       </div>
 
       <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo dos exercícios" />

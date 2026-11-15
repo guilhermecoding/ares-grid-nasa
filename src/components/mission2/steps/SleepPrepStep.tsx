@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { MEDIA } from '../../../constants/mediaAssets'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
+import { StageHeader } from '../ActivityCard'
 import { SciTermM2 } from '../SciTermM2'
 
 interface Props {
@@ -31,18 +32,17 @@ export function SleepPrepStep({ exerciseDone, nutritionDone, hygieneDone, onSlee
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
-      <div className="pointer-events-none h-[7.5rem] shrink-0 sm:h-32" />
+      <StageHeader
+        title="Etapa — Sono"
+        subtitle={
+          <>
+            Checklist do dia. Sensores de <SciTermM2 term="Actigrafia" /> medem o descanso.
+          </>
+        }
+      />
 
-      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-3 pb-24 sm:px-4">
-        <div className="flex min-h-full flex-col justify-center py-3">
-        <h2 className="font-pixel text-sm leading-relaxed text-cyan-hud [overflow-wrap:anywhere] sm:text-base">
-          Etapa — Sono
-        </h2>
-        <p className="mt-1 font-pixel text-[11px] leading-relaxed text-void-100 [overflow-wrap:anywhere] sm:text-xs">
-          Checklist do dia. Sensores de <SciTermM2 term="Actigrafia" /> medem o descanso.
-        </p>
-
-        <div className="mt-4 space-y-2">
+      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-3 pt-16 pb-28 sm:px-4 sm:pt-[4.5rem]">
+        <div className="space-y-2">
           <CheckRow ok={exerciseDone} label="Exercícios registrados" />
           <CheckRow ok={nutritionDone} label="Alimentação e hidratação" />
           <CheckRow ok={hygieneDone} label="Higiene completa" />
@@ -84,7 +84,6 @@ export function SleepPrepStep({ exerciseDone, nutritionDone, hygieneDone, onSlee
             ? 'Tudo certo, Comandante! Toque no card para dormir.'
             : 'Ainda falta algo no checklist.'}
         </motion.p>
-        </div>
       </div>
 
       <div className="absolute inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-end px-3 sm:px-4">

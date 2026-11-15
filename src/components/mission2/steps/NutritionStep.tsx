@@ -7,7 +7,7 @@ import {
 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
-import { StageCostBadge, SwipeDeck, type ActivityCardModel } from '../ActivityCard'
+import { StageCostBadge, StageHeader, SwipeDeck, type ActivityCardModel } from '../ActivityCard'
 import { SciTermM2 } from '../SciTermM2'
 
 function NutritionIcon({ id }: { id: NutritionCardId }) {
@@ -121,32 +121,31 @@ export function NutritionStep({
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
-      <div className="pointer-events-none h-[6.5rem] shrink-0 sm:h-28" />
+      <StageHeader
+        title="Etapa — Alimentação"
+        subtitle={
+          <span className="flex items-start gap-2">
+            <img
+              src={MEDIA.mission2.tray}
+              alt=""
+              className="mt-0.5 size-6 shrink-0 object-contain"
+              draggable={false}
+            />
+            <span className="min-w-0">
+              Complete <strong>3 cards</strong> (inclua Hidratação). <SciTermM2 term="Metabolismo" /> e{' '}
+              <SciTermM2 term="Hidratação" />. Feitos: {completedIds.length}/{NUTRITION_REQUIRED_COUNT}
+            </span>
+          </span>
+        }
+      />
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-24">
-        <div className="flex min-h-full flex-col justify-center py-3">
-          <SwipeDeck
-            title="Etapa — Alimentação"
-            subtitle={
-              <span className="flex items-start gap-2">
-                <img
-                  src={MEDIA.mission2.tray}
-                  alt=""
-                  className="mt-0.5 size-7 shrink-0 object-contain"
-                  draggable={false}
-                />
-                <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
-                  Complete <strong>3 cards</strong> (inclua Hidratação). <SciTermM2 term="Metabolismo" /> e{' '}
-                  <SciTermM2 term="Hidratação" />. Feitos: {completedIds.length}/{NUTRITION_REQUIRED_COUNT}
-                </span>
-              </span>
-            }
-            cards={deckCards}
-            canAccept={canAccept}
-            onAccept={handleAccept}
-            emptyMessage="Refeição completa — continue."
-          />
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col pt-16 pb-[4.75rem] sm:pt-[4.5rem]">
+        <SwipeDeck
+          cards={deckCards}
+          canAccept={canAccept}
+          onAccept={handleAccept}
+          emptyMessage="Refeição completa — continue."
+        />
       </div>
 
       <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo da refeição" />

@@ -34,7 +34,7 @@ function CardFace({ card }: { card: ActivityCardModel }) {
       className="flex h-full w-full flex-col overflow-hidden rounded-xl p-3 shadow-[0_10px_22px_rgba(0,0,0,0.35)] sm:p-3.5"
       style={{
         border: `3px solid ${card.color}`,
-        background: `linear-gradient(165deg, ${card.color}55 0%, #f7f4ee 42%, #f7f4ee 72%, ${card.color}33 100%)`,
+        background: '#f7f4ee',
       }}
     >
       <div
@@ -148,9 +148,25 @@ function SwipeCard({
   )
 }
 
+/** Compact stage title beside the status indicators (content-sized, not full-bleed). */
+export function StageHeader({ title, subtitle }: { title: string; subtitle?: ReactNode }) {
+  return (
+    <div className="pointer-events-none absolute top-3 right-16 left-[7.5rem] z-30 sm:left-[9.5rem] sm:right-[4.5rem]">
+      <div className="pointer-events-auto w-fit max-w-full rounded-md border border-cyan-hud/40 bg-[#0a1628] px-2.5 py-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.45)] sm:px-3 sm:py-2">
+        <h2 className="font-pixel text-xs leading-snug whitespace-normal text-cyan-hud sm:text-sm">
+          {title}
+        </h2>
+        {subtitle ? (
+          <div className="mt-0.5 font-pixel text-[10px] leading-snug whitespace-normal text-void-100 sm:text-[11px]">
+            {subtitle}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 interface SwipeDeckProps {
-  title: string
-  subtitle?: ReactNode
   cards: ActivityCardModel[]
   canAccept?: (id: string) => boolean
   onAccept: (id: string) => void
@@ -159,8 +175,6 @@ interface SwipeDeckProps {
 
 /** Tinder-style vertical card stack: right/check accepts, left/X sends to back. */
 export function SwipeDeck({
-  title,
-  subtitle,
   cards,
   canAccept,
   onAccept,
@@ -168,7 +182,6 @@ export function SwipeDeck({
 }: SwipeDeckProps) {
   const [order, setOrder] = useState(() => cards.map((c) => c.id))
   const [exitDir, setExitDir] = useState<ExitDir>(null)
-  const [hint, setHint] = useState<string | null>(null)
   const pendingAction = useRef<'accept' | 'skip' | null>(null)
   const dragX = useMotionValue(0)
 
@@ -185,12 +198,6 @@ export function SwipeDeck({
     pendingAction.current = null
     dragX.set(0)
   }, [cardIdsKey, cards, dragX])
-
-  useEffect(() => {
-    if (!hint) return
-    const id = window.setTimeout(() => setHint(null), 2000)
-    return () => clearTimeout(id)
-  }, [hint])
 
   const byId = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards])
   const queue = order.flatMap((id) => {
@@ -232,7 +239,6 @@ export function SwipeDeck({
   const tryAccept = () => {
     if (!top || exitDir) return
     if (canAccept && !canAccept(top.id)) {
-      setHint('Sem recurso suficiente ou cota da etapa cheia.')
       dragX.set(0)
       return
     }
@@ -242,7 +248,6 @@ export function SwipeDeck({
   const trySkip = () => {
     if (!top || exitDir) return
     if (queue.length < 2) {
-      setHint('Só resta este card — aceite ou continue a etapa.')
       dragX.set(0)
       return
     }
@@ -255,19 +260,8 @@ export function SwipeDeck({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col px-3 sm:px-4">
-      <div className="w-full shrink-0 overflow-visible rounded-md border border-cyan-hud/40 bg-[#0a1628]/92 px-3 py-2 shadow-[0_4px_14px_rgba(0,0,0,0.35)]">
-        <h2 className="font-pixel text-sm leading-relaxed text-cyan-hud [overflow-wrap:anywhere] sm:text-base">
-          {title}
-        </h2>
-        {subtitle ? (
-          <div className="mt-1 font-pixel text-[11px] leading-relaxed text-void-100 [overflow-wrap:anywhere] sm:text-xs">
-            {subtitle}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="relative mx-auto mt-2 h-[min(38dvh,15.5rem)] w-[min(72vw,11.5rem)] sm:h-[min(40dvh,16.5rem)] sm:w-[min(70vw,12.5rem)]">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-sm flex-col items-center justify-center px-3 sm:px-4">
+      <div className="relative h-[min(34dvh,14.5rem)] w-[min(70vw,11.5rem)] shrink-0 sm:h-[min(36dvh,15.5rem)] sm:w-[min(58vw,12.5rem)]">
         {stack.length === 0 ? (
           <div className="flex h-full items-center justify-center rounded-xl border-2 border-dashed border-cyan-hud/40 bg-[#0a1628]/60 px-4 text-center font-pixel text-xs text-void-200">
             {emptyMessage}
@@ -289,21 +283,13 @@ export function SwipeDeck({
         )}
       </div>
 
-      {hint ? (
-        <p className="mt-2 shrink-0 text-center font-pixel text-[10px] text-danger sm:text-xs">{hint}</p>
-      ) : (
-        <p className="mt-2 shrink-0 text-center font-pixel text-[10px] text-void-400 sm:text-xs">
-          Deslize → aceitar · ← pular
-        </p>
-      )}
-
-      <div className="relative z-50 mt-2 flex shrink-0 items-center justify-center gap-8 pb-1">
+      <div className="relative z-50 mt-6 flex w-full shrink-0 items-center justify-center gap-8 sm:mt-8">
         <button
           type="button"
           aria-label="Descartar card"
           disabled={!top || !!exitDir}
           onClick={trySkip}
-          className="flex size-12 items-center justify-center rounded-full border-2 border-[#e11d48] bg-[#fff1f2] text-[#e11d48] shadow-md transition hover:bg-[#ffe4e6] disabled:opacity-40 sm:size-14"
+          className="flex size-12 items-center justify-center rounded-full border-2 border-[#e11d48] bg-[#fff1f2] text-[#e11d48] shadow-md transition hover:bg-[#ffe4e6] disabled:opacity-40"
           style={{ touchAction: 'manipulation' }}
         >
           <X className="size-6 sm:size-7" strokeWidth={2.5} />
@@ -313,7 +299,7 @@ export function SwipeDeck({
           aria-label="Aceitar card"
           disabled={!top || !!exitDir}
           onClick={tryAccept}
-          className="flex size-12 items-center justify-center rounded-full border-2 border-[#1f8a52] bg-[#ecfdf5] text-[#1f8a52] shadow-md transition hover:bg-[#d1fae5] disabled:opacity-40 sm:size-14"
+          className="flex size-12 items-center justify-center rounded-full border-2 border-[#1f8a52] bg-[#ecfdf5] text-[#1f8a52] shadow-md transition hover:bg-[#d1fae5] disabled:opacity-40"
           style={{ touchAction: 'manipulation' }}
         >
           <Check className="size-6 sm:size-7" strokeWidth={2.5} />
