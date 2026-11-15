@@ -1,5 +1,8 @@
-import { CULTIVATION_METHODS, SCI_TERMS_M4, type CultivationMethodId } from '../../data/mission4Data'
+import { Check, Droplets, FlaskConical, TriangleAlert, Zap } from 'lucide-react'
+import { ChallengeBar, GameCta, PipMeter, Tag } from '../../components/missionKit/kit'
 import { SciTerm } from '../../components/SciTerm'
+import { MEDIA } from '../../constants/mediaAssets'
+import { CULTIVATION_METHODS, SCI_TERMS_M4, type CultivationMethodId } from '../../data/mission4Data'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
@@ -12,19 +15,35 @@ interface Props {
   onDone: () => void
 }
 
+const ROOTS: Record<CultivationMethodId, string> = {
+  hydro: 'Raízes na água',
+  aero: 'Raízes no ar com névoa',
+  regolith: 'Raízes no solo de Marte',
+}
+
 export function MethodStep({ method, energy, waterL, onChoose, onEnergyShort, onWaterShort, onDone }: Props) {
   return (
-    <div className="mx-auto w-full max-w-6xl">
-      <p className="text-sm text-[#f4fff4]/85 md:text-base">
-        Escolha como as raízes vão viver. A{' '}
-        <SciTerm term="Hidroponia" terms={SCI_TERMS_M4} /> gasta mais água. A{' '}
-        <SciTerm term="Aeroponia" terms={SCI_TERMS_M4} /> gasta menos água e mais energia. O{' '}
-        <SciTerm term="Regolito" terms={SCI_TERMS_M4} /> cru tem{' '}
-        <SciTerm term="Percloratos" terms={SCI_TERMS_M4} /> e só entra depois do aviso.
-      </p>
-      <div className="mt-3 grid gap-3 md:grid-cols-3">
+    <>
+      <ChallengeBar
+        code="4.2"
+        title="Escolha o método de cultivo"
+        icon={<FlaskConical className="size-5" aria-hidden />}
+        counterLabel="Método"
+        value={method ? 1 : 0}
+        total={1}
+        hint={
+          <>
+            Compare os medidores. A <SciTerm term="Hidroponia" terms={SCI_TERMS_M4} /> gasta mais água. A{' '}
+            <SciTerm term="Aeroponia" terms={SCI_TERMS_M4} /> gasta mais energia. O{' '}
+            <SciTerm term="Regolito" terms={SCI_TERMS_M4} /> cru tem <SciTerm term="Percloratos" terms={SCI_TERMS_M4} />.
+          </>
+        }
+      />
+
+      <div className="grid gap-3 md:grid-cols-3">
         {CULTIVATION_METHODS.map((item) => {
           const chosen = method === item.id
+          const dimmed = method != null && !chosen
           return (
             <button
               key={item.id}
@@ -39,33 +58,69 @@ export function MethodStep({ method, energy, waterL, onChoose, onEnergyShort, on
                   onWaterShort()
                   return
                 }
-                soundEngine.click()
+                soundEngine.snap()
                 onChoose(item.id)
               }}
-              className={`min-h-36 border-4 px-3 py-3 text-left ${
-                chosen ? 'border-life bg-[#0a1628]/92' : 'border-energy bg-[#0a1628]/92'
+              className={`group relative flex flex-col overflow-hidden border-2 bg-[#091422]/95 text-left transition-[transform,opacity,border-color] duration-300 ${
+                chosen
+                  ? 'z-10 border-life shadow-[0_0_24px_rgba(94,207,154,0.55)] md:-translate-y-1.5'
+                  : dimmed
+                    ? 'border-[#262b4d] opacity-45'
+                    : 'border-(--gk-line) hover:-translate-y-1 hover:border-energy'
               }`}
               style={{ touchAction: 'manipulation' }}
             >
-              <span className="font-pixel text-base text-energy">{chosen ? '✓ ' : ''}{item.title}</span>
-              <span className="mt-2 block text-sm text-[#f4fff4]">{item.detail}</span>
-              <span className="mt-2 block font-pixel text-sm text-[#f4fff4]/80">
-                −{item.energyCost}% energia · −{item.waterL} L
+              <span className="relative block aspect-[4/3] w-full overflow-hidden border-b-2 border-inherit sm:aspect-[16/9] md:aspect-[4/3]">
+                <img src={MEDIA.mission4.methods[item.id]} alt="" className="gk-pixelated h-full w-full object-cover" draggable={false} />
+                <Tag className="absolute top-2 left-2" tone="water">
+                  {ROOTS[item.id]}
+                </Tag>
+                {item.id === 'regolith' ? (
+                  <Tag className="absolute right-2 bottom-2" tone="danger">
+                    <TriangleAlert className="size-3" aria-hidden /> Precisa de tratamento
+                  </Tag>
+                ) : null}
+                {chosen ? (
+                  <span className="gk-pop absolute inset-0 flex items-center justify-center bg-[#04130c]/55">
+                    <span className="flex items-center gap-1.5 border-2 border-life bg-[#04130c] px-3 py-1.5 font-pixel text-sm text-[#7dffb0] uppercase">
+                      <Check className="size-4" strokeWidth={3} aria-hidden /> Escolhido
+                    </span>
+                  </span>
+                ) : null}
+              </span>
+              <span className="flex flex-1 flex-col gap-2 p-3">
+                <span className="font-pixel text-sm text-energy uppercase md:text-base">{item.title}</span>
+                <span className="text-sm leading-snug text-[#f4fff4]/85">{item.detail}</span>
+                <span className="mt-auto grid gap-1.5 pt-1">
+                  <PipMeter
+                    label="Água"
+                    filled={item.waterL}
+                    total={6}
+                    color="#38bdf8"
+                    value={`−${item.waterL} L`}
+                    icon={<Droplets className="size-3" aria-hidden />}
+                  />
+                  <PipMeter
+                    label="Energia"
+                    filled={item.energyCost / 2}
+                    total={6}
+                    color="#f0b429"
+                    value={`−${item.energyCost}%`}
+                    icon={<Zap className="size-3" aria-hidden />}
+                  />
+                </span>
+                {method == null ? (
+                  <span className="mt-1 bg-energy px-2 py-1.5 text-center font-pixel text-xs text-[#1a1203] uppercase group-hover:bg-[#ffd166]">
+                    Escolher
+                  </span>
+                ) : null}
               </span>
             </button>
           )
         })}
       </div>
-      {method ? (
-        <button
-          type="button"
-          className="mt-4 min-h-12 border-4 border-life bg-life/15 px-4 font-pixel text-sm text-[#f4fff4]"
-          style={{ touchAction: 'manipulation' }}
-          onClick={onDone}
-        >
-          Plantar as espécies
-        </button>
-      ) : null}
-    </div>
+
+      {method ? <GameCta onClick={onDone}>Plantar as espécies (Desafio 4.3)</GameCta> : null}
+    </>
   )
 }

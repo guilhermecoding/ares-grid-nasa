@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Brush, Lock, Radiation, ScanSearch } from 'lucide-react'
 import { FullscreenButton } from '../FullscreenButton'
 import { NightReportModal } from '../mission2/NightReportModal'
 import { CapiBeat } from '../mission3/CapiBeat'
+import { MissionIntroCard } from '../missionKit/MissionIntroCard'
+import { Tag } from '../missionKit/kit'
+import { MEDIA } from '../../constants/mediaAssets'
 import { SciTerm } from '../SciTerm'
 import type { Mission2Choices, Mission2Scores } from '../../data/mission2Data'
 import {
@@ -17,6 +21,7 @@ import { DustProtocolStep } from '../../missions/mission5-storms/DustProtocolSte
 import { InspectionStep } from '../../missions/mission5-storms/InspectionStep'
 import { PanelScrubStep } from '../../missions/mission5-storms/PanelScrubStep'
 import { RadiationRun } from '../../missions/mission5-storms/RadiationRun'
+import { ShieldMonitor } from '../../missions/mission5-storms/ShieldMonitor'
 import { clearMissionRun, loadProgress, resumeWaterLiters, saveMissionRun } from '../../services/progressStore'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { EarthTransmission } from './EarthTransmission'
@@ -24,7 +29,6 @@ import { ExpeditionEnding } from './ExpeditionEnding'
 import { MarsStormBackground, type StormScene } from './MarsStormBackground'
 import { Mission5Logbook } from './Mission5Logbook'
 import { Mission5Stage } from './Mission5Stage'
-import { McButton } from '../../opening/McButton'
 
 const DEFAULT_STATS: BaseStats = { energy: 70, water: 55, wellbeing: 72 }
 const EMPTY_CHOICES: Mission2Choices = { exercises: [], foods: [], waterRationL: 0.35, hygieneDone: [] }
@@ -54,6 +58,13 @@ const ENTER_LINES: Record<Mission5Step, readonly string[]> = {
   scene6_earth_transmission: ['O relatório das cinco missões está pronto para a Terra.'],
   scene7_ending: ['A expedição fecha com a base pronta.'],
 }
+
+const INTRO_GOALS = [
+  { icon: <Lock className="size-4" aria-hidden />, label: '5.1 Vedar o habitat' },
+  { icon: <Brush className="size-4" aria-hidden />, label: '5.2 Limpar os painéis' },
+  { icon: <Radiation className="size-4" aria-hidden />, label: '5.3 Correr para o abrigo' },
+  { icon: <ScanSearch className="size-4" aria-hidden />, label: '5.4 Inspecionar a base' },
+]
 
 interface Props {
   onComplete: (result: BaseStats) => void
@@ -273,8 +284,6 @@ export default function Mission5View({
     healthPoints: 80,
   }
 
-  const green = radiation <= 1.2
-
   return (
     <div className="absolute inset-0 overflow-hidden bg-void-950">
       <MarsStormBackground mode={sceneFor(step, phase)} />
@@ -297,7 +306,7 @@ export default function Mission5View({
 
       {play && (
         <Mission5Stage
-          title="Alerta! Tempestades em Marte"
+          step={step}
           subtitle={
             <span>
               <SciTerm term="Tempestade de poeira" terms={SCI_TERMS_M5} /> e{' '}
@@ -311,13 +320,28 @@ export default function Mission5View({
           overlay={overlay}
         >
           {step === 'intro' && notice == null ? (
-            <button
-              type="button"
-              className="min-h-12 border-4 border-energy bg-[#0a1628]/90 px-4 font-pixel text-sm text-[#f4fff4]"
-              onClick={() => go('step5_1_dust_storm')}
-            >
-              Abrir o protocolo
-            </button>
+            <MissionIntroCard
+              scene={
+                <div className="absolute inset-0">
+                  <img
+                    src={MEDIA.mission5.storm}
+                    alt="Base em Marte com uma parede de poeira chegando"
+                    className="gk-pixelated absolute inset-0 h-full w-full object-cover"
+                    draggable={false}
+                  />
+                  <div className="gk-dust absolute inset-0" aria-hidden />
+                  <Tag tone="danger" className="absolute top-2 left-2">
+                    <span className="gk-blink">●</span> Alerta ambiental
+                  </Tag>
+                </div>
+              }
+              badge="Sol 05 · Alerta ambiental"
+              title="Duas tempestades, dois perigos"
+              lead="A poeira corta a luz e suja os painéis. A radiação solar é invisível e pede um abrigo com água e regolito. Proteja a base nas duas."
+              goals={INTRO_GOALS}
+              cta="Abrir o protocolo"
+              onStart={() => go('step5_1_dust_storm')}
+            />
           ) : null}
           {step === 'step5_1_dust_storm' && (
             <DustProtocolStep
@@ -340,29 +364,15 @@ export default function Mission5View({
             />
           )}
           {step === 'step5_3_solar_radiation' && !shielded && (
-            <RadiationRun key={runKey} onFail={onRunFail} onSafe={onRunSafe} />
+            <RadiationRun key={runKey} paused={overlay != null} onFail={onRunFail} onSafe={onRunSafe} />
           )}
           {step === 'step5_3_solar_radiation' && shielded && (
-            <div className="mx-auto w-full max-w-xl border-4 border-life bg-[#0a1628]/90 p-4">
-              <p className="font-pixel text-sm text-[#f4fff4]">Abrigo com água e regolito</p>
-              <p className="mt-2 text-sm text-[#f4fff4]/85">
-                Radiação {radiation.toFixed(1)} mSv · {green ? 'verde' : 'ainda alta'}
-              </p>
-              <button
-                type="button"
-                className="mt-3 min-h-12 border-4 border-cyan-hud px-3 font-pixel text-xs text-[#f4fff4]"
-                onClick={() => setMonitorOk(true)}
-              >
-                {monitorOk ? '✓ Monitor da blindagem conferido' : 'Conferir o monitor da blindagem'}
-              </button>
-              {monitorOk && green ? (
-                <McButton className="mt-3" onClick={() => go('step5_4_post_storm_inspection')}>
-                  Sair do abrigo
-                </McButton>
-              ) : (
-                <p className="mt-3 text-sm text-[#f4fff4]/75">Saia só quando o medidor voltar ao verde.</p>
-              )}
-            </div>
+            <ShieldMonitor
+              radiation={radiation}
+              checked={monitorOk}
+              onCheck={() => setMonitorOk(true)}
+              onLeave={() => go('step5_4_post_storm_inspection')}
+            />
           )}
           {step === 'step5_4_post_storm_inspection' && (
             <InspectionStep

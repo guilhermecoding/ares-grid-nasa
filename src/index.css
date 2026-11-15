@@ -583,3 +583,292 @@
     }
   }
 }
+
+/* Mission game kit — shared by Missão 04 (estufa) and Missão 05 (tempestades). */
+@layer utilities {
+  .gk-panel {
+    border: 2px solid var(--gk-line, #1f6b66);
+    background: var(--gk-panel, rgba(9, 20, 34, 0.94));
+    box-shadow:
+      0 0 0 2px #04080f,
+      0 10px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .gk-pixelated {
+    image-rendering: pixelated;
+  }
+
+  /* Energy or water running along a connected line. */
+  .gk-flow {
+    stroke-dasharray: 10 8;
+    animation: gk-flow 0.6s linear infinite;
+  }
+
+  .gk-flow-slow {
+    stroke-dasharray: 4 10;
+    animation: gk-flow-slow 1.4s linear infinite;
+  }
+
+  @keyframes gk-flow {
+    to {
+      stroke-dashoffset: -18;
+    }
+  }
+
+  @keyframes gk-flow-slow {
+    to {
+      stroke-dashoffset: -14;
+    }
+  }
+
+  .gk-flow-x {
+    background-size: 18px 100%;
+    animation: gk-flow-x 0.6s linear infinite;
+  }
+
+  @keyframes gk-flow-x {
+    to {
+      background-position-x: 18px;
+    }
+  }
+
+  .gk-pulse {
+    animation: gk-pulse 1.1s ease-in-out infinite;
+  }
+
+  @keyframes gk-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 var(--gk-glow, rgba(240, 180, 41, 0.6));
+    }
+    50% {
+      box-shadow:
+        0 0 0 5px rgba(0, 0, 0, 0),
+        0 0 20px 3px var(--gk-glow, rgba(240, 180, 41, 0.6));
+    }
+  }
+
+  .gk-shake {
+    animation: gk-shake 0.38s steps(8);
+  }
+
+  @keyframes gk-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-7px);
+    }
+    40% {
+      transform: translateX(7px);
+    }
+    60% {
+      transform: translateX(-4px);
+    }
+    80% {
+      transform: translateX(4px);
+    }
+  }
+
+  .gk-pop {
+    animation: gk-pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  }
+
+  @keyframes gk-pop {
+    from {
+      transform: scale(0.4);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .gk-float-up {
+    animation: gk-float-up 1.1s ease-out forwards;
+  }
+
+  @keyframes gk-float-up {
+    0% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-34px);
+      opacity: 0;
+    }
+  }
+
+  .gk-blink {
+    animation: gk-blink 0.9s steps(2) infinite;
+  }
+
+  @keyframes gk-blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  .gk-bob {
+    animation: bob 1.4s ease-in-out infinite;
+  }
+
+  .gk-walk {
+    animation: bob 0.28s steps(2) infinite;
+  }
+
+  .gk-glow-breathe {
+    animation: gk-glow-breathe 2.2s ease-in-out infinite;
+  }
+
+  @keyframes gk-glow-breathe {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Dust streaks blowing across a scene. */
+  .gk-dust {
+    background-image: repeating-linear-gradient(
+      100deg,
+      rgba(255, 170, 90, 0) 0 70px,
+      rgba(255, 170, 90, 0.16) 70px 96px,
+      rgba(255, 170, 90, 0) 96px 190px,
+      rgba(120, 50, 20, 0.2) 190px 230px,
+      rgba(255, 170, 90, 0) 230px 380px
+    );
+    background-size: 380px 100%;
+    animation: gk-dust 1.6s linear infinite;
+  }
+
+  .gk-dust-slow {
+    animation-duration: 3.4s;
+    opacity: 0.7;
+  }
+
+  @keyframes gk-dust {
+    to {
+      background-position-x: -380px;
+    }
+  }
+
+  /* Solar particle streaks during the radiation alert. */
+  .gk-rays {
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(255, 244, 180, 0) 0 46px,
+      rgba(255, 244, 180, 0.22) 46px 48px,
+      rgba(255, 244, 180, 0) 48px 120px
+    );
+    background-size: 240px 240px;
+    animation: gk-rays 0.9s linear infinite;
+  }
+
+  @keyframes gk-rays {
+    to {
+      background-position: -240px 240px;
+    }
+  }
+
+  .gk-scan-ring {
+    animation: gk-scan-ring 0.9s ease-out forwards;
+  }
+
+  @keyframes gk-scan-ring {
+    from {
+      transform: translate(-50%, -50%) scale(0.3);
+      opacity: 1;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(3.2);
+      opacity: 0;
+    }
+  }
+
+  .gk-ping {
+    animation: gk-ping 1.3s ease-out infinite;
+  }
+
+  @keyframes gk-ping {
+    from {
+      transform: scale(0.7);
+      opacity: 0.9;
+    }
+    to {
+      transform: scale(1.9);
+      opacity: 0;
+    }
+  }
+
+  .gk-mist-puff {
+    animation: gk-mist-puff 2.6s ease-in-out infinite;
+  }
+
+  @keyframes gk-mist-puff {
+    0% {
+      transform: translate(0, 6px) scale(0.8);
+      opacity: 0;
+    }
+    35% {
+      opacity: 0.7;
+    }
+    100% {
+      transform: translate(14px, -22px) scale(1.5);
+      opacity: 0;
+    }
+  }
+
+  .gk-particle-fall {
+    animation: gk-particle-fall 1.2s linear infinite;
+  }
+
+  @keyframes gk-particle-fall {
+    0% {
+      transform: translateY(-10%);
+      opacity: 0;
+    }
+    15% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(var(--gk-fall, 120px));
+      opacity: 0;
+    }
+  }
+
+  .gk-sweep {
+    animation: gk-sweep 1.1s ease-out forwards;
+  }
+
+  @keyframes gk-sweep {
+    from {
+      transform: translateX(-120%) skewX(-18deg);
+    }
+    to {
+      transform: translateX(320%) skewX(-18deg);
+    }
+  }
+
+  .gk-alarm {
+    animation: gk-alarm 1.2s ease-in-out infinite;
+  }
+
+  @keyframes gk-alarm {
+    0%,
+    100% {
+      opacity: 0.08;
+    }
+    50% {
+      opacity: 0.3;
+    }
+  }
+}

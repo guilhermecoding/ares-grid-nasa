@@ -1,10 +1,28 @@
 import type { ReactNode } from 'react'
-import { MISSION5_META } from '../../data/mission5Data'
-import { ScrollHintArea } from '../ScrollHintArea'
+import { BatteryCharging, Radiation, ShieldCheck, Sun, TriangleAlert } from 'lucide-react'
+import { MISSION5_META, type Mission5Step } from '../../data/mission5Data'
+import { BarMeter } from '../missionKit/kit'
+import { MissionFrame } from '../missionKit/MissionFrame'
+
+const TABS = ['5.1 Poeira', '5.2 Painéis', '5.3 Radiação', '5.4 Inspeção'] as const
+
+const TAB_INDEX: Record<Mission5Step, number> = {
+  intro: -1,
+  step5_1_dust_storm: 0,
+  step5_2_clean_panels: 1,
+  step5_3_solar_radiation: 2,
+  step5_4_post_storm_inspection: 3,
+  step5_logbook_and_sleep: 4,
+  scene6_earth_transmission: 4,
+  scene7_ending: 4,
+}
+
+/** Gauge tops out at 8 mSv, a bit above the storm peak. */
+const RADIATION_MAX = 8
 
 interface Props {
-  title: string
-  subtitle?: ReactNode
+  step: Mission5Step
+  subtitle: ReactNode
   energy: number
   radiation: number
   integrity: number
@@ -13,42 +31,35 @@ interface Props {
   overlay?: ReactNode
 }
 
-export function Mission5Stage({
-  title,
-  subtitle,
-  energy,
-  radiation,
-  integrity,
-  generationPct,
-  children,
-  overlay,
-}: Props) {
+export function Mission5Stage({ step, subtitle, energy, radiation, integrity, generationPct, children, overlay }: Props) {
+  const radiationColor = radiation <= 1.2 ? '#5ecf9a' : radiation <= 3 ? '#f0b429' : '#ff6b8a'
   return (
-    <div
-      className={`absolute inset-0 flex min-h-0 flex-col ${overlay ? 'z-[60]' : 'z-20'}`}
-      style={{ touchAction: 'manipulation' }}
+    <MissionFrame
+      theme="alert"
+      icon={<TriangleAlert className="size-6 md:size-7" aria-hidden />}
+      code="Missão 5"
+      title={MISSION5_META.title}
+      subtitle={subtitle}
+      tabs={TABS}
+      current={TAB_INDEX[step]}
+      hud={
+        <>
+          <BarMeter className="w-24" label="Bateria" value={energy} color="#f0b429" icon={<BatteryCharging className="size-3" aria-hidden />} />
+          <BarMeter className="w-24" label="Geração" value={generationPct} color="#ffb15a" icon={<Sun className="size-3" aria-hidden />} />
+          <BarMeter
+            className="w-28"
+            label="Radiação"
+            value={(radiation / RADIATION_MAX) * 100}
+            display={`${radiation.toFixed(1)} mSv`}
+            color={radiationColor}
+            icon={<Radiation className="size-3" aria-hidden />}
+          />
+          <BarMeter className="w-28" label="Integridade" value={integrity} color="#5ecf9a" icon={<ShieldCheck className="size-3" aria-hidden />} />
+        </>
+      }
+      overlay={overlay}
     >
-      <ScrollHintArea
-        variant="dark"
-        frameClassName="h-full min-h-0 flex-1"
-        className="flex h-full flex-col gap-3 px-3 pt-16 pb-8 sm:px-4 md:gap-4 md:px-6"
-      >
-        <div className="mx-auto w-full max-w-6xl">
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-pixel text-xs text-cyan-hud md:text-sm">
-            <span>
-              {MISSION5_META.solLabel} | {MISSION5_META.location}
-            </span>
-            <span className="text-energy">Bateria {Math.round(energy)}%</span>
-            <span className="text-[#ffb4b4]">Radiação {radiation.toFixed(1)} mSv</span>
-            <span className="text-[#7dffb0]">Integridade {Math.round(integrity)}%</span>
-            <span className="text-[#ffb15a]">Geração {Math.round(generationPct)}%</span>
-          </p>
-          <p className="mt-1 font-pixel text-sm text-[#f4fff4] md:text-base lg:text-lg">{title}</p>
-          {subtitle ? <div className="mt-1 text-sm text-void-100/90 md:text-base">{subtitle}</div> : null}
-        </div>
-        {children}
-      </ScrollHintArea>
-      {overlay ? <div className="absolute inset-0 z-[70]">{overlay}</div> : null}
-    </div>
+      {children}
+    </MissionFrame>
   )
 }

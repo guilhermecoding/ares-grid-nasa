@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FlaskConical, Recycle, Sprout, Wrench } from 'lucide-react'
 import { FullscreenButton } from '../FullscreenButton'
 import { NightReportModal } from '../mission2/NightReportModal'
 import { StatusIndicators } from '../StatusIndicators'
 import { CapiBeat } from '../mission3/CapiBeat'
+import { MissionIntroCard } from '../missionKit/MissionIntroCard'
+import { Tag } from '../missionKit/kit'
+import { MEDIA } from '../../constants/mediaAssets'
 import {
   CULTIVATION_METHODS,
   GREENHOUSE_MODULES,
@@ -28,6 +32,14 @@ import { Mission4Stage } from './Mission4Stage'
 
 const DEFAULT_STATS: BaseStats = { energy: 70, water: 55, wellbeing: 72 }
 const EMPTY_CHOICES: Mission2Choices = { exercises: [], foods: [], waterRationL: 0.35, hygieneDone: [] }
+
+const INTRO_GOALS = [
+  { icon: <Wrench className="size-4" aria-hidden />, label: '4.1 Montar o domo' },
+  { icon: <FlaskConical className="size-4" aria-hidden />, label: '4.2 Escolher o cultivo' },
+  { icon: <Sprout className="size-4" aria-hidden />, label: '4.3 Plantar as espécies' },
+  { icon: <Sprout className="size-4" aria-hidden />, label: '4.4 Cuidar e colher' },
+  { icon: <Recycle className="size-4" aria-hidden />, label: '4.5 Fechar o ciclo' },
+] as const
 
 const ENTER_LINES: Record<Mission4Step, readonly string[]> = {
   intro: [
@@ -305,7 +317,7 @@ export default function Mission4View({
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-void-950">
-      <GreenhouseInteriorBackground leds={installed.includes('led')} mist={misted} growth={growthStage} />
+      <GreenhouseInteriorBackground lit={installed.includes('led')} />
       {play && <StatusIndicators stats={hudStats} placement="mission" />}
       <div className="absolute top-3 right-3 z-50 flex items-center gap-2">
         <FullscreenButton className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px]" />
@@ -326,22 +338,39 @@ export default function Mission4View({
 
       {play && (
         <Mission4Stage
-          title={step === 'intro' ? 'A primeira estufa de Marte' : 'Estufa'}
-          subtitle="Agricultura espacial"
-          energy={energy}
+          step={step}
           waterL={waterL}
           foodPct={step === 'step4_5_bioregenerative' ? foodPct : undefined}
           o2Pct={step === 'step4_5_bioregenerative' ? o2Pct : undefined}
           overlay={overlay}
         >
           {step === 'intro' && notice == null ? (
-            <button
-              type="button"
-              className="min-h-12 border-4 border-energy bg-[#0a1628]/90 px-4 font-pixel text-sm text-[#f4fff4]"
-              onClick={() => go('step4_1_build_greenhouse')}
-            >
-              Montar a estufa
-            </button>
+            <MissionIntroCard
+              scene={
+                <div className="absolute inset-0 bg-[radial-gradient(70%_80%_at_55%_55%,#5a2416,#2a0f0c_75%)]">
+                  <div className="absolute inset-x-0 bottom-0 h-[22%] border-t-4 border-[#9a3a19] bg-[#45190f]" />
+                  <img
+                    src={MEDIA.mission4.astronaut}
+                    alt=""
+                    className="gk-pixelated gk-bob absolute bottom-[6%] left-[8%] h-[30%]"
+                    draggable={false}
+                  />
+                  <img
+                    src={MEDIA.mission4.dome}
+                    alt="Estufa em domo geodésico"
+                    className="gk-pixelated absolute right-[6%] bottom-[4%] h-[86%] drop-shadow-[0_0_14px_rgba(125,255,224,0.45)]"
+                    draggable={false}
+                  />
+                  <Tag className="absolute top-2 left-2">Projeto da estufa</Tag>
+                </div>
+              }
+              badge="Sol 04 · Arcadia Planitia"
+              title="A primeira estufa de Marte"
+              lead="Monte o domo, ligue energia e água, plante quatro espécies e feche o ciclo que dá comida e oxigênio para a base."
+              goals={INTRO_GOALS}
+              cta="Montar a estufa"
+              onStart={() => go('step4_1_build_greenhouse')}
+            />
           ) : null}
 
           {step === 'step4_1_build_greenhouse' && (
@@ -392,7 +421,7 @@ export default function Mission4View({
               harvested={harvested}
               waterL={waterL}
               onToggleLight={() => setLightOn((value) => !value)}
-              onToggleTemp={() => setTempOk((value) => !value)}
+              onSetTemp={setTempOk}
               onMist={() => {
                 setWaterL((value) => Math.max(0, Math.round((value - 2) * 10) / 10))
                 setMisted(true)

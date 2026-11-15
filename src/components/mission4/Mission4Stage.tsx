@@ -1,11 +1,24 @@
 import type { ReactNode } from 'react'
-import { MISSION4_META } from '../../data/mission4Data'
-import { ScrollHintArea } from '../ScrollHintArea'
+import { Droplets, Sprout, Utensils, Wind } from 'lucide-react'
+import { MISSION4_META, type Mission4Step } from '../../data/mission4Data'
+import { BarMeter } from '../missionKit/kit'
+import { MissionFrame } from '../missionKit/MissionFrame'
+import { MAX_WATER_RESERVE_L } from '../../types/game'
+
+const TABS = ['4.1 Estufa', '4.2 Cultivo', '4.3 Plantas', '4.4 Crescer', '4.5 Ciclo'] as const
+
+const TAB_INDEX: Record<Mission4Step, number> = {
+  intro: -1,
+  step4_1_build_greenhouse: 0,
+  step4_2_cultivation_method: 1,
+  step4_3_select_species: 2,
+  step4_4_growth_monitor: 3,
+  step4_5_bioregenerative: 4,
+  step4_logbook_and_sleep: 5,
+}
 
 interface Props {
-  title: string
-  subtitle?: ReactNode
-  energy: number
+  step: Mission4Step
   waterL: number
   foodPct?: number
   o2Pct?: number
@@ -13,35 +26,37 @@ interface Props {
   overlay?: ReactNode
 }
 
-export function Mission4Stage({ title, subtitle, energy, waterL, foodPct, o2Pct, children, overlay }: Props) {
+export function Mission4Stage({ step, waterL, foodPct, o2Pct, children, overlay }: Props) {
   return (
-    <div
-      className={`absolute inset-0 flex min-h-0 flex-col ${overlay ? 'z-[60]' : 'z-20'}`}
-      style={{ touchAction: 'manipulation' }}
+    <MissionFrame
+      theme="greenhouse"
+      icon={<Sprout className="size-6 md:size-7" aria-hidden />}
+      code="Missão 4"
+      title={MISSION4_META.title}
+      subtitle={`${MISSION4_META.solLabel} · ${MISSION4_META.location} · Agricultura espacial e ciclo bioregenerativo`}
+      tabs={TABS}
+      current={TAB_INDEX[step]}
+      hud={
+        <>
+          <BarMeter
+            className="w-32"
+            label="Água"
+            value={(waterL / MAX_WATER_RESERVE_L) * 100}
+            display={`${Math.round(waterL * 10) / 10} L`}
+            color="#38bdf8"
+            icon={<Droplets className="size-3" aria-hidden />}
+          />
+          {foodPct != null ? (
+            <BarMeter className="w-28" label="Comida" value={foodPct} color="#5ecf9a" icon={<Utensils className="size-3" aria-hidden />} />
+          ) : null}
+          {o2Pct != null ? (
+            <BarMeter className="w-28" label="Oxigênio" value={o2Pct} color="#d7fff4" icon={<Wind className="size-3" aria-hidden />} />
+          ) : null}
+        </>
+      }
+      overlay={overlay}
     >
-      <ScrollHintArea
-        variant="dark"
-        frameClassName="h-full min-h-0 flex-1"
-        className="flex h-full flex-col gap-3 px-3 pt-16 pb-8 sm:px-4 md:gap-4 md:px-6"
-      >
-        <div className="mx-auto w-full max-w-6xl">
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-pixel text-xs text-cyan-hud md:text-sm">
-            <span>
-              {MISSION4_META.solLabel} | {MISSION4_META.location}
-            </span>
-            <span className="text-energy">Energia Base {Math.round(energy)}%</span>
-            <span className="text-[#7dd3fc]">Reserva de Água {Math.round(waterL)} L</span>
-            {foodPct != null ? <span className="text-[#7dffb0]">Comida {Math.round(foodPct)}%</span> : null}
-            {o2Pct != null ? <span className="text-[#d7fff4]">O₂ {Math.round(o2Pct)}%</span> : null}
-          </p>
-          <p className="mt-1 font-pixel text-sm text-[#f4fff4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] md:text-base lg:text-lg">
-            {title}
-          </p>
-          {subtitle ? <div className="mt-1 text-sm text-void-100/90 md:text-base">{subtitle}</div> : null}
-        </div>
-        {children}
-      </ScrollHintArea>
-      {overlay ? <div className="absolute inset-0 z-[70]">{overlay}</div> : null}
-    </div>
+      {children}
+    </MissionFrame>
   )
 }

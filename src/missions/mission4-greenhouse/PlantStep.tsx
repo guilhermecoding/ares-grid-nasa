@@ -1,19 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { Check, Sprout } from 'lucide-react'
+import { PlantTray } from '../../components/mission4/PlantTray'
+import { GROWTH_SCALE, TRAY_BEDS, TRAY_ORDER, TRAY_VIEWBOX } from '../../components/mission4/trayLayout'
+import { Burst, ChallengeBar, GameCta } from '../../components/missionKit/kit'
+import { useDrag } from '../../components/missionKit/useDrag'
 import { MEDIA } from '../../constants/mediaAssets'
-import {
-  PLANT_GROUPS,
-  type PlantGroupId,
-  type SpeciesId,
-} from '../../data/mission4Data'
-import { McButton } from '../../opening/McButton'
+import { PLANT_GROUPS, speciesLabel, type PlantGroupId, type SpeciesId } from '../../data/mission4Data'
 import { soundEngine } from '../../services/soundEngine'
-
-const ICONS: Record<PlantGroupId, string> = {
-  veggie: MEDIA.mission4.leaf,
-  fruit: MEDIA.mission4.berry,
-  grain: MEDIA.mission4.grain,
-  flower: MEDIA.mission4.flower,
-}
 
 interface Props {
   planted: Partial<Record<PlantGroupId, SpeciesId>>
@@ -22,99 +15,162 @@ interface Props {
   onDone: () => void
 }
 
-export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
-  const [drag, setDrag] = useState<{ species: SpeciesId; group: PlantGroupId; x: number; y: number } | null>(null)
-  const full = PLANT_GROUPS.every((g) => planted[g.id])
+interface Seed {
+  species: SpeciesId
+  group: PlantGroupId
+}
 
-  useEffect(() => {
-    if (!drag) return
-    const current = { species: drag.species, group: drag.group }
-    const move = (e: PointerEvent) =>
-      setDrag({ species: current.species, group: current.group, x: e.clientX, y: e.clientY })
-    const up = (e: PointerEvent) => {
-      setDrag(null)
-      const bed = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-bed]')
-      const group = bed?.getAttribute('data-bed')
-      if (group !== current.group) {
+const GROUP_TITLE = Object.fromEntries(PLANT_GROUPS.map((g) => [g.id, g.title])) as Record<PlantGroupId, string>
+
+function isGroup(value: string | null): value is PlantGroupId {
+  return value != null && value in TRAY_BEDS
+}
+
+export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
+  const [wrong, setWrong] = useState<PlantGroupId | null>(null)
+  const [fx, setFx] = useState<{ key: number; group: PlantGroupId } | null>(null)
+  const count = PLANT_GROUPS.filter((g) => planted[g.id]).length
+  const full = count === PLANT_GROUPS.length
+
+  const onDrop = useCallback(
+    (seed: Seed, target: string | null) => {
+      if (!isGroup(target)) return
+      if (target !== seed.group) {
         soundEngine.fail()
+        setWrong(target)
         onMismatch()
         return
       }
-      soundEngine.success()
-      onPlant(current.group, current.species)
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    return () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-    }
-    // Restart only when a new species is picked up.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drag?.species, drag?.group])
+      soundEngine.snap()
+      window.setTimeout(() => soundEngine.harvest(), 120)
+      onPlant(seed.group, seed.species)
+      setFx((current) => ({ key: (current?.key ?? 0) + 1, group: seed.group }))
+    },
+    [onMismatch, onPlant],
+  )
+  const { drag, start } = useDrag<Seed>(onDrop)
+
+  const scales = Object.fromEntries(
+    TRAY_ORDER.filter((group) => planted[group]).map((group) => [group, GROWTH_SCALE[0]]),
+  ) as Partial<Record<PlantGroupId, number>>
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-3 lg:grid-cols-2">
-      <div className="grid gap-2">
-        {PLANT_GROUPS.map((group) => (
-          <div key={group.id} className="border-4 border-[#30346d] bg-[#0a1628]/85 p-2">
-            <p className="font-pixel text-xs text-cyan-hud">{group.title}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {group.species.map((species) => {
+    <>
+      <ChallengeBar
+        code="4.3"
+        title="Plante uma espécie em cada berço"
+        icon={<Sprout className="size-5" aria-hidden />}
+        counterLabel="Berços"
+        value={count}
+        total={PLANT_GROUPS.length}
+        hint="Arraste a semente até o berço da mesma cor. Cada berço aceita um grupo."
+      />
+
+      <div className="grid gap-3 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="gk-panel p-3">
+          <p className="font-pixel text-xs text-(--gk-accent) uppercase">Banco de sementes</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
+            {PLANT_GROUPS.flatMap((group) =>
+              group.species.map((species) => {
+                const bed = TRAY_BEDS[group.id]
+                const groupDone = Boolean(planted[group.id])
                 const used = planted[group.id] === species.id
+                const dragging = drag?.payload.species === species.id
                 return (
                   <button
                     key={species.id}
                     type="button"
-                    disabled={Boolean(planted[group.id])}
+                    disabled={groupDone}
                     onPointerDown={(e) => {
-                      if (planted[group.id]) return
-                      setDrag({ species: species.id, group: group.id, x: e.clientX, y: e.clientY })
+                      if (groupDone) return
+                      soundEngine.pickup()
+                      start({ species: species.id, group: group.id }, e)
                     }}
-                    className="flex min-h-12 touch-none items-center gap-2 border-4 border-energy px-2 select-none"
-                    style={{ touchAction: 'none' }}
+                    aria-label={`Arrastar semente: ${species.label}, grupo ${group.title}`}
+                    className={`relative flex min-h-16 touch-none items-center gap-2 border-2 bg-[#04080f]/70 px-2 py-1.5 text-left select-none ${
+                      used ? '' : groupDone ? 'opacity-35' : dragging ? 'opacity-40' : 'cursor-grab hover:-translate-y-0.5'
+                    }`}
+                    style={{ touchAction: 'none', borderColor: bed.color }}
                   >
-                    <img src={ICONS[group.id]} alt="" className="h-8 w-8" draggable={false} />
-                    <span className="font-pixel text-[10px] text-[#f4fff4]">{used ? '✓ ' : 'ARRASTE '}{species.label}</span>
+                    <img src={MEDIA.mission4.seeds[species.id]} alt="" className="gk-pixelated size-11 shrink-0" draggable={false} />
+                    <span className="min-w-0">
+                      <span className="block font-pixel text-[10px] leading-tight text-[#f4fff4] uppercase sm:text-xs">{species.label}</span>
+                      <span className="mt-0.5 block font-pixel text-[9px] leading-none uppercase" style={{ color: bed.color }}>
+                        {group.title}
+                      </span>
+                    </span>
+                    {used ? (
+                      <span className="gk-pop absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-life text-[#04130c]">
+                        <Check className="size-3" strokeWidth={3} aria-label="Plantado" />
+                      </span>
+                    ) : null}
                   </button>
                 )
-              })}
-            </div>
+              }),
+            )}
           </div>
-        ))}
+        </div>
+
+        <div className="gk-panel flex flex-col items-center p-3">
+          <p className="self-start font-pixel text-xs text-(--gk-accent) uppercase">Bandeja de cultivo</p>
+          <PlantTray plants={scales} className="mt-1 max-w-xl">
+            <svg viewBox={TRAY_VIEWBOX} className="absolute inset-0 h-full w-full">
+              {TRAY_ORDER.map((group) => {
+                const bed = TRAY_BEDS[group]
+                const done = Boolean(planted[group])
+                const wanted = drag != null && !done && drag.payload.group === group
+                const hovered = drag?.over === group
+                return (
+                  <polygon
+                    key={group}
+                    data-drop={done ? undefined : group}
+                    points={bed.points}
+                    fill={bed.color}
+                    fillOpacity={done ? 0 : hovered ? 0.5 : wanted ? 0.28 : 0.08}
+                    stroke={wrong === group ? '#ff3b5c' : bed.color}
+                    strokeWidth={wanted || wrong === group ? 8 : 4}
+                    strokeDasharray={done ? undefined : '14 10'}
+                    strokeOpacity={done ? 0.45 : 1}
+                    className={wanted ? 'gk-blink' : wrong === group ? 'gk-shake' : ''}
+                    onAnimationEnd={() => setWrong((value) => (value === group ? null : value))}
+                  />
+                )
+              })}
+            </svg>
+            {TRAY_ORDER.map((group) => {
+              const bed = TRAY_BEDS[group]
+              const species = planted[group]
+              return (
+                <span
+                  key={group}
+                  className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${bed.cx}%`, top: `${bed.cy}%` }}
+                >
+                  <span
+                    className="flex items-center gap-1 border bg-[#04080f]/85 px-1.5 py-1 font-pixel text-[9px] leading-none whitespace-nowrap uppercase sm:text-[10px]"
+                    style={{ borderColor: bed.color, color: species ? '#f4fff4' : bed.color }}
+                  >
+                    {species ? <Check className="size-3 text-life" strokeWidth={3} aria-hidden /> : null}
+                    {species ? speciesLabel(species) : GROUP_TITLE[group]}
+                  </span>
+                  {fx?.group === group ? <Burst key={fx.key} color={bed.color} /> : null}
+                </span>
+              )
+            })}
+          </PlantTray>
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {PLANT_GROUPS.map((group) => {
-          const species = group.species.find((s) => s.id === planted[group.id])
-          return (
-            <div
-              key={group.id}
-              data-bed={group.id}
-              className={`flex min-h-28 flex-col items-center justify-center border-4 border-dashed p-2 text-center ${
-                species ? 'border-life' : 'border-cyan-hud'
-              }`}
-            >
-              <img src={ICONS[group.id]} alt="" className="h-10 w-10" />
-              <span className="font-pixel text-[10px] text-[#f4fff4]">
-                {species ? species.label : `Berço de ${group.title.toLowerCase()}`}
-              </span>
-            </div>
-          )
-        })}
-        {full ? (
-          <McButton className="col-span-2" onClick={onDone}>
-            Acompanhar o crescimento
-          </McButton>
-        ) : null}
-      </div>
+
+      {full ? <GameCta onClick={onDone}>Acompanhar o crescimento (Desafio 4.4)</GameCta> : null}
+
       {drag ? (
         <img
-          src={ICONS[drag.group]}
+          src={MEDIA.mission4.seeds[drag.payload.species]}
           alt=""
-          className="pointer-events-none fixed z-[80] h-12 w-12"
-          style={{ left: drag.x - 24, top: drag.y - 24 }}
+          className="gk-pixelated pointer-events-none fixed z-[80] size-16 -rotate-6 drop-shadow-[0_6px_0_rgba(0,0,0,0.45)]"
+          style={{ left: drag.x - 32, top: drag.y - 40 }}
         />
       ) : null}
-    </div>
+    </>
   )
 }
