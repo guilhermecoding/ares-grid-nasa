@@ -53,11 +53,11 @@ export function MorningWakeupStep({ playerName, scores, onAdvance }: Props) {
         <McButton
           className="mt-5 min-h-12 w-full font-pixel text-sm font-bold leading-tight sm:text-base"
           onClick={() => {
-            soundEngine.missionComplete()
+            soundEngine.click()
             onAdvance()
           }}
         >
-          AVANÇAR PARA A MISSÃO 03: O MISTÉRIO DO GELO
+          Abrir diário de bordo
         </McButton>
       </motion.div>
     </div>

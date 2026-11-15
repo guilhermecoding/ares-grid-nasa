@@ -8,6 +8,8 @@ export type Mission2Step =
   | 'step2_4_sleep_prep'
   | 'special_capi_night_report'
   | 'morning_wakeup'
+  | 'logbook'
+  | 'mission_outro'
 
 export type HabitatLighting = 'morning' | 'afternoon' | 'dusk' | 'night' | 'dawn'
 
@@ -69,13 +71,16 @@ export interface ExerciseOption {
   color: string
 }
 
-/** Complete exactly 2 of these 4 cards. */
+/**
+ * Complete exactly 2 of these 4 cards.
+ * Energy costs stay modest so a typical Missão 01 battery (~35–60%) can finish the day.
+ */
 export const EXERCISES: readonly ExerciseOption[] = [
   {
     id: 'treadmill',
     title: 'Caminhada na Esteira',
     focus: 'Coração e resistência',
-    energyCost: 12,
+    energyCost: 6,
     waterCostL: 0.8,
     physicalGain: 14,
     sleepBonus: 4,
@@ -86,7 +91,7 @@ export const EXERCISES: readonly ExerciseOption[] = [
     id: 'resistance',
     title: 'Exercícios de Resistência',
     focus: 'Força muscular e densidade óssea',
-    energyCost: 18,
+    energyCost: 8,
     waterCostL: 0.5,
     physicalGain: 22,
     sleepBonus: 2,
@@ -97,7 +102,7 @@ export const EXERCISES: readonly ExerciseOption[] = [
     id: 'stretch',
     title: 'Alongamento',
     focus: 'Flexibilidade e recuperação',
-    energyCost: 5,
+    energyCost: 2,
     waterCostL: 0.2,
     physicalGain: 6,
     sleepBonus: 6,
@@ -108,7 +113,7 @@ export const EXERCISES: readonly ExerciseOption[] = [
     id: 'balance',
     title: 'Treinamento de Equilíbrio',
     focus: 'Adaptação neurológica à gravidade de Marte',
-    energyCost: 7,
+    energyCost: 3,
     waterCostL: 0.3,
     physicalGain: 8,
     sleepBonus: 5,
@@ -163,13 +168,13 @@ export interface NutritionCard {
   waterRationL?: number
 }
 
-/** Four nutrition cards — complete at least 3 (incl. hydrate) for balance. */
+/** Four nutrition cards — complete at least 3 (incl. hydrate). Food uses water, not battery. */
 export const NUTRITION_CARDS: readonly NutritionCard[] = [
   {
     id: 'protein',
     title: 'Proteínas',
     detail: 'Feijão + soja',
-    energyCost: 3,
+    energyCost: 0,
     waterCostL: 0.25,
     wellbeingGain: 8,
     color: '#f0b429',
@@ -179,7 +184,7 @@ export const NUTRITION_CARDS: readonly NutritionCard[] = [
     id: 'veggie',
     title: 'Vegetais',
     detail: 'Folhas da estufa',
-    energyCost: 2,
+    energyCost: 0,
     waterCostL: 0.15,
     wellbeingGain: 7,
     color: '#5ecf9a',
@@ -189,7 +194,7 @@ export const NUTRITION_CARDS: readonly NutritionCard[] = [
     id: 'fruit',
     title: 'Frutas',
     detail: 'Energia rápida',
-    energyCost: 2,
+    energyCost: 0,
     waterCostL: 0.1,
     wellbeingGain: 6,
     color: '#ff6b8a',
@@ -235,7 +240,7 @@ export const HYGIENE_ACTIONS: readonly (HygieneAction & { wellbeingGain: number;
     title: 'Escovar os dentes',
     detail: 'Sistema de sucção — quase sem desperdício de água.',
     waterCostL: 0.05,
-    energyCost: 1,
+    energyCost: 0,
     contaminationDrop: 25,
     wellbeingGain: 5,
     color: '#7b8cff',
@@ -245,7 +250,7 @@ export const HYGIENE_ACTIONS: readonly (HygieneAction & { wellbeingGain: number;
     title: 'Higienizar mãos e corpo',
     detail: 'Lenços especiais / banho seco econômico.',
     waterCostL: 0.2,
-    energyCost: 2,
+    energyCost: 1,
     contaminationDrop: 40,
     wellbeingGain: 8,
     color: '#5ee7ff',
@@ -255,7 +260,7 @@ export const HYGIENE_ACTIONS: readonly (HygieneAction & { wellbeingGain: number;
     title: 'Limpar sensores e equipamentos',
     detail: 'Evita poeira e microrganismos na estação.',
     waterCostL: 0.08,
-    energyCost: 2,
+    energyCost: 1,
     contaminationDrop: 35,
     wellbeingGain: 6,
     color: '#c47848',
@@ -266,7 +271,7 @@ export const HYGIENE_BONUS_CARD = {
   id: 'cabin' as const,
   title: 'Revisar cabine',
   detail: 'Última checagem de higiene',
-  energyCost: 1,
+  energyCost: 0,
   waterCostL: 0.05,
   wellbeingGain: 4,
   color: '#4ade80',
@@ -461,6 +466,8 @@ export function lightingForStep(step: Mission2Step): HabitatLighting {
     case 'special_capi_night_report':
       return 'night'
     case 'morning_wakeup':
+    case 'logbook':
+    case 'mission_outro':
       return 'dawn'
   }
 }
@@ -476,6 +483,8 @@ export function roomAccentForStep(step: Mission2Step): 'exercise' | 'nutrition' 
     case 'step2_4_sleep_prep':
     case 'special_capi_night_report':
     case 'morning_wakeup':
+    case 'logbook':
+    case 'mission_outro':
       return 'sleep'
     default:
       return 'idle'

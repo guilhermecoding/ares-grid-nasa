@@ -207,7 +207,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         position="center"
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
-        lines={['Quer voltar?', 'Seu progresso não será perdido.']}
+        lines={['Ops, parece que você já passou por aqui.', 'Quer entrar de novo?']}
         onTypingComplete={() => setReplayReady(true)}
         onClosed={() => {
           setReplayLevel(null)

@@ -21,6 +21,8 @@ import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { CapiBridgeDialog } from './CapiBridgeDialog'
 import { EnergyDepletedOverlay } from './EnergyDepletedOverlay'
 import { HabitatInteriorBackground } from './HabitatInteriorBackground'
+import { Mission2Logbook } from './Mission2Logbook'
+import { Mission2Outro } from './Mission2Outro'
 import { NightReportModal } from './NightReportModal'
 import { ExerciseStep } from './steps/ExerciseStep'
 import { HygieneStep } from './steps/HygieneStep'
@@ -61,7 +63,8 @@ export default function Mission2View({
   playerName = 'Comandante',
 }: Props) {
   const [step, setStep] = useState<Mission2Step>('intro')
-  const [baseEnergy, setBaseEnergy] = useState(() => clamp(stats.energy))
+  /** Floor so a weak Missão 01 storm still leaves a finishable day (max path ~16%). */
+  const [baseEnergy, setBaseEnergy] = useState(() => clamp(Math.max(stats.energy, 28)))
   const [waterL, setWaterL] = useState(() => pctToLiters(stats.water))
   const [wellbeingBoost, setWellbeingBoost] = useState(0)
   const [contaminationRisk, setContaminationRisk] = useState(100)
@@ -86,7 +89,12 @@ export default function Mission2View({
 
   const wellbeingLive = useMemo(() => {
     const base = clamp(stats.wellbeing * 0.55 + wellbeingBoost)
-    if (step === 'morning_wakeup' || step === 'special_capi_night_report') {
+    if (
+      step === 'morning_wakeup' ||
+      step === 'special_capi_night_report' ||
+      step === 'logbook' ||
+      step === 'mission_outro'
+    ) {
       return clamp(Math.max(base, scores.wellbeing))
     }
     return clamp(base)
@@ -197,16 +205,24 @@ export default function Mission2View({
     >
       <HabitatInteriorBackground lighting={lighting} room={room} />
 
-      {(step === 'special_capi_night_report' || step === 'morning_wakeup') && (
+      {(step === 'special_capi_night_report' ||
+        step === 'morning_wakeup' ||
+        step === 'logbook' ||
+        step === 'mission_outro') && (
         <motion.div
           className="pointer-events-none absolute inset-0 z-[1] bg-void-950"
           initial={{ opacity: 0 }}
-          animate={{ opacity: step === 'morning_wakeup' ? 0.15 : 0.45 }}
+          animate={{
+            opacity:
+              step === 'morning_wakeup' || step === 'logbook' || step === 'mission_outro' ? 0.15 : 0.45,
+          }}
           transition={{ duration: 1.2 }}
         />
       )}
 
-      {step !== 'morning_wakeup' && <StatusIndicators stats={hudStats} placement="mission" />}
+      {step !== 'morning_wakeup' && step !== 'logbook' && step !== 'mission_outro' && (
+        <StatusIndicators stats={hudStats} placement="mission" />
+      )}
 
       <div className="absolute top-3 right-3 z-50">
         <button
@@ -324,8 +340,22 @@ export default function Mission2View({
         <MorningWakeupStep
           playerName={playerName}
           scores={scores}
-          onAdvance={() => onComplete(hudStats)}
+          onAdvance={() => setStep('logbook')}
         />
+      )}
+
+      {step === 'logbook' && (
+        <Mission2Logbook
+          exercises={exercises}
+          nutritionCards={nutritionCards}
+          hygieneDone={hygieneDone}
+          sleepScore={scores.sleepScore}
+          onDone={() => setStep('mission_outro')}
+        />
+      )}
+
+      {step === 'mission_outro' && (
+        <Mission2Outro stats={hudStats} onDone={() => onComplete(hudStats)} />
       )}
 
       {energySoftLocked && <EnergyDepletedOverlay onExit={onExit} />}

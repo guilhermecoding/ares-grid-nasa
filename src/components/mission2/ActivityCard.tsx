@@ -93,10 +93,13 @@ export function ActivityCard({ card, done, disabled, busy, onStart, onActivate }
         <p className="font-bold" style={{ color: card.color }}>
           +{card.wellbeingGain} saúde
         </p>
-        <p className="text-energy">
-          −{card.energyCost}% energia
-          {card.waterCostL > 0 ? ` · −${card.waterCostL}L` : ''}
-        </p>
+        {(card.energyCost > 0 || card.waterCostL > 0) && (
+          <p className="text-energy">
+            {card.energyCost > 0 ? `−${card.energyCost}% energia` : null}
+            {card.energyCost > 0 && card.waterCostL > 0 ? ' · ' : null}
+            {card.waterCostL > 0 ? `−${card.waterCostL}L` : null}
+          </p>
+        )}
       </div>
 
       {playing ? (
