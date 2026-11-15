@@ -37,4 +37,14 @@ export const MEDIA = {
     pointC,
     panel: solarPanel,
   },
+  /** Mission 02 sprites — public paths with SVG/icon UI fallbacks when missing. */
+  mission2: {
+    treadmill: '/assets/mission2/treadmill.svg',
+    resistance: '/assets/mission2/resistance.svg',
+    stretch: '/assets/mission2/stretch.svg',
+    balance: '/assets/mission2/balance.svg',
+    tray: '/assets/mission2/food-tray.svg',
+    hygiene: '/assets/mission2/hygiene.svg',
+    bunk: '/assets/mission2/bunk.svg',
+  },
 } as const

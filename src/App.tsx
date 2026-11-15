@@ -14,6 +14,7 @@ import type { DonkiBundle } from './types/nasa'
 import type { ScreenId, WorldState } from './types/game'
 
 const Mission01Screen = lazy(() => import('./mission1/Mission01Screen'))
+const Mission2View = lazy(() => import('./components/mission2/Mission2View'))
 
 type GateState = {
   missionId: number
@@ -73,12 +74,16 @@ export default function App() {
     )
   }, [])
 
-  const applyMissionComplete = useCallback((completed: boolean) => {
+  const applyMissionComplete = useCallback((completed: boolean, missionId: number) => {
     const w = worldRef.current
     if (!completed || !w) return
-    const nextLevel = Math.max(w.level, 2)
-    const nextXp = w.xp + 40
-    const next = { ...w, level: nextLevel, xp: nextXp, message: 'Missão 1 concluída! Nova ilha no mapa.' }
+    const nextLevel = Math.max(w.level, missionId + 1)
+    const nextXp = w.xp + (missionId === 2 ? 50 : 40)
+    const message =
+      missionId === 2
+        ? 'Missão 2 concluída! O mistério do gelo aguarda.'
+        : 'Missão 1 concluída! Nova ilha no mapa.'
+    const next = { ...w, level: nextLevel, xp: nextXp, message }
     setWorld(next)
     setProgress(
       updateProgress({
@@ -134,7 +139,7 @@ export default function App() {
     if (!g) return
 
     if (g.direction === 'exit') {
-      applyMissionComplete(!!g.completed)
+      applyMissionComplete(!!g.completed, g.missionId)
       setActiveMission(null)
       setScreen('world')
       // World paints under closed shutters, then open.
@@ -222,6 +227,24 @@ export default function App() {
         >
           <Mission01Screen
             stats={world?.stats}
+            onComplete={() => leaveMission(true)}
+            onExit={() => leaveMission(false)}
+            onReady={() => setMissionReady(true)}
+          />
+        </Suspense>
+      )}
+
+      {screen === 'mission' && activeMission === 2 && (
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center bg-void-950 font-pixel text-cyan-hud">
+              Carregando missão…
+            </div>
+          }
+        >
+          <Mission2View
+            stats={world?.stats}
+            playerName={progress.playerName}
             onComplete={() => leaveMission(true)}
             onExit={() => leaveMission(false)}
             onReady={() => setMissionReady(true)}
