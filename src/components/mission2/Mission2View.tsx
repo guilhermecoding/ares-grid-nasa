@@ -26,7 +26,8 @@ import { SleepPrepStep } from './steps/SleepPrepStep'
 const DEFAULT_STATS: BaseStats = { energy: 68, water: 85, wellbeing: 70 }
 
 interface Props {
-  onComplete: () => void
+  /** Final meters after the day (energy/water spent stay saved for the base). */
+  onComplete: (result: BaseStats) => void
   onExit: () => void
   onReady?: () => void
   stats?: BaseStats
@@ -216,7 +217,11 @@ export default function Mission2View({
       />
 
       {step === 'morning_wakeup' && (
-        <MorningWakeupStep playerName={playerName} scores={scores} onAdvance={onComplete} />
+        <MorningWakeupStep
+          playerName={playerName}
+          scores={scores}
+          onAdvance={() => onComplete(hudStats)}
+        />
       )}
     </div>
   )

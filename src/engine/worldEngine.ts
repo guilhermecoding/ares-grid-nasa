@@ -52,12 +52,25 @@ export function createWorldState(
   level: number,
   xp: number,
   weather?: WeatherState,
+  baseStats?: BaseStats,
 ): WorldState {
   const def = getLevelDef(level)
+  const stats: BaseStats = baseStats
+    ? {
+        energy: clamp(baseStats.energy),
+        water: clamp(baseStats.water),
+        wellbeing: clamp(baseStats.wellbeing),
+      }
+    : {
+        // No solar until Mission 01 — energy stays empty.
+        energy: level >= 2 ? 70 : 0,
+        water: 85,
+        wellbeing: 70,
+      }
   return {
     grid: createArcadiaGrid(level),
     rover: { x: 0, y: 0, cargo: 'none', sheltered: true },
-    stats: { energy: MAX_ENERGY, water: 85, wellbeing: 70 },
+    stats,
     sol: 1,
     hour: WAKE_HOUR,
     level,
@@ -358,7 +371,8 @@ export function sleep(state: WorldState, bundle: DonkiBundle | null): WorldState
     sol: nextSol,
     hour: WAKE_HOUR,
     stats: {
-      energy: MAX_ENERGY,
+      // Solar recharge overnight only after Mission 01 panels are online.
+      energy: state.level >= 2 ? MAX_ENERGY : state.stats.energy,
       water: clamp(state.stats.water + 4),
       wellbeing: clamp(state.stats.wellbeing + (isStorm(weather.kind) ? 2 : 8)),
     },

@@ -19,32 +19,44 @@ import { SolarCalcChallenge } from './steps/SolarCalcChallenge'
 import { StormTestChallenge } from './steps/StormTestChallenge'
 import { TransmissionOutro } from './steps/TransmissionOutro'
 
-const DEFAULT_STATS: BaseStats = { energy: 55, water: 85, wellbeing: 70 }
+const DEFAULT_STATS: BaseStats = { energy: 0, water: 85, wellbeing: 70 }
 
 function clampStat(n: number) {
   return Math.max(0, Math.min(100, Math.round(n)))
 }
 
-/** Soft HUD reflection of mission progress (does not mutate world store). */
+/**
+ * HUD for Mission 01: external energy starts at 0 and only rises after the panel
+ * is installed, according to site/tilt/season efficiency and storm choice.
+ */
 function deriveMissionStats(
   base: BaseStats,
   step: Mission1Step,
   efficiency: number,
+  panelInstalled: boolean,
   stormChoice: 'save' | 'max' | null,
   wellbeingLive: number,
 ): BaseStats {
-  let { energy, water } = base
+  let water = base.water
+  let energy = 0
 
-  if (step === 'intro' || step === 'risk_warning' || step === 'step1_location') {
-    energy = Math.min(energy, 38)
-  } else if (step === 'step2_solar_calc') {
-    energy = Math.max(energy, 52)
+  if (!panelInstalled) {
+    energy = 0
   } else if (step === 'step3_storm_test') {
-    energy = clampStat(efficiency * 0.38)
+    // Panel just online — energy mirrors installation efficiency.
+    energy = clampStat(efficiency)
     water = clampStat(water - 3)
   } else if (step === 'step4_logbook' || step === 'step5_transmission') {
-    energy = stormChoice === 'save' ? clampStat(Math.max(base.energy, 68)) : clampStat(42)
-    water = stormChoice === 'save' ? water : clampStat(water - 6)
+    if (stormChoice === 'save') {
+      energy = clampStat(efficiency * 0.92)
+    } else if (stormChoice === 'max') {
+      energy = clampStat(efficiency * 0.55)
+      water = clampStat(water - 6)
+    } else {
+      energy = clampStat(efficiency)
+    }
+  } else {
+    energy = clampStat(efficiency)
   }
 
   return {
@@ -55,7 +67,8 @@ function deriveMissionStats(
 }
 
 interface Props {
-  onComplete: () => void
+  /** Final HUD meters after a successful run (energy from the installed panel). */
+  onComplete: (result: BaseStats) => void
   onExit: () => void
   /** Called once the mission UI has painted and is ready for the gate to open. */
   onReady?: () => void
@@ -72,7 +85,8 @@ export default function Mission01Screen({
   const [site, setSite] = useState<SiteId>('B')
   const [season, setSeason] = useState<SeasonId>('summer_n')
   const [tilt, setTilt] = useState(30)
-  const [efficiency, setEfficiency] = useState(70)
+  const [efficiency, setEfficiency] = useState(0)
+  const [panelInstalled, setPanelInstalled] = useState(false)
   const [stormChoice, setStormChoice] = useState<'save' | 'max' | null>(null)
   const [hour] = useState(12)
 
@@ -90,13 +104,13 @@ export default function Mission01Screen({
   const siteLabel = INSTALL_SITES.find((s) => s.id === site)?.name ?? site
 
   const hudStats = useMemo(
-    () => deriveMissionStats(stats, step, efficiency, stormChoice, wellbeingLive),
-    [stats, step, efficiency, stormChoice, wellbeingLive],
+    () => deriveMissionStats(stats, step, efficiency, panelInstalled, stormChoice, wellbeingLive),
+    [stats, step, efficiency, panelInstalled, stormChoice, wellbeingLive],
   )
 
   const finish = useCallback(() => {
-    onComplete()
-  }, [onComplete])
+    onComplete(hudStats)
+  }, [onComplete, hudStats])
 
   const beginExposure = useCallback(() => {
     outdoorElapsedMs.current = 0
@@ -162,7 +176,7 @@ export default function Mission01Screen({
         dustIntensity={storm ? 0.85 : 0.35}
       />
 
-      {!indicatorsBesideExit && !gameOver && (
+      {!indicatorsBesideExit && !gameOver && step !== 'step5_transmission' && (
         <StatusIndicators stats={hudStats} placement="mission" />
       )}
 
@@ -209,6 +223,7 @@ export default function Mission01Screen({
             setSeason(opts.season)
             setTilt(opts.tilt)
             setEfficiency(opts.efficiency)
+            setPanelInstalled(true)
             setStep('step3_storm_test')
           }}
         />
@@ -236,7 +251,9 @@ export default function Mission01Screen({
         </>
       )}
 
-      {!gameOver && step === 'step5_transmission' && <TransmissionOutro onDone={finish} />}
+      {!gameOver && step === 'step5_transmission' && (
+        <TransmissionOutro stats={hudStats} onDone={finish} />
+      )}
 
       {gameOver && <GameOverOverlay onExit={onExit} />}
     </div>
