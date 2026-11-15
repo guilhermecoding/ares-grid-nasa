@@ -175,6 +175,14 @@
     animation: bob 0.9s ease-in-out infinite;
   }
 
+  .island-bob {
+    animation: island-float 2.6s ease-in-out infinite;
+  }
+
+  .lock-float {
+    animation: lock-float 1.8s ease-in-out infinite;
+  }
+
   @keyframes bob {
     0%,
     100% {
@@ -182,6 +190,26 @@
     }
     50% {
       transform: translateY(-3px);
+    }
+  }
+
+  @keyframes island-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes lock-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
     }
   }
 
