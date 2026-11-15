@@ -81,6 +81,8 @@ export default function App() {
 
   const handleEnterMission = (level: number) => {
     const node = getMissionNode(level)
+    void unlockAudio()
+    soundEngine.missionOpen()
     setMissionReady(false)
     setGate({ missionId: level, title: node.gateTitle })
   }

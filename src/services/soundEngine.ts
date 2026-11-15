@@ -177,6 +177,70 @@ export const soundEngine = {
     beep(880, 0.06, 'square', 0.06)
     setTimeout(() => beep(1320, 0.08, 'sine', 0.05), 50)
   },
+  /** Animated fanfare when a mission gate opens / mission starts. */
+  missionOpen: () => {
+    if (muted) return
+    const audio = getCtx()
+    if (!audio) return
+    const t0 = audio.currentTime
+
+    // Long launch whoosh (~1.4s)
+    const whoosh = audio.createOscillator()
+    const wg = audio.createGain()
+    whoosh.type = 'sawtooth'
+    whoosh.frequency.setValueAtTime(55, t0)
+    whoosh.frequency.exponentialRampToValueAtTime(180, t0 + 0.55)
+    whoosh.frequency.exponentialRampToValueAtTime(720, t0 + 1.25)
+    wg.gain.setValueAtTime(0.001, t0)
+    wg.gain.exponentialRampToValueAtTime(0.16, t0 + 0.1)
+    wg.gain.setValueAtTime(0.12, t0 + 0.7)
+    wg.gain.exponentialRampToValueAtTime(0.001, t0 + 1.45)
+    whoosh.connect(wg)
+    wg.connect(audio.destination)
+    whoosh.start(t0)
+    whoosh.stop(t0 + 1.5)
+
+    // Deep rumble under the whole open (~1.6s)
+    const rumble = audio.createOscillator()
+    const rg = audio.createGain()
+    rumble.type = 'triangle'
+    rumble.frequency.setValueAtTime(48, t0)
+    rumble.frequency.exponentialRampToValueAtTime(95, t0 + 0.9)
+    rumble.frequency.exponentialRampToValueAtTime(130, t0 + 1.5)
+    rg.gain.setValueAtTime(0.001, t0)
+    rg.gain.exponentialRampToValueAtTime(0.12, t0 + 0.08)
+    rg.gain.setValueAtTime(0.09, t0 + 0.9)
+    rg.gain.exponentialRampToValueAtTime(0.001, t0 + 1.65)
+    rumble.connect(rg)
+    rg.connect(audio.destination)
+    rumble.start(t0)
+    rumble.stop(t0 + 1.7)
+
+    // Sustained pad layer
+    const pad = audio.createOscillator()
+    const pg = audio.createGain()
+    pad.type = 'sine'
+    pad.frequency.setValueAtTime(196, t0 + 0.2)
+    pad.frequency.exponentialRampToValueAtTime(392, t0 + 1.4)
+    pg.gain.setValueAtTime(0.001, t0 + 0.2)
+    pg.gain.exponentialRampToValueAtTime(0.06, t0 + 0.45)
+    pg.gain.exponentialRampToValueAtTime(0.001, t0 + 1.8)
+    pad.connect(pg)
+    pg.connect(audio.destination)
+    pad.start(t0 + 0.2)
+    pad.stop(t0 + 1.85)
+
+    // Longer rising mission sting (~2s)
+    setTimeout(() => beep(262, 0.14, 'square', 0.06), 120)
+    setTimeout(() => beep(330, 0.14, 'square', 0.07), 280)
+    setTimeout(() => beep(392, 0.15, 'square', 0.08), 440)
+    setTimeout(() => beep(523, 0.16, 'square', 0.09), 620)
+    setTimeout(() => beep(659, 0.18, 'square', 0.1), 820)
+    setTimeout(() => beep(784, 0.2, 'square', 0.11), 1040)
+    setTimeout(() => beep(1046, 0.35, 'sine', 0.1), 1280)
+    setTimeout(() => beep(1319, 0.4, 'sine', 0.08), 1520)
+    setTimeout(() => beep(1568, 0.45, 'sine', 0.06), 1750)
+  },
   /** CRT / pixel-dialog power-off. */
   dialogClose: () => {
     if (muted) return
