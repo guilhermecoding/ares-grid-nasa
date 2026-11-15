@@ -9,6 +9,7 @@ interface CapiDialogProps {
   /** Optional single confirm message instead of multi-line flow */
   confirmMode?: boolean
   continueLabel?: string
+  characterSrc?: string
 }
 
 /** Capi speech popup — thin wrapper over the shared PixelDialogBox pattern. */
@@ -17,6 +18,7 @@ export function CapiDialog({
   onComplete,
   confirmMode = false,
   continueLabel = 'Continuar',
+  characterSrc = MEDIA.capi.neutral,
 }: CapiDialogProps) {
   const [open, setOpen] = useState(true)
   const [idx, setIdx] = useState(0)
@@ -40,7 +42,7 @@ export function CapiDialog({
       open={open}
       lines={pageLines}
       title="Capi"
-      characterSrc={MEDIA.capi.neutral}
+      characterSrc={characterSrc}
       characterAlt="Capi"
       onTypingComplete={() => setReady(true)}
       onClosed={onComplete}

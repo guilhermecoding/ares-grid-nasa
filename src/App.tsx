@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { DialogBox } from './components/DialogBox'
 import { MissionGateTransition } from './components/MissionGateTransition'
 import { NasaDataModal } from './components/NasaDataModal'
@@ -39,6 +39,11 @@ export default function App() {
   const [tutorialOpen, setTutorialOpen] = useState(false)
   const [activeMission, setActiveMission] = useState<number | null>(null)
   const [gate, setGate] = useState<{ missionId: number; title: string } | null>(null)
+  const [missionReady, setMissionReady] = useState(false)
+  const gateRef = useRef(gate)
+  useEffect(() => {
+    gateRef.current = gate
+  }, [gate])
   const [muted, setMutedState] = useState(() => {
     setMuted(progress.muted)
     return progress.muted
@@ -76,17 +81,25 @@ export default function App() {
 
   const handleEnterMission = (level: number) => {
     const node = getMissionNode(level)
+    setMissionReady(false)
     setGate({ missionId: level, title: node.gateTitle })
   }
 
-  const handleGateComplete = () => {
-    if (!gate) return
-    setActiveMission(gate.missionId)
-    setGate(null)
+  const handleGateClosed = useCallback(() => {
+    const g = gateRef.current
+    if (!g) return
+    setMissionReady(false)
+    setActiveMission(g.missionId)
     setScreen('mission')
-  }
+  }, [])
+
+  const handleGateOpened = useCallback(() => {
+    setGate(null)
+    setMissionReady(false)
+  }, [])
 
   const leaveMission = (completed: boolean) => {
+    setMissionReady(false)
     if (completed && world) {
       const nextLevel = Math.max(world.level, 2)
       const nextXp = world.xp + 40
@@ -162,15 +175,21 @@ export default function App() {
             </div>
           }
         >
-          <Mission01Screen onComplete={() => leaveMission(true)} onExit={() => leaveMission(false)} />
+          <Mission01Screen
+            onComplete={() => leaveMission(true)}
+            onExit={() => leaveMission(false)}
+            onReady={() => setMissionReady(true)}
+          />
         </Suspense>
       )}
 
       <MissionGateTransition
         open={!!gate}
+        contentReady={missionReady}
         missionNumber={gate?.missionId ?? 1}
         title={gate?.title ?? ''}
-        onComplete={handleGateComplete}
+        onClosed={handleGateClosed}
+        onOpened={handleGateOpened}
       />
 
       <NasaDataModal open={nasaOpen} weather={world?.weather ?? null} onClose={() => setNasaOpen(false)} />

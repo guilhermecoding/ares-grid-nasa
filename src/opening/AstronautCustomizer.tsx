@@ -12,6 +12,7 @@ import {
   type InsigniaId,
   type SuitColorId,
 } from '../data/openingData'
+import { MEDIA } from '../constants/mediaAssets'
 import { CapiDialog } from './CapiDialog'
 import { LaunchSpaceCanvas } from './LaunchSpaceCanvas'
 import { McButton } from './McButton'
@@ -125,7 +126,12 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
     return (
       <div className="relative h-full w-full overflow-hidden">
         <LaunchSpaceCanvas warp={0.35} hologramActive paused />
-        <CapiDialog lines={[confirmLine]} confirmMode onComplete={() => onConfirm(profile)} />
+        <CapiDialog
+          lines={[confirmLine]}
+          confirmMode
+          characterSrc={MEDIA.capi.excited2}
+          onComplete={() => onConfirm(profile)}
+        />
       </div>
     )
   }

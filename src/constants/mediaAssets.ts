@@ -6,6 +6,8 @@ export const MEDIA = {
     emblem: '/assets/artefacts/arcadia_emblema_capivara.png',
     /** Portrait used in PixelDialogBox / CapiDialog */
     neutral: '/assets/artefacts/capi-neutral.png',
+    /** Excited portrait (confirm astronaut / celebration) */
+    excited2: '/assets/artefacts/capi-excited2.png',
     ref: '/assets/capi/capi-ref.jpeg',
   },
   opening: {

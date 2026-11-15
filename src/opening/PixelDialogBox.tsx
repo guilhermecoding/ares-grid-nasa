@@ -101,7 +101,7 @@ export function PixelDialogBox({
   if (!visible) return null
 
   return (
-    <div className={`pointer-events-none absolute inset-0 z-20 ${className}`}>
+    <div className={`pointer-events-none absolute inset-0 z-[70] ${className}`}>
       <AnimatePresence>
         {open ? (
           <motion.div

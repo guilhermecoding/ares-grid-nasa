@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   INSTALL_SITES,
   type Mission1Step,
@@ -16,9 +16,11 @@ import { TransmissionOutro } from './steps/TransmissionOutro'
 interface Props {
   onComplete: () => void
   onExit: () => void
+  /** Called once the mission UI has painted and is ready for the gate to open. */
+  onReady?: () => void
 }
 
-export default function Mission01Screen({ onComplete, onExit }: Props) {
+export default function Mission01Screen({ onComplete, onExit, onReady }: Props) {
   const [step, setStep] = useState<Mission1Step>('intro')
   const [site, setSite] = useState<SiteId>('B')
   const [season, setSeason] = useState<SeasonId>('summer_n')
@@ -33,6 +35,22 @@ export default function Mission01Screen({ onComplete, onExit }: Props) {
   const finish = useCallback(() => {
     onComplete()
   }, [onComplete])
+
+  useEffect(() => {
+    let cancelled = false
+    const kick = () => {
+      if (cancelled) return
+      onReady?.()
+    }
+    // Wait for layout + lazy chunk paint before opening the gate.
+    const id = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(kick)
+    })
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(id)
+    }
+  }, [onReady])
 
   return (
     <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-void-950" style={{ touchAction: 'manipulation' }}>
