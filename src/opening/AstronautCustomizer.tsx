@@ -56,12 +56,23 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
             {t('Who is the astronaut?', 'Quem é o astronauta?')}
           </h2>
 
-          <img
-            src={art.frontal}
-            alt={avatar === 'girl' ? t('Girl astronaut', 'Astronauta menina') : t('Boy astronaut', 'Astronauta menino')}
-            draggable={false}
-            className="mx-auto mt-3 h-44 w-auto object-contain sm:h-56"
-          />
+          <div className="relative mx-auto mt-3 w-fit">
+            <img
+              src={art.frontal}
+              alt={avatar === 'girl' ? t('Girl astronaut', 'Astronauta menina') : t('Boy astronaut', 'Astronauta menino')}
+              draggable={false}
+              className="h-44 w-auto object-contain sm:h-56"
+            />
+            <span className="absolute right-0 bottom-0 flex size-12 items-center justify-center border-2 border-cyan-hud bg-[#0a1628] sm:size-14">
+              <img
+                src={art.chibi}
+                alt=""
+                draggable={false}
+                className="size-full object-contain"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </span>
+          </div>
           <p className="mt-1 truncate text-center font-pixel text-sm text-cyan-hud">{profile.name}</p>
 
           <div className="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label={t('Astronaut', 'Astronauta')}>
