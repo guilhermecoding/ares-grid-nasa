@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CAPI_LANDING_LINES, LANDING_HUD_LINES } from '../data/openingData'
+import { useI18n } from '../i18n/locale'
 import { CapiDialog } from './CapiDialog'
 import { MarsApproachCanvas } from './MarsApproachCanvas'
 import { McButton } from './McButton'
@@ -11,6 +12,9 @@ interface LandingSceneProps {
 }
 
 export function LandingScene({ onStartMission }: LandingSceneProps) {
+  const { t, locale } = useI18n()
+  const hudLines = useMemo(() => LANDING_HUD_LINES.map((line) => line[locale]), [locale])
+  const capiLines = useMemo(() => CAPI_LANDING_LINES.map((line) => line[locale]), [locale])
   const [progress, setProgress] = useState(0)
   const [hudDone, setHudDone] = useState(false)
   const [capiDone, setCapiDone] = useState(false)
@@ -43,23 +47,23 @@ export function LandingScene({ onStartMission }: LandingSceneProps) {
       <div className="relative z-10 flex h-full flex-col justify-between p-3 sm:p-5">
         <div className="mx-auto w-full max-w-lg pt-8">
           {progress > 0.75 && (
-            <TypewriterHud lines={LANDING_HUD_LINES} onComplete={() => setHudDone(true)} />
+            <TypewriterHud lines={hudLines} onComplete={() => setHudDone(true)} />
           )}
         </div>
 
         {hudDone && !capiDone && (
           <CapiDialog
             dialogId="opening-landing"
-            lines={CAPI_LANDING_LINES}
+            lines={capiLines}
             onComplete={() => setCapiDone(true)}
-            continueLabel="Continuar"
+            continueLabel={t('Continue', 'Continuar')}
           />
         )}
 
         {capiDone && (
           <div className="absolute inset-x-0 bottom-6 z-30 flex justify-center px-4">
             <McButton className="min-h-14 w-full max-w-md px-4 font-pixel text-lg font-bold sm:text-xl" onClick={onStartMission}>
-              COMEÇAR MISSÕES
+              {t('START MISSIONS', 'COMEÇAR MISSÕES')}
             </McButton>
           </div>
         )}

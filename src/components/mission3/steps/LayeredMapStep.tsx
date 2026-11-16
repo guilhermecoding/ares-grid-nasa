@@ -1,10 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
 import {
   BETA_CONFIRM_LINES,
+  BETA_CONFIRM_LINES_EN,
   MAP_LAYERS,
   NASA_CITATIONS,
+  NASA_CITATIONS_EN,
   REQUIRED_MAP_LAYERS,
   SITES,
   WRONG_SITE_ENERGY_COST,
@@ -12,6 +14,7 @@ import {
   type SiteId,
   type SiteInfo,
 } from '../../../data/mission3Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
 import { ArcadiaSiteMap } from '../ArcadiaSiteMap'
@@ -46,14 +49,20 @@ const INTRO_LINES = [
   'Depois toque no setor. O certo tem gelo, radar forte e chão plano.',
 ] as const
 
+const INTRO_LINES_EN = [
+  'First, turn on the map layers. The button that pulses is next.',
+  'Then tap a sector. The right one has ice, a strong radar signal, and flat ground.',
+] as const
+
 function SiteRow({ label, value, on, good }: { label: string; value: string; on: boolean; good?: boolean }) {
+  const { t } = useI18n()
   return (
     <div className="flex items-center justify-between gap-2 border-b border-cyan-hud/15 py-2 text-base last:border-0">
       <span className="text-void-100/85">{label}</span>
       {on ? (
         <span className={`font-semibold ${good === undefined ? 'text-[#f4fff4]' : good ? 'text-life' : 'text-danger'}`}>{value}</span>
       ) : (
-        <span className="text-sm text-void-100/55">ligue a camada</span>
+        <span className="text-sm text-void-100/55">{t('turn the layer on', 'ligue a camada')}</span>
       )}
     </div>
   )
@@ -61,10 +70,11 @@ function SiteRow({ label, value, on, good }: { label: string; value: string; on:
 
 /** Desafio 3.2 — layered Arcadia map, three candidate sectors. */
 export function LayeredMapStep({ energy, waterL, onSpend, onConfirm }: Props) {
+  const { t, locale } = useI18n()
   const [layers, setLayers] = useState<LayerMap>({ surface: true, radar: false, studies: false, terrain: false, ice: false })
   const [seen, setSeen] = useState<Set<MapLayerId>>(() => new Set(['surface']))
   const [picked, setPicked] = useState<SiteId | null>(null)
-  const [feedback, setFeedback] = useState<{ lines: string[]; ok: boolean } | null>(null)
+  const [feedback, setFeedback] = useState<{ siteId: SiteId; ok: boolean } | null>(null)
   const [rejected, setRejected] = useState<Set<SiteId>>(() => new Set())
   const [introOpen, setIntroOpen] = useState(true)
 
@@ -83,40 +93,59 @@ export function LayeredMapStep({ energy, waterL, onSpend, onConfirm }: Props) {
     if (!site || missing.length > 0) return
     if (site.ideal) {
       soundEngine.success()
-      setFeedback({ lines: [...BETA_CONFIRM_LINES], ok: true })
+      setFeedback({ siteId: site.id, ok: true })
       return
     }
     soundEngine.fail()
     onSpend(WRONG_SITE_ENERGY_COST)
     setRejected((prev) => new Set(prev).add(site.id))
-    setFeedback({
-      lines: [...site.rejectReason, `A tentativa gastou ${WRONG_SITE_ENERGY_COST}% de energia. Escolha outro setor.`],
-      ok: false,
-    })
+    setFeedback({ siteId: site.id, ok: false })
   }
+
+  const introLines = useMemo(() => (locale === 'en' ? INTRO_LINES_EN : INTRO_LINES), [locale])
+  const feedbackLines = useMemo(() => {
+    if (!feedback) return []
+    if (feedback.ok) return locale === 'en' ? [...BETA_CONFIRM_LINES_EN] : [...BETA_CONFIRM_LINES]
+    const chosen = SITES.find((item) => item.id === feedback.siteId)
+    const reasons = chosen ? (locale === 'en' ? chosen.rejectReasonEn : chosen.rejectReason) : []
+    return [
+      ...reasons,
+      t(
+        `That try used ${WRONG_SITE_ENERGY_COST}% energy. Pick another sector.`,
+        `A tentativa gastou ${WRONG_SITE_ENERGY_COST}% de energia. Escolha outro setor.`,
+      ),
+    ]
+  }, [feedback, locale, t])
 
   const activeLayers = MAP_LAYERS.filter((layer) => layers[layer.id])
 
   return (
     <Mission3Stage
-      title="Desafio 3.2 — Mapa Científico com Camadas"
+      title={t('Challenge 3.2 — Science Map with Layers', 'Desafio 3.2 — Mapa Científico com Camadas')}
       subtitle={
         <>
-          Siga os 3 passos. O ponto ideal tem sinal forte no <SciTermM3 term="Radar SHARAD">radar SHARAD</SciTermM3>, gelo nos estudos e terreno estável.
+          {t(
+            'Follow the 3 steps. The best spot has a strong signal on the',
+            'Siga os 3 passos. O ponto ideal tem sinal forte no',
+          )}{' '}
+          <SciTermM3 term={t('SHARAD radar', 'Radar SHARAD')} />
+          {t(', ice in the studies, and stable ground.', ', gelo nos estudos e terreno estável.')}
         </>
       }
       energy={energy}
       waterL={waterL}
       overlay={
         introOpen ? (
-          <CapiBeat id="m3-map-intro" lines={INTRO_LINES} onDone={() => setIntroOpen(false)} />
+          <CapiBeat id="m3-map-intro" lines={introLines} onDone={() => setIntroOpen(false)} />
         ) : feedback ? (
           <CapiBridgeM3
-            lines={feedback.lines}
+            dialogId={feedback.ok ? 'm3-map-beta' : `m3-map-reject-${feedback.siteId}`}
+            lines={feedbackLines}
             onDone={() => {
               const ok = feedback.ok
+              const chosen = feedback.siteId
               setFeedback(null)
-              if (ok && picked) onConfirm(picked)
+              if (ok) onConfirm(chosen)
               else setPicked(null)
             }}
           />
@@ -125,9 +154,9 @@ export function LayeredMapStep({ energy, waterL, onSpend, onConfirm }: Props) {
     >
       <ol className="mx-auto grid w-full max-w-6xl gap-2 sm:grid-cols-3">
         {[
-          ['1', 'Ligue as camadas'],
-          ['2', 'Toque no setor'],
-          ['3', 'Confirme'],
+          ['1', t('Turn on the layers', 'Ligue as camadas')],
+          ['2', t('Tap a sector', 'Toque no setor')],
+          ['3', t('Confirm', 'Confirme')],
         ].map(([n, label], i) => {
           const current = guide === i + 1
           const done = guide > i + 1
@@ -147,7 +176,7 @@ export function LayeredMapStep({ energy, waterL, onSpend, onConfirm }: Props) {
 
       <div className="mx-auto grid w-full max-w-6xl gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-4">
         <section className="rounded border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:p-4">
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Camadas do mapa">
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t('Map layers', 'Camadas do mapa')}>
             {MAP_LAYERS.map((layer) => {
               const pulse = layer.id === nextLayer
               return (
@@ -168,8 +197,8 @@ export function LayeredMapStep({ energy, waterL, onSpend, onConfirm }: Props) {
                   style={{ touchAction: 'manipulation' }}
                 >
                   {layers[layer.id] ? '● ' : pulse ? '→ ' : '○ '}
-                  {layer.label}
-                  {pulse ? <span className="mt-0.5 block font-pixel text-xs">TOQUE AQUI</span> : null}
+                  {t(layer.labelEn, layer.label)}
+                  {pulse ? <span className="mt-0.5 block font-pixel text-xs">{t('TAP HERE', 'TOQUE AQUI')}</span> : null}
                 </motion.button>
               )
             })}
@@ -273,51 +302,63 @@ export function LayeredMapStep({ energy, waterL, onSpend, onConfirm }: Props) {
                   style={{ left: `${s.leftPct}%`, top: `${s.topPct}%`, borderColor: s.color, touchAction: 'manipulation' }}
                 >
                   <img src={SECTOR_ICON[s.id]} alt="" className="size-10 object-contain" draggable={false} />
-                  <span className="font-pixel text-[11px] text-[#f4fff4] md:text-xs">{s.name}</span>
+                  <span className="font-pixel text-[11px] text-[#f4fff4] md:text-xs">{t(s.nameEn, s.name)}</span>
                   {layers.studies ? (
-                    <span className={`text-[11px] md:text-xs ${s.studies === 'Gelo confirmado' ? 'text-life' : 'text-energy'}`}>{s.studies}</span>
+                    <span className={`text-[11px] md:text-xs ${s.studies === 'Gelo confirmado' ? 'text-life' : 'text-energy'}`}>
+                      {t(s.studiesEn, s.studies)}
+                    </span>
                   ) : null}
                 </motion.button>
               )
             })}
             {guide === 2 ? (
               <p className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded bg-[#0a1628]/90 px-3 py-1 font-pixel text-sm text-energy">
-                Toque no setor
+                {t('Tap a sector', 'Toque no setor')}
               </p>
             ) : null}
           </div>
-          <p className="mt-2 text-sm text-void-100/75">{NASA_CITATIONS.sharad}</p>
+          <p className="mt-2 text-sm text-void-100/75">{locale === 'en' ? NASA_CITATIONS_EN.sharad : NASA_CITATIONS.sharad}</p>
         </section>
 
         <section className={`flex flex-col rounded border-2 bg-[#0a1628]/92 p-4 ${site?.ideal && missing.length === 0 ? 'border-life' : 'border-cyan-hud/30'}`}>
-          <p className="font-pixel text-xs text-cyan-hud md:text-sm">FICHA DO SETOR</p>
+          <p className="font-pixel text-xs text-cyan-hud md:text-sm">{t('SECTOR CARD', 'FICHA DO SETOR')}</p>
           {site ? (
             <>
               <div className="mt-2 flex items-center gap-3">
                 <img src={SECTOR_ICON[site.id]} alt="" className="size-14 object-contain" draggable={false} />
                 <p className="font-pixel text-base text-[#f4fff4]">
-                  {site.name}
-                  <span className="mt-1 block text-sm font-sans font-normal text-void-100/80">{site.short}</span>
+                  {t(site.nameEn, site.name)}
+                  <span className="mt-1 block text-sm font-sans font-normal text-void-100/80">{t(site.shortEn, site.short)}</span>
                 </p>
               </div>
               <div className="mt-2">
-                <SiteRow label="Radar SHARAD" value={site.radar} on={layers.radar} good={site.radar === 'Forte'} />
-                <SiteRow label="Estudos NASA" value={site.studies} on={layers.studies} good={site.studies === 'Gelo confirmado'} />
-                <SiteRow label="Terreno" value={site.terrain} on={layers.terrain} good={site.terrain !== 'Instável'} />
-                <SiteRow label="Depósito de gelo" value={site.iceHint ? 'Possível' : 'Nenhum'} on={layers.ice} good={site.iceHint} />
+                <SiteRow label={t('SHARAD radar', 'Radar SHARAD')} value={t(site.radarEn, site.radar)} on={layers.radar} good={site.radar === 'Forte'} />
+                <SiteRow label={t('NASA studies', 'Estudos NASA')} value={t(site.studiesEn, site.studies)} on={layers.studies} good={site.studies === 'Gelo confirmado'} />
+                <SiteRow label={t('Ground', 'Terreno')} value={t(site.terrainEn, site.terrain)} on={layers.terrain} good={site.terrain !== 'Instável'} />
+                <SiteRow
+                  label={t('Ice deposit', 'Depósito de gelo')}
+                  value={site.iceHint ? t('Possible', 'Possível') : t('None', 'Nenhum')}
+                  on={layers.ice}
+                  good={site.iceHint}
+                />
               </div>
             </>
           ) : (
             <p className="mt-3 text-base text-void-100/85">
-              {missing.length > 0 ? 'Ligue as camadas que pulsam. Depois o mapa libera os setores.' : 'Toque em um setor do mapa.'}
+              {missing.length > 0
+                ? t('Turn on the layers that pulse. Then the map unlocks the sectors.', 'Ligue as camadas que pulsam. Depois o mapa libera os setores.')
+                : t('Tap a sector on the map.', 'Toque em um setor do mapa.')}
             </p>
           )}
           <p className="mt-3 text-sm text-void-100/80">
-            Camadas analisadas: {REQUIRED_MAP_LAYERS.length - missing.length}/{REQUIRED_MAP_LAYERS.length}
+            {t(
+              `Layers checked: ${REQUIRED_MAP_LAYERS.length - missing.length}/${REQUIRED_MAP_LAYERS.length}`,
+              `Camadas analisadas: ${REQUIRED_MAP_LAYERS.length - missing.length}/${REQUIRED_MAP_LAYERS.length}`,
+            )}
           </p>
           <motion.div animate={guide === 3 ? { scale: [1, 1.03, 1] } : { scale: 1 }} transition={guide === 3 ? { duration: 1, repeat: Infinity } : { duration: 0.2 }}>
             <McButton className={`mt-3 min-h-14 w-full px-5 font-pixel text-base ${site && missing.length === 0 ? '' : 'opacity-50'}`} disabled={!site || missing.length > 0} onClick={confirm}>
-              {guide === 3 ? 'Confirme este setor' : 'Confirmar setor'}
+              {guide === 3 ? t('Confirm this sector', 'Confirme este setor') : t('Confirm sector', 'Confirmar setor')}
             </McButton>
           </motion.div>
         </section>

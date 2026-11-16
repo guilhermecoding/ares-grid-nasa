@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { MEDIA } from '../../../constants/mediaAssets'
 import type { Mission2Scores } from '../../../data/mission2Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function MorningWakeupStep({ playerName, scores, onAdvance }: Props) {
+  const { t } = useI18n()
   return (
     <div className="absolute inset-0 z-40 flex items-center justify-center bg-void-950/50 p-4" style={{ touchAction: 'manipulation' }}>
       <motion.div
@@ -25,19 +27,22 @@ export function MorningWakeupStep({ playerName, scores, onAdvance }: Props) {
           draggable={false}
         />
         <p className="mt-3 font-pixel text-sm text-cyan-hud sm:text-base">
-          Bom dia, Comandante {playerName}!
+          {t(`Good morning, Commander ${playerName}!`, `Bom dia, Comandante ${playerName}!`)}
         </p>
         <p className="mt-2 font-pixel text-[10px] leading-snug text-void-200 sm:text-xs">
-          O Sol nasce em Arcadia. Seu corpo e a base estão prontos para a próxima exploração.
+          {t(
+            'The sun rises in Arcadia. Your body and the base are ready for the next exploration.',
+            'O Sol nasce em Arcadia. Seu corpo e a base estão prontos para a próxima exploração.',
+          )}
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-2 text-left">
           <div className="rounded border border-cyan-hud/30 bg-void-950/60 px-2 py-2">
-            <p className="font-pixel text-[9px] text-void-300">Pontos de ciência</p>
+            <p className="font-pixel text-[9px] text-void-300">{t('Science points', 'Pontos de ciência')}</p>
             <p className="font-pixel text-lg text-cyan-hud">{scores.sciencePoints}</p>
           </div>
           <div className="rounded border border-cyan-hud/30 bg-void-950/60 px-2 py-2">
-            <p className="font-pixel text-[9px] text-void-300">Pontos de saúde</p>
+            <p className="font-pixel text-[9px] text-void-300">{t('Health points', 'Pontos de saúde')}</p>
             <p className="font-pixel text-lg text-[#5ecf9a]">{scores.healthPoints}</p>
           </div>
           <div className="rounded border border-cyan-hud/30 bg-void-950/60 px-2 py-2">
@@ -45,7 +50,7 @@ export function MorningWakeupStep({ playerName, scores, onAdvance }: Props) {
             <p className="font-pixel text-lg text-[#f0b429]">{scores.sleepScore}</p>
           </div>
           <div className="rounded border border-cyan-hud/30 bg-void-950/60 px-2 py-2">
-            <p className="font-pixel text-[9px] text-void-300">Saúde</p>
+            <p className="font-pixel text-[9px] text-void-300">{t('Health', 'Saúde')}</p>
             <p className="font-pixel text-lg text-[var(--color-wellbeing)]">{scores.wellbeing}%</p>
           </div>
         </div>
@@ -57,7 +62,7 @@ export function MorningWakeupStep({ playerName, scores, onAdvance }: Props) {
             onAdvance()
           }}
         >
-          Abrir diário de bordo
+          {t('Open the logbook', 'Abrir diário de bordo')}
         </McButton>
       </motion.div>
     </div>

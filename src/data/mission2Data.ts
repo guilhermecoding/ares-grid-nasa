@@ -40,6 +40,15 @@ export const SCI_TERMS_M2: Record<string, string> = {
   'Arcadia Planitia': 'Uma planície grande e relativamente plana em Marte.',
 }
 
+export const SCI_TERMS_M2_EN: Record<string, string> = {
+  Microgravity: 'Almost no weight — on Mars, gravity is only 38% of Earth\'s.',
+  Actigraphy: 'Measuring movement and sleep with sensors on the body or in the cabin.',
+  Contamination: 'Germs or dirt that can make the crew sick inside the closed module.',
+  Metabolism: 'How the body turns food and water into energy.',
+  Hydration: 'Enough water in the body to work well.',
+  'Arcadia Planitia': 'A large, fairly flat plain on Mars.',
+}
+
 /** Short Capi intro parts — one dialog box each. */
 export const INTRO_PARTS_M2 = [
   ['A vida fora da Terra pode abalar a saúde de um astronauta corajoso.'] as const,
@@ -60,6 +69,7 @@ export type ExerciseId = 'treadmill' | 'resistance' | 'stretch' | 'balance'
 export interface ExerciseOption {
   id: ExerciseId
   title: string
+  titleEn: string
   focus: string
   energyCost: number
   waterCostL: number
@@ -79,6 +89,7 @@ export const EXERCISES: readonly ExerciseOption[] = [
   {
     id: 'treadmill',
     title: 'Caminhada na Esteira',
+    titleEn: 'Treadmill Walk',
     focus: 'Coração e resistência',
     energyCost: 6,
     waterCostL: 0.8,
@@ -90,6 +101,7 @@ export const EXERCISES: readonly ExerciseOption[] = [
   {
     id: 'resistance',
     title: 'Exercícios de Resistência',
+    titleEn: 'Resistance Exercises',
     focus: 'Força muscular e densidade óssea',
     energyCost: 8,
     waterCostL: 0.5,
@@ -101,6 +113,7 @@ export const EXERCISES: readonly ExerciseOption[] = [
   {
     id: 'stretch',
     title: 'Alongamento',
+    titleEn: 'Stretching',
     focus: 'Flexibilidade e recuperação',
     energyCost: 2,
     waterCostL: 0.2,
@@ -112,6 +125,7 @@ export const EXERCISES: readonly ExerciseOption[] = [
   {
     id: 'balance',
     title: 'Treinamento de Equilíbrio',
+    titleEn: 'Balance Training',
     focus: 'Adaptação neurológica à gravidade de Marte',
     energyCost: 3,
     waterCostL: 0.3,
@@ -132,6 +146,7 @@ export interface FoodItem {
   id: string
   group: FoodGroupId
   label: string
+  labelEn: string
   kcal: number
   intensity: string
 }
@@ -154,15 +169,15 @@ export const WATER_DISPENSER = {
 export const BALANCED_MEAL_BONUS = { wellbeing: 18, energy: 6 } as const
 
 export const FOOD_ITEMS: readonly FoodItem[] = [
-  { id: 'tofu', group: 'protein', label: 'Tofu Proteico', kcal: 140, intensity: 'Leve' },
-  { id: 'chickpea', group: 'protein', label: 'Grão-de-bico Espacial', kcal: 250, intensity: 'Moderado' },
-  { id: 'fish', group: 'protein', label: 'Peixe Selado NASA', kcal: 360, intensity: 'Alta Energia' },
-  { id: 'salad', group: 'veggie', label: 'Salada de Folhas Verdes', kcal: 35, intensity: 'Ultra Leve' },
-  { id: 'tomato', group: 'veggie', label: 'Tomates-cereja', kcal: 70, intensity: 'Leve' },
-  { id: 'broccoli', group: 'veggie', label: 'Brócolis da Estufa', kcal: 130, intensity: 'Nutritivo' },
-  { id: 'tortilla', group: 'carb', label: 'Tortilha Integral', kcal: 190, intensity: 'Leve' },
-  { id: 'quinoa', group: 'carb', label: 'Quinoa Espacial', kcal: 290, intensity: 'Moderado' },
-  { id: 'rice', group: 'carb', label: 'Arroz Integral', kcal: 410, intensity: 'Alta Energia' },
+  { id: 'tofu', group: 'protein', label: 'Tofu Proteico', labelEn: 'Protein Tofu', kcal: 140, intensity: 'Leve' },
+  { id: 'chickpea', group: 'protein', label: 'Grão-de-bico Espacial', labelEn: 'Space Chickpeas', kcal: 250, intensity: 'Moderado' },
+  { id: 'fish', group: 'protein', label: 'Peixe Selado NASA', labelEn: 'NASA Sealed Fish', kcal: 360, intensity: 'Alta Energia' },
+  { id: 'salad', group: 'veggie', label: 'Salada de Folhas Verdes', labelEn: 'Leafy Green Salad', kcal: 35, intensity: 'Ultra Leve' },
+  { id: 'tomato', group: 'veggie', label: 'Tomates-cereja', labelEn: 'Cherry Tomatoes', kcal: 70, intensity: 'Leve' },
+  { id: 'broccoli', group: 'veggie', label: 'Brócolis da Estufa', labelEn: 'Greenhouse Broccoli', kcal: 130, intensity: 'Nutritivo' },
+  { id: 'tortilla', group: 'carb', label: 'Tortilha Integral', labelEn: 'Whole-Wheat Tortilla', kcal: 190, intensity: 'Leve' },
+  { id: 'quinoa', group: 'carb', label: 'Quinoa Espacial', labelEn: 'Space Quinoa', kcal: 290, intensity: 'Moderado' },
+  { id: 'rice', group: 'carb', label: 'Arroz Integral', labelEn: 'Brown Rice', kcal: 410, intensity: 'Alta Energia' },
 ] as const
 
 export const FOOD_GROUPS: Record<FoodGroupId, { label: string; hint: string }> = {

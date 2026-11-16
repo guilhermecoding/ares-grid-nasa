@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { MISSION3_META } from '../../data/mission3Data'
+import { useI18n } from '../../i18n/locale'
 import { ScrollHintArea } from '../ScrollHintArea'
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 /** Shared challenge frame — same dark HUD language as Missões 01 e 02. */
 export function Mission3Stage({ title, subtitle, energy, waterL, children, overlay }: Props) {
+  const { t } = useI18n()
   return (
     <div
       className={`absolute inset-0 flex min-h-0 flex-col ${overlay ? 'z-[60]' : 'z-20'}`}
@@ -29,9 +31,13 @@ export function Mission3Stage({ title, subtitle, energy, waterL, children, overl
             <span>
               {MISSION3_META.solLabel} | {MISSION3_META.location}
             </span>
-            <span className="text-energy">Energia Base {Math.round(energy)}%</span>
-            <span className="text-[#7dd3fc]">Reserva de Água {Math.round(waterL)} L</span>
-            <span className="border border-cyan-hud/40 px-1.5 py-0.5">Missão científica</span>
+            <span className="text-energy">
+              {t('Base energy', 'Energia Base')} {Math.round(energy)}%
+            </span>
+            <span className="text-[#7dd3fc]">
+              {t('Water reserve', 'Reserva de Água')} {Math.round(waterL)} L
+            </span>
+            <span className="border border-cyan-hud/40 px-1.5 py-0.5">{t('Science mission', 'Missão científica')}</span>
           </p>
           <p className="mt-1 font-pixel text-sm text-[#f4fff4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] md:text-base lg:text-lg">
             {title}

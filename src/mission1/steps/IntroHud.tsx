@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
 import { INTRO_HIGHLIGHT_WORDS, INTRO_PARTS } from '../../data/mission1Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
 import { useHideFollowingDialogs } from '../../opening/useHideFollowingDialogs'
@@ -11,11 +12,13 @@ interface Props {
 }
 
 export function IntroHud({ onContinue }: Props) {
+  const { t, locale } = useI18n()
   const [part, setPart] = useState(0)
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
 
-  const lines = INTRO_PARTS[part]!
+  const partCopy = INTRO_PARTS[part]!
+  const lines = useMemo(() => partCopy.map((line) => t(line.en, line.pt)), [partCopy, t])
   const isLast = part >= INTRO_PARTS.length - 1
   const { blocked, hideDialog, afterClose } = useHideFollowingDialogs('m1', onContinue)
 
@@ -24,10 +27,10 @@ export function IntroHud({ onContinue }: Props) {
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-3 pt-3 sm:px-4 sm:pt-4">
         <div className="mx-auto max-w-3xl border-2 border-cyan-hud/50 bg-[#0a1628]/9 px-3 py-2 font-pixel text-[10px] text-cyan-hud sm:text-xs">
           <p>
-            Local: <SciTerm term="Arcadia Planitia" />
+            {t('Location', 'Local')}: <SciTerm term="Arcadia Planitia" />
           </p>
-          <p>Suporte à Vida: OK</p>
-          <p className="text-energy">Energia Externa: NÃO INSTALADA</p>
+          <p>{t('Life support', 'Suporte à Vida')}: OK</p>
+          <p className="text-energy">{t('Outside power', 'Energia Externa')}: {t('NOT INSTALLED', 'NÃO INSTALADA')}</p>
         </div>
       </div>
 
@@ -35,7 +38,7 @@ export function IntroHud({ onContinue }: Props) {
       <PixelDialogBox
         key={`m1-intro-${part}`}
         open={open}
-        lines={[...lines]}
+        lines={lines}
         title="Capi"
         dialogId={`m1-intro-${part}`}
         onSkip={() => {
@@ -44,7 +47,7 @@ export function IntroHud({ onContinue }: Props) {
         }}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
-        highlightWords={part === 1 ? INTRO_HIGHLIGHT_WORDS : undefined}
+        highlightWords={part === 1 ? INTRO_HIGHLIGHT_WORDS[locale] : undefined}
         onTypingComplete={() => setReady(true)}
         onClosed={() => {
           afterClose(isLast, () => {
@@ -60,7 +63,7 @@ export function IntroHud({ onContinue }: Props) {
               style={{ touchAction: 'manipulation' }}
               onClick={() => setOpen(false)}
             >
-              {isLast ? 'Avançar' : 'Continuar'}
+              {isLast ? t('Next', 'Avançar') : t('Continue', 'Continuar')}
             </McButton>
           ) : null
         }

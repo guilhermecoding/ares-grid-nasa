@@ -17,6 +17,7 @@ import { Burst, ChallengeBar, FloatDelta, GameCta, Tag } from '../../components/
 import { useDrag } from '../../components/missionKit/useDrag'
 import { MEDIA } from '../../constants/mediaAssets'
 import { GREENHOUSE_MODULES, type GreenhouseModuleId } from '../../data/mission4Data'
+import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
@@ -44,21 +45,43 @@ const MODULE_ICONS: Record<GreenhouseModuleId, LucideIcon> = {
   monitor: Activity,
 }
 
-const LINKS: Record<LinkId, { source: string; terminal: string; color: string; done: string; wait: string; Icon: LucideIcon }> = {
+const LINKS: Record<
+  LinkId,
+  {
+    sourceEn: string
+    sourcePt: string
+    terminalEn: string
+    terminalPt: string
+    color: string
+    doneEn: string
+    donePt: string
+    waitEn: string
+    waitPt: string
+    Icon: LucideIcon
+  }
+> = {
   energy: {
-    source: 'Cabo solar · 480 W',
-    terminal: 'Domo · Energia',
+    sourceEn: 'Solar cable · 480 W',
+    sourcePt: 'Cabo solar · 480 W',
+    terminalEn: 'Dome · Energy',
+    terminalPt: 'Domo · Energia',
     color: '#f0b429',
-    done: 'Solar conectado (480 W)',
-    wait: 'Aguardando o cabo solar',
+    doneEn: 'Solar connected (480 W)',
+    donePt: 'Solar conectado (480 W)',
+    waitEn: 'Waiting for the solar cable',
+    waitPt: 'Aguardando o cabo solar',
     Icon: Zap,
   },
   water: {
-    source: 'Tubo de água H₂O',
-    terminal: 'Domo · Válvula H₂O',
+    sourceEn: 'Water tube H₂O',
+    sourcePt: 'Tubo de água H₂O',
+    terminalEn: 'Dome · H₂O valve',
+    terminalPt: 'Domo · Válvula H₂O',
     color: '#38bdf8',
-    done: 'Água potável ligada',
-    wait: 'Aguardando o tubo de água',
+    doneEn: 'Drinking water connected',
+    donePt: 'Água potável ligada',
+    waitEn: 'Waiting for the water tube',
+    waitPt: 'Aguardando o tubo de água',
     Icon: Droplets,
   },
 }
@@ -82,6 +105,7 @@ export function BuildStep({
   onEnergyShort,
   onDone,
 }: Props) {
+  const { t } = useI18n()
   const [fx, setFx] = useState<{ key: number; id: GreenhouseModuleId | LinkId; cost?: number } | null>(null)
   const [shake, setShake] = useState<LinkId | null>(null)
 
@@ -125,18 +149,21 @@ export function BuildStep({
   }
 
   const sceneLabel = online
-    ? 'Estufa integrada e online'
+    ? t('Greenhouse linked and online', 'Estufa integrada e online')
     : modulesReady
-      ? 'Domo pronto · falta energia e água'
-      : `Domo em montagem · ${installed.length}/${ORDER.length}`
+      ? t('Dome ready · still needs energy and water', 'Domo pronto · falta energia e água')
+      : t(
+          `Building the dome · ${installed.length}/${ORDER.length}`,
+          `Domo em montagem · ${installed.length}/${ORDER.length}`,
+        )
 
   return (
     <>
       <ChallengeBar
         code="4.1"
-        title="Montagem do domo e conexões por arraste"
+        title={t('Build the dome and drag the connections', 'Montagem do domo e conexões por arraste')}
         icon={<Wrench className="size-5" aria-hidden />}
-        counterLabel="Subsistemas"
+        counterLabel={t('Subsystems', 'Subsistemas')}
         value={progress}
         total={TOTAL}
       />
@@ -165,7 +192,11 @@ export function BuildStep({
             ) : null}
             <img
               src={MEDIA.mission4.dome}
-              alt={online ? 'Estufa em domo, ligada' : 'Estufa em domo, em montagem'}
+              alt={
+                online
+                  ? t('Dome greenhouse, powered on', 'Estufa em domo, ligada')
+                  : t('Dome greenhouse, still being built', 'Estufa em domo, em montagem')
+              }
               className="gk-pixelated relative h-full w-full transition-[filter] duration-700"
               style={{ filter: domeFilter(installed.length, has('shell'), online) }}
               draggable={false}
@@ -189,7 +220,7 @@ export function BuildStep({
             ) : null}
             {has('monitor') ? (
               <Tag className="gk-pop absolute top-[16%] left-[-10%]">
-                <span className="gk-blink size-1.5 bg-life" /> Sensores
+                <span className="gk-blink size-1.5 bg-life" /> {t('Sensors', 'Sensores')}
               </Tag>
             ) : null}
             {energyLinked ? (
@@ -232,25 +263,26 @@ export function BuildStep({
                 <span className="flex items-start justify-between gap-2">
                   <span className={`flex items-center gap-1.5 font-pixel text-xs leading-snug uppercase ${done ? 'text-[#7dffb0]' : current ? 'text-energy' : 'text-[#f4fff4]/70'}`}>
                     <Icon className="size-4 shrink-0" aria-hidden />
-                    {index + 1}. {mod.title}
+                    {index + 1}. {t(mod.titleEn, mod.title)}
                   </span>
                   {done ? (
                     <span className="gk-pop flex size-5 shrink-0 items-center justify-center rounded-full border border-life text-life">
-                      <Check className="size-3" strokeWidth={3} aria-label="Instalado" />
+                      <Check className="size-3" strokeWidth={3} aria-label={t('Installed', 'Instalado')} />
                     </span>
                   ) : current ? null : (
-                    <Lock className="size-4 shrink-0 text-[#f4fff4]/50" aria-label="Bloqueado" />
+                    <Lock className="size-4 shrink-0 text-[#f4fff4]/50" aria-label={t('Locked', 'Bloqueado')} />
                   )}
                 </span>
-                <span className="mt-1 text-sm leading-snug text-[#f4fff4]/80">{mod.detail}</span>
+                <span className="mt-1 text-sm leading-snug text-[#f4fff4]/80">{t(mod.detailEn, mod.detail)}</span>
                 {current ? (
                   <span className="mt-2 flex min-h-10 w-full items-center justify-center gap-1.5 border-2 border-[#04080f] bg-energy px-2 py-1 text-center font-pixel text-xs leading-snug text-[#1a1203] uppercase shadow-[0_3px_0_#7a5a0c]">
-                    <Zap className="size-4 shrink-0" aria-hidden /> Instalar · −{mod.energyCost}% energia
+                    <Zap className="size-4 shrink-0" aria-hidden />{' '}
+                    {t(`Install · −${mod.energyCost}% energy`, `Instalar · −${mod.energyCost}% energia`)}
                   </span>
                 ) : null}
                 {fx?.id === mod.id ? (
                   <FloatDelta key={fx.key} className="top-1 right-8">
-                    −{fx.cost}% energia
+                    {t(`−${fx.cost}% energy`, `−${fx.cost}% energia`)}
                   </FloatDelta>
                 ) : null}
               </button>
@@ -262,7 +294,7 @@ export function BuildStep({
         <div className="gk-panel p-3">
           <p className="flex items-center gap-2 font-pixel text-xs leading-snug text-(--gk-accent) uppercase">
             <Cable className="size-4 shrink-0" aria-hidden />
-            6 e 7. Arraste o cabo e o tubo até os terminais do domo
+            {t('6 and 7. Drag the cable and the tube to the dome terminals', '6 e 7. Arraste o cabo e o tubo até os terminais do domo')}
           </p>
           <div className="mt-3 grid gap-3">
             {(['energy', 'water'] as const).map((id) => {
@@ -281,7 +313,7 @@ export function BuildStep({
                       soundEngine.pickup()
                       start(id, e)
                     }}
-                    aria-label={`Arrastar: ${link.source}`}
+                    aria-label={t(`Drag: ${link.sourceEn}`, `Arrastar: ${link.sourcePt}`)}
                     className={`flex min-h-14 touch-none items-center gap-2 border-2 px-2.5 font-pixel text-xs leading-snug uppercase select-none ${
                       !modulesReady ? 'opacity-45' : isLinked ? '' : dragging ? 'opacity-60' : 'gk-pulse cursor-grab'
                     }`}
@@ -294,7 +326,7 @@ export function BuildStep({
                     }}
                   >
                     {modulesReady ? <link.Icon className="size-5 shrink-0" aria-hidden /> : <Lock className="size-4 shrink-0" aria-hidden />}
-                    {link.source}
+                    {t(link.sourceEn, link.sourcePt)}
                   </button>
 
                   <div className="relative h-2" aria-hidden>
@@ -329,8 +361,8 @@ export function BuildStep({
                     style={wanted ? { borderColor: link.color, ['--gk-glow' as string]: `${link.color}99` } : undefined}
                   >
                     <span className="size-3 shrink-0 rounded-full border-2" style={{ borderColor: link.color, background: isLinked ? link.color : 'transparent' }} />
-                    <span className="flex-1">{wanted ? 'Solte aqui' : link.terminal}</span>
-                    {isLinked ? <Check className="gk-pop size-4 shrink-0 text-life" strokeWidth={3} aria-label="Ligado" /> : null}
+                    <span className="flex-1">{wanted ? t('Drop here', 'Solte aqui') : t(link.terminalEn, link.terminalPt)}</span>
+                    {isLinked ? <Check className="gk-pop size-4 shrink-0 text-life" strokeWidth={3} aria-label={t('Connected', 'Ligado')} /> : null}
                     {fx?.id === id ? <Burst key={fx.key} color={link.color} className="top-1/2 left-3" /> : null}
                   </div>
                 </div>
@@ -339,7 +371,8 @@ export function BuildStep({
           </div>
           {!modulesReady ? (
             <p className="mt-3 flex items-center gap-1.5 text-sm text-[#f4fff4]/70">
-              <Lock className="size-4 shrink-0" aria-hidden /> Instale os cinco subsistemas para liberar o cabo e o tubo.
+              <Lock className="size-4 shrink-0" aria-hidden />{' '}
+              {t('Install the five subsystems to unlock the cable and the tube.', 'Instale os cinco subsistemas para liberar o cabo e o tubo.')}
             </p>
           ) : null}
         </div>
@@ -348,13 +381,19 @@ export function BuildStep({
         <div className="flex flex-col gap-3">
           <div className="gk-panel px-3 py-2.5">
             <p className="font-pixel text-[10px] leading-relaxed text-[#f4fff4]/70 uppercase sm:text-xs" aria-live="polite">
-              Status da integração:{' '}
-              <span className={energyLinked ? 'text-energy' : ''}>{energyLinked ? LINKS.energy.done : LINKS.energy.wait}</span>
+              {t('Integration status:', 'Status da integração:')}{' '}
+              <span className={energyLinked ? 'text-energy' : ''}>
+                {energyLinked ? t(LINKS.energy.doneEn, LINKS.energy.donePt) : t(LINKS.energy.waitEn, LINKS.energy.waitPt)}
+              </span>
               {' · '}
-              <span className={waterLinked ? 'text-[#7dd3fc]' : ''}>{waterLinked ? LINKS.water.done : LINKS.water.wait}</span>
+              <span className={waterLinked ? 'text-[#7dd3fc]' : ''}>
+                {waterLinked ? t(LINKS.water.doneEn, LINKS.water.donePt) : t(LINKS.water.waitEn, LINKS.water.waitPt)}
+              </span>
             </p>
           </div>
-          {online ? <GameCta onClick={onDone}>Escolher o método de cultivo (Desafio 4.2)</GameCta> : null}
+          {online ? (
+            <GameCta onClick={onDone}>{t('Choose the growing method (Challenge 4.2)', 'Escolher o método de cultivo (Desafio 4.2)')}</GameCta>
+          ) : null}
         </div>
       </div>
 

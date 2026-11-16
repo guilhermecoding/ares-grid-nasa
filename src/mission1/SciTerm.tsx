@@ -1,15 +1,20 @@
 import { useState, type ReactNode } from 'react'
-import { SCI_TERMS } from '../data/mission1Data'
+import { SCI_TERMS_EN, SCI_TERMS_PT } from '../data/mission1Data'
+import { useI18n } from '../i18n/locale'
+
+type Term = keyof typeof SCI_TERMS_EN | keyof typeof SCI_TERMS_PT
 
 interface Props {
-  term: keyof typeof SCI_TERMS
+  term: Term
   children?: ReactNode
 }
 
 /** Underlined science word with a one-sentence kid-friendly tooltip. */
 export function SciTerm({ term, children }: Props) {
+  const { locale } = useI18n()
   const [open, setOpen] = useState(false)
-  const tip = SCI_TERMS[term]
+  const terms = locale === 'en' ? SCI_TERMS_EN : SCI_TERMS_PT
+  const tip = (terms as Record<string, string>)[term]
 
   return (
     <span className="relative inline-block">

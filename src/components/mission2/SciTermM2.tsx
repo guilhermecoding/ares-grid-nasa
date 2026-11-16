@@ -1,15 +1,18 @@
 import { useState, type ReactNode } from 'react'
-import { SCI_TERMS_M2 } from '../../data/mission2Data'
+import { SCI_TERMS_M2, SCI_TERMS_M2_EN } from '../../data/mission2Data'
+import { useI18n } from '../../i18n/locale'
 
 interface Props {
-  term: keyof typeof SCI_TERMS_M2 | string
+  term: string
   children?: ReactNode
 }
 
 /** Touch glossary tip — one short kid-friendly sentence. */
 export function SciTermM2({ term, children }: Props) {
+  const { locale } = useI18n()
   const [open, setOpen] = useState(false)
-  const tip = SCI_TERMS_M2[term]
+  const terms = locale === 'en' ? SCI_TERMS_M2_EN : SCI_TERMS_M2
+  const tip = terms[term]
 
   return (
     <span className="relative inline-block">

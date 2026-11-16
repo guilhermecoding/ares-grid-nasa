@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ScrollHintArea } from '../../components/ScrollHintArea'
 import { MEDIA } from '../../constants/mediaAssets'
 import { INSTALL_SITES, type SiteId } from '../../data/mission1Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
 
@@ -12,11 +13,23 @@ interface Props {
 }
 
 export function LocationChallenge({ onConfirm, initialSite }: Props) {
+  const { t } = useI18n()
   const [selected, setSelected] = useState<SiteId | null>(initialSite ?? null)
   const [capiOpen, setCapiOpen] = useState(false)
-  const [capiLines, setCapiLines] = useState<string[]>([])
   const [capiReady, setCapiReady] = useState(false)
   const [pendingAdvance, setPendingAdvance] = useState(false)
+
+  const capiLines = useMemo(() => {
+    const option = INSTALL_SITES.find((item) => item.id === selected)
+    if (!option || option.ideal) return []
+    return [
+      t(option.capiFeedback.en, option.capiFeedback.pt),
+      t(
+        'You can confirm it anyway, or pick another spot.',
+        'Você pode confirmar mesmo assim ou escolher outro ponto.',
+      ),
+    ]
+  }, [selected, t])
 
   const tryConfirm = (id: SiteId) => {
     const option = INSTALL_SITES.find((item) => item.id === id)
@@ -26,7 +39,6 @@ export function LocationChallenge({ onConfirm, initialSite }: Props) {
       onConfirm(option.id)
       return
     }
-    setCapiLines([option.capiFeedback, 'Você pode confirmar mesmo assim ou escolher outro ponto.'])
     setCapiReady(false)
     setPendingAdvance(true)
     setCapiOpen(true)
@@ -41,10 +53,13 @@ export function LocationChallenge({ onConfirm, initialSite }: Props) {
       >
         <div className="mx-auto w-full max-w-lg md:max-w-5xl lg:max-w-6xl xl:max-w-7xl">
           <p className="font-pixel text-sm text-[#f4fff4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] md:text-base lg:text-lg">
-            Desafio 1.1 — Escolha o local dos painéis
+            {t('Challenge 1.1 — Choose a spot for the panels', 'Desafio 1.1 — Escolha o local dos painéis')}
           </p>
           <p className="mt-1 text-sm text-void-100/90 md:text-base">
-            Compare o sprite, os prós e os contras. Confirme no cartão escolhido.
+            {t(
+              'Compare the picture, the pros, and the cons. Confirm the card you pick.',
+              'Compare o sprite, os prós e os contras. Confirme no cartão escolhido.',
+            )}
           </p>
         </div>
 
@@ -66,30 +81,30 @@ export function LocationChallenge({ onConfirm, initialSite }: Props) {
                   style={{ imageRendering: 'pixelated' }}
                 />
                 <div className="flex flex-1 flex-col gap-2 p-3 md:gap-3 md:p-4 lg:p-5">
-                  <p className="font-pixel text-sm text-cyan-hud md:text-base lg:text-lg">{option.name}</p>
+                  <p className="font-pixel text-sm text-cyan-hud md:text-base lg:text-lg">{t(option.name.en, option.name.pt)}</p>
                   <div>
-                    <p className="text-xs font-bold tracking-wide text-life md:text-sm">Prós</p>
+                    <p className="text-xs font-bold tracking-wide text-life md:text-sm">{t('Pros', 'Prós')}</p>
                     <ul className="mt-1 space-y-1 text-sm leading-snug text-void-100 md:text-base">
                       {option.pros.map((pro) => (
-                        <li key={pro}>+ {pro}</li>
+                        <li key={pro.en}>+ {t(pro.en, pro.pt)}</li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <p className="text-xs font-bold tracking-wide text-danger md:text-sm">Contras</p>
+                    <p className="text-xs font-bold tracking-wide text-danger md:text-sm">{t('Cons', 'Contras')}</p>
                     <ul className="mt-1 space-y-1 text-sm leading-snug text-void-100 md:text-base">
                       {option.cons.map((con) => (
-                        <li key={con}>− {con}</li>
+                        <li key={con.en}>− {t(con.en, con.pt)}</li>
                       ))}
                     </ul>
                   </div>
                   <div className="mt-auto pt-3">
                     <McButton
                       className="min-h-12 w-full font-pixel text-base font-bold sm:text-lg"
-                      aria-label={`Confirmar ${option.name}`}
+                      aria-label={t(`Confirm ${option.name.en}`, `Confirmar ${option.name.pt}`)}
                       onClick={() => tryConfirm(option.id)}
                     >
-                      Confirmar
+                      {t('Confirm', 'Confirmar')}
                     </McButton>
                   </div>
                 </div>
@@ -124,10 +139,10 @@ export function LocationChallenge({ onConfirm, initialSite }: Props) {
                   setCapiOpen(false)
                 }}
               >
-                Escolher outro
+                {t('Pick another', 'Escolher outro')}
               </McButton>
               <McButton className="min-h-12 px-4 font-pixel" onClick={() => setCapiOpen(false)}>
-                Confirmar mesmo assim
+                {t('Confirm anyway', 'Confirmar mesmo assim')}
               </McButton>
             </div>
           ) : null

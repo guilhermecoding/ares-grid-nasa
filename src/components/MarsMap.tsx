@@ -1,9 +1,11 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { MEDIA } from '../constants/mediaAssets'
 import { ARCADIA_MAP_SRC } from '../data/mapPois'
 import { TOTAL_MISSIONS, TROPHY_SPRITE } from '../data/missionBadges'
 import { getMissionNode, isPlayableMission, MISSION_NODES, missionPathD } from '../data/missionNodes'
 import { LOCK_SPRITE } from '../data/tileSprites'
+import { useI18n } from '../i18n/locale'
+import { nodeCopy } from '../i18n/worldCopy'
 import { McButton } from '../opening/McButton'
 import { PixelDialogBox } from '../opening/PixelDialogBox'
 import type { WorldState } from '../types/game'
@@ -20,22 +22,32 @@ function dayOverlay(hour: number): string {
   return 'transparent'
 }
 
+type HintKind = 'locked' | 'soon' | 'done'
+
 function MarsMapComponent({ state, onEnterMission }: Props) {
+  const { t } = useI18n()
   const storm = state.weather.intensity > 45
   const current = getMissionNode(state.level)
   const expeditionDone = state.level > TOTAL_MISSIONS
   const [hintId, setHintId] = useState<string | null>(null)
-  const [hintText, setHintText] = useState('')
+  const [hintKind, setHintKind] = useState<HintKind>('locked')
   const [replayLevel, setReplayLevel] = useState<number | null>(null)
   const hintTimer = useRef(0)
+  const replayLines = useMemo(
+    () => [
+      t('Looks like you have already been here.', 'Ops, parece que você já passou por aqui.'),
+      t('Want to go in again?', 'Quer entrar de novo?'),
+    ],
+    [t],
+  )
 
   useEffect(() => {
     return () => window.clearTimeout(hintTimer.current)
   }, [])
 
-  const showHint = (id: string, text: string) => {
+  const showHint = (id: string, kind: HintKind) => {
     setHintId(id)
-    setHintText(text)
+    setHintKind(kind)
     window.clearTimeout(hintTimer.current)
     hintTimer.current = window.setTimeout(() => setHintId(null), 2000)
   }
@@ -44,7 +56,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
     <div className="absolute inset-0 overflow-hidden">
       <img
         src={ARCADIA_MAP_SRC}
-        alt="Arcadia Planitia — mapa de missões"
+        alt={t('Arcadia Planitia — mission map', 'Arcadia Planitia — mapa de missões')}
         draggable={false}
         className="absolute inset-0 h-full w-full object-cover object-center select-none"
         style={{ imageRendering: 'pixelated' }}
@@ -85,6 +97,13 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         const completed = node.level < state.level
         const isCurrent = node.level === state.level
         const showing = hintId === node.id
+        const copy = nodeCopy(node.level, t)
+        const hintText =
+          hintKind === 'done'
+            ? t('Mission complete!', 'Missão concluída!')
+            : hintKind === 'soon'
+              ? copy.soon
+              : copy.locked
 
         return (
           <div
@@ -96,37 +115,37 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
               type="button"
               aria-label={
                 completed
-                  ? `${node.title} concluída`
+                  ? t(`${copy.title} complete`, `${copy.title} concluída`)
                   : unlocked
-                    ? node.title
-                    : `${node.title} trancada`
+                    ? copy.title
+                    : t(`${copy.title} locked`, `${copy.title} trancada`)
               }
               onClick={() => {
                 if (!unlocked) {
-                  showHint(node.id, node.lockedHint)
+                  showHint(node.id, 'locked')
                   return
                 }
                 if (completed) {
                   if (!isPlayableMission(node.level)) {
-                    showHint(node.id, node.soonHint)
+                    showHint(node.id, 'soon')
                     return
                   }
                   setReplayLevel(node.level)
                   return
                 }
                 if (!isPlayableMission(node.level)) {
-                  showHint(node.id, node.soonHint)
+                  showHint(node.id, 'soon')
                   return
                 }
                 onEnterMission(node.level)
               }}
               onPointerEnter={() => {
-                if (!unlocked) showHint(node.id, node.lockedHint)
-                else if (completed) showHint(node.id, 'Missão concluída!')
+                if (!unlocked) showHint(node.id, 'locked')
+                else if (completed) showHint(node.id, 'done')
               }}
               onFocus={() => {
-                if (!unlocked) showHint(node.id, node.lockedHint)
-                else if (completed) showHint(node.id, 'Missão concluída!')
+                if (!unlocked) showHint(node.id, 'locked')
+                else if (completed) showHint(node.id, 'done')
               }}
               className={`island-bob relative flex flex-col items-center outline-none ${isCurrent ? 'scale-105' : ''}`}
             >
@@ -146,7 +165,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
                 <span className="lock-float pointer-events-none absolute -top-12 z-10 sm:-top-14">
                   <img
                     src={TROPHY_SPRITE}
-                    alt="Troféu: as 5 missões concluídas"
+                    alt={t('Trophy: all 5 missions complete', 'Troféu: as 5 missões concluídas')}
                     width={96}
                     height={96}
                     draggable={false}
@@ -188,7 +207,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
                   unlocked ? 'bg-[#0a1628]/9 text-cyan-hud' : 'bg-void-950/85 text-void-300'
                 }`}
               >
-                {node.level}. {node.title}
+                {node.level}. {copy.title}
               </span>
             </button>
 
@@ -212,7 +231,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
       >
         <img
           src={MEDIA.player.head}
-          alt="Seu astronauta"
+          alt={t('Your astronaut', 'Seu astronauta')}
           draggable={false}
           className="rover-bob size-[min(16vw,80px)] object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.75)]"
           style={{ mixBlendMode: 'lighten' }}
@@ -224,12 +243,12 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         position="center"
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
-        lines={['Ops, parece que você já passou por aqui.', 'Quer entrar de novo?']}
+        lines={replayLines}
         onClosed={() => setReplayLevel(null)}
         footer={
           <div className="flex flex-wrap justify-center gap-2">
             <McButton className="min-h-12 px-4 font-pixel" onClick={() => setReplayLevel(null)}>
-              Cancelar
+              {t('Cancel', 'Cancelar')}
             </McButton>
             <McButton
               className="mc-btn-green min-h-12 px-4 font-pixel font-bold"
@@ -239,7 +258,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
                 if (level !== null) onEnterMission(level)
               }}
             >
-              Quero
+              {t('Let’s go', 'Quero')}
             </McButton>
           </div>
         }

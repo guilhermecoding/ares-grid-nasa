@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n/locale'
+import { indicatorLabel } from '../i18n/worldCopy'
 import type { BaseStats } from '../types/game'
 import { IndicatorIcon } from './IndicatorIcon'
 import { INDICATOR_META } from './indicatorIcons'
@@ -37,24 +39,25 @@ interface Props {
 
 /** Energy / water / wellbeing — one icon each, fill level + value under the icon. */
 export function ResourcePips({ stats, className = '' }: Props) {
+  const { t } = useI18n()
   return (
     <div
       className={`flex flex-row flex-nowrap items-end gap-2 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] sm:gap-2.5 ${className}`}
     >
       <StatPip
-        label={INDICATOR_META.energy.label}
+        label={indicatorLabel('energy', t)}
         value={stats.energy}
         color={INDICATOR_META.energy.color}
         path={INDICATOR_META.energy.path}
       />
       <StatPip
-        label={INDICATOR_META.water.label}
+        label={indicatorLabel('water', t)}
         value={stats.water}
         color={INDICATOR_META.water.color}
         path={INDICATOR_META.water.path}
       />
       <StatPip
-        label={INDICATOR_META.wellbeing.label}
+        label={indicatorLabel('wellbeing', t)}
         value={stats.wellbeing}
         color={INDICATOR_META.wellbeing.color}
         path={INDICATOR_META.wellbeing.path}

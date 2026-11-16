@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useI18n } from '../i18n/locale'
 import { dialogGroupOf, hasSeenDialog, markDialogGroupSkipped, markDialogSeen } from '../services/progressStore'
 import { soundEngine } from '../services/soundEngine'
 
@@ -90,6 +91,7 @@ export function PixelDialogBox({
   dialogId,
   onSkip,
 }: PixelDialogBoxProps) {
+  const { t } = useI18n()
   const [entered, setEntered] = useState(false)
   const [lineIdx, setLineIdx] = useState(0)
   const [charIdx, setCharIdx] = useState(0)
@@ -238,7 +240,7 @@ export function PixelDialogBox({
             }}
             role={entered && !typingDone ? 'button' : undefined}
             tabIndex={entered && !typingDone ? 0 : undefined}
-            aria-label={entered && !typingDone ? 'Mostrar texto completo' : undefined}
+            aria-label={entered && !typingDone ? t('Show the full text', 'Mostrar texto completo') : undefined}
             onAnimationComplete={(def) => {
               if (!open) return
               if (def === 'exit') return
@@ -295,7 +297,7 @@ export function PixelDialogBox({
                             className="shrink-0 font-pixel text-[10px] text-cyan-hud underline sm:text-xs"
                             onClick={skipDialog}
                           >
-                            Pular
+                            {t('Skip', 'Pular')}
                           </button>
                         ) : null}
                       </div>

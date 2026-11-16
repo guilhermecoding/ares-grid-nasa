@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
 import { REPLAY_INTRO_HIGHLIGHT_WORDS, REPLAY_INTRO_PARTS } from '../../data/mission1Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
 import { useHideFollowingDialogs } from '../../opening/useHideFollowingDialogs'
@@ -27,12 +28,13 @@ function ConfiguredPanel({
   azimuth: number
   cleanButton?: ReactNode
 }) {
+  const { t } = useI18n()
   return (
     <div className="absolute inset-x-[8%] bottom-[18%] z-10 flex justify-center sm:inset-x-[16%]">
       <div className="relative w-[min(88%,24rem)]">
         <img
           src={MEDIA.mission1.panel}
-          alt="Painel solar configurado"
+          alt={t('Solar panel already set up', 'Painel solar configurado')}
           draggable={false}
           className="pointer-events-none w-full origin-bottom drop-shadow-[0_16px_28px_rgba(0,0,0,0.45)]"
           style={{
@@ -50,11 +52,16 @@ function ConfiguredPanel({
 }
 
 function StatusBanner({ efficiency }: { efficiency: number }) {
+  const { t } = useI18n()
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-20 px-3 pt-3 sm:px-4 sm:pt-4">
       <div className="mx-auto max-w-3xl border-2 border-cyan-hud/50 bg-[#0a1628]/9 px-3 py-2 font-pixel text-[10px] text-cyan-hud sm:text-xs">
-        <p>Energia Externa: ATIVA</p>
-        <p className="text-energy">Painel · eficiência {Math.round(efficiency)}%</p>
+        <p>
+          {t('Outside power', 'Energia Externa')}: {t('ACTIVE', 'ATIVA')}
+        </p>
+        <p className="text-energy">
+          {t(`Panel · efficiency ${Math.round(efficiency)}%`, `Painel · eficiência ${Math.round(efficiency)}%`)}
+        </p>
       </div>
     </div>
   )
@@ -71,11 +78,13 @@ export function ReplayIntroHud({
   onContinue,
   onCleanPanel,
 }: Props) {
+  const { t, locale } = useI18n()
   const [part, setPart] = useState(0)
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
 
-  const lines = REPLAY_INTRO_PARTS[part]!
+  const partCopy = REPLAY_INTRO_PARTS[part]!
+  const lines = useMemo(() => partCopy.map((line) => t(line.en, line.pt)), [partCopy, t])
   const isLast = part >= REPLAY_INTRO_PARTS.length - 1
   const { blocked, hideDialog, afterClose } = useHideFollowingDialogs('m1', onContinue)
 
@@ -105,7 +114,7 @@ export function ReplayIntroHud({
       <PixelDialogBox
         key={`m1-replay-${part}`}
         open={open}
-        lines={[...lines]}
+        lines={lines}
         title="Capi"
         dialogId={`m1-replay-${part}`}
         onSkip={() => {
@@ -114,7 +123,7 @@ export function ReplayIntroHud({
         }}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
-        highlightWords={part === 1 ? REPLAY_INTRO_HIGHLIGHT_WORDS : undefined}
+        highlightWords={part === 1 ? REPLAY_INTRO_HIGHLIGHT_WORDS[locale] : undefined}
         onTypingComplete={() => setReady(true)}
         onClosed={() => {
           afterClose(isLast, () => {

@@ -1,7 +1,8 @@
 import { motion, useAnimationControls } from 'framer-motion'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
 import { PROCESS_STEPS, type ProcessStepId } from '../../../data/mission3Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
 import { CapiBeat } from '../CapiBeat'
@@ -42,6 +43,7 @@ function BenchModule({
   next: boolean
   onTap: (id: ProcessStepId, shake: () => void) => void
 }) {
+  const { t } = useI18n()
   const controls = useAnimationControls()
   const step = PROCESS_STEPS.find((s) => s.id === id)!
   return (
@@ -60,25 +62,53 @@ function BenchModule({
       <span className="flex w-full items-center justify-between gap-2">
         <img src={MODULE_ICON[id]} alt="" className="size-12 object-contain" draggable={false} />
         <span className={`font-pixel text-sm ${done ? 'text-life' : 'text-energy'}`}>
-          {done ? '✓ ATIVO' : `−${step.energyCost}% energia`}
+          {done ? t('✓ ON', '✓ ATIVO') : t(`−${step.energyCost}% energy`, `−${step.energyCost}% energia`)}
         </span>
       </span>
-      <span className="text-base font-semibold text-[#f4fff4]">{step.title}</span>
-      <span className="text-sm text-void-100/80">{step.detail}</span>
-      {next ? <span className="font-pixel text-base text-energy">TOQUE NESTE · −{step.energyCost}% energia</span> : null}
+      <span className="text-base font-semibold text-[#f4fff4]">{t(step.titleEn, step.title)}</span>
+      <span className="text-sm text-void-100/80">{t(step.detailEn, step.detail)}</span>
+      {next ? (
+        <span className="font-pixel text-base text-energy">
+          {t(`TAP THIS · −${step.energyCost}% energy`, `TOQUE NESTE · −${step.energyCost}% energia`)}
+        </span>
+      ) : null}
     </motion.button>
   )
 }
 
 /** Desafio 3.5 — six-module lab pipeline in scientific order. */
 export function IceProcessingStep({ energy, waterL, initialDone = 0, onSpend, onProgress, onEnergyShort, onContinue }: Props) {
+  const { t } = useI18n()
   const [doneCount, setDoneCount] = useState(initialDone)
-  const [beat, setBeat] = useState<{ id: string; lines: readonly string[] } | null>(
-    initialDone > 0 ? null : { id: 'm3-lab-intro', lines: ['Ative os módulos na ordem. O card que pulsa é o próximo.', 'Comece identificando o material congelado.'] },
-  )
+  const [beatKind, setBeatKind] = useState<'intro' | 'wrong' | 'done' | null>(initialDone > 0 ? null : 'intro')
   const [wrongCount, setWrongCount] = useState(0)
   const allDone = doneCount >= PROCESS_STEPS.length
   const spent = PROCESS_STEPS.slice(0, doneCount).reduce((sum, s) => sum + s.energyCost, 0)
+  const beatLines = useMemo(() => {
+    if (beatKind === 'intro') {
+      return [
+        t('Turn the modules on in order. The card that pulses is next.', 'Ative os módulos na ordem. O card que pulsa é o próximo.'),
+        t('Start by identifying the frozen material.', 'Comece identificando o material congelado.'),
+      ]
+    }
+    if (beatKind === 'wrong') {
+      const expected = PROCESS_STEPS[doneCount]
+      return [
+        t(
+          `Not yet! The next step is: ${(expected?.titleEn ?? '').toLowerCase()}.`,
+          `Ainda não! A próxima etapa é: ${(expected?.title ?? '').toLowerCase()}.`,
+        ),
+      ]
+    }
+    if (beatKind === 'done') {
+      return [
+        t('Clean, clear water!', 'Água limpa e transparente!'),
+        t('But does clear mean safe? Let\'s test the potability.', 'Mas transparente é seguro? Vamos testar a potabilidade.'),
+      ]
+    }
+    return []
+  }, [beatKind, doneCount, t])
+  const beatId = beatKind === 'intro' ? 'm3-lab-intro' : beatKind === 'done' ? 'm3-lab-done' : `m3-lab-wrong-${wrongCount}`
 
   const tap = (id: ProcessStepId, shake: () => void) => {
     const expected = PROCESS_STEPS[doneCount]
@@ -88,10 +118,7 @@ export function IceProcessingStep({ energy, waterL, initialDone = 0, onSpend, on
       shake()
       const n = wrongCount + 1
       setWrongCount(n)
-      setBeat({
-        id: `m3-lab-wrong-${n}`,
-        lines: [`Ainda não! A próxima etapa é: ${expected.title.toLowerCase()}.`],
-      })
+      setBeatKind('wrong')
       return
     }
     if (energy < expected.energyCost) {
@@ -105,30 +132,34 @@ export function IceProcessingStep({ energy, waterL, initialDone = 0, onSpend, on
     setDoneCount(next)
     onProgress(next)
     if (next >= PROCESS_STEPS.length) {
-      setBeat({
-        id: 'm3-lab-done',
-        lines: ['Água limpa e transparente!', 'Mas transparente é seguro? Vamos testar a potabilidade.'],
-      })
+      setBeatKind('done')
     }
   }
 
   return (
     <Mission3Stage
-      title="Desafio 3.5 — Transformando Gelo em Água"
+      title={t('Challenge 3.5 — Turning Ice into Water', 'Desafio 3.5 — Transformando Gelo em Água')}
       subtitle={
         <>
-          Monte o pipeline do laboratório: cada módulo gasta energia da base. Ordem errada não avança a{' '}
-          <SciTermM3 term="Amostra">amostra</SciTermM3>.
+          {t(
+            'Build the lab steps: each module uses energy from the base. The wrong order does not move the',
+            'Monte o pipeline do laboratório: cada módulo gasta energia da base. Ordem errada não avança a',
+          )}{' '}
+          <SciTermM3 term={t('Sample', 'Amostra')} />.
         </>
       }
       energy={energy}
       waterL={waterL}
-      overlay={beat ? <CapiBeat id={beat.id} lines={beat.lines} onDone={() => setBeat(null)} /> : null}
+      overlay={beatKind ? <CapiBeat id={beatId} lines={beatLines} onDone={() => setBeatKind(null)} /> : null}
     >
       <section className="mx-auto w-full max-w-6xl rounded border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:p-4">
         <div className="flex items-center justify-between gap-2">
-            <p className="font-pixel text-sm text-cyan-hud">PIPELINE · {doneCount}/{PROCESS_STEPS.length}</p>
-            <p className="font-pixel text-sm text-energy">Energia usada: {spent}%</p>
+            <p className="font-pixel text-sm text-cyan-hud">
+              {t('STEPS', 'PIPELINE')} · {doneCount}/{PROCESS_STEPS.length}
+            </p>
+            <p className="font-pixel text-sm text-energy">
+              {t('Energy used', 'Energia usada')}: {spent}%
+            </p>
         </div>
         <ol className="mt-2 grid grid-cols-6 gap-1.5">
           {PROCESS_STEPS.map((s, i) => (
@@ -137,7 +168,7 @@ export function IceProcessingStep({ energy, waterL, initialDone = 0, onSpend, on
               className={`flex min-h-12 flex-col items-center justify-center border-2 text-center ${
                 i < doneCount ? 'border-life bg-life/15' : i === doneCount ? 'border-energy' : 'border-void-600'
               }`}
-              title={s.title}
+              title={t(s.titleEn, s.title)}
             >
               {i < doneCount ? (
                 <img src={MODULE_ICON[s.id]} alt="" className="size-8 object-contain" draggable={false} />
@@ -156,7 +187,9 @@ export function IceProcessingStep({ energy, waterL, initialDone = 0, onSpend, on
             />
           </div>
           <p className="text-base text-void-100/90">
-            {allDone ? 'Amostra pronta para o teste de qualidade.' : 'Gelo com regolito na entrada do laboratório.'}
+            {allDone
+              ? t('Sample ready for the quality test.', 'Amostra pronta para o teste de qualidade.')
+              : t('Ice with regolith at the lab door.', 'Gelo com regolito na entrada do laboratório.')}
           </p>
         </div>
       </section>
@@ -176,7 +209,7 @@ export function IceProcessingStep({ energy, waterL, initialDone = 0, onSpend, on
       {allDone ? (
         <div className="mx-auto w-full max-w-6xl">
           <McButton className="mc-btn-green min-h-12 px-5 font-pixel" onClick={onContinue}>
-            Levar água ao teste de potabilidade
+            {t('Take the water to the potability test', 'Levar água ao teste de potabilidade')}
           </McButton>
         </div>
       ) : null}

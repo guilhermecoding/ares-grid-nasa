@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useI18n } from '../../i18n/locale'
 import { FullscreenButton } from '../FullscreenButton'
 import { StatusIndicators } from '../StatusIndicators'
 import {
@@ -37,12 +38,6 @@ import { SleepPrepStep } from './steps/SleepPrepStep'
 
 const DEFAULT_STATS: BaseStats = { energy: 68, water: 85, wellbeing: 70 }
 
-const OUTRO_LINES = [
-  'DADOS DA MISSÃO 2 ARMAZENADOS.',
-  'TENTANDO CONEXÃO COM A CENTRAL TERRESTRE…',
-  'Rotina de saúde salva a bordo!',
-] as const
-
 interface Props {
   /** Final meters after the day (energy/water spent stay saved for the base). */
   onComplete: (result: BaseStats) => void
@@ -65,6 +60,15 @@ function litersToPct(liters: number) {
   return clamp((liters / MAX_WATER_RESERVE_L) * 100)
 }
 
+function exerciseDetail(ids: readonly ExerciseId[], field: 'title' | 'titleEn') {
+  return ids
+    .flatMap((id) => {
+      const item = EXERCISES.find((exercise) => exercise.id === id)
+      return item ? [item[field]] : []
+    })
+    .join(' · ')
+}
+
 /** Mission 02 orchestrator — daily astronaut care routine. */
 export default function Mission2View({
   onComplete,
@@ -73,6 +77,7 @@ export default function Mission2View({
   stats = DEFAULT_STATS,
   playerName = 'Comandante',
 }: Props) {
+  const { t, locale } = useI18n()
   const savedRun = useMemo(() => loadProgress().missionRuns.m2, [])
   const [step, setStep] = useState<Mission2Step>(() => savedRun?.step ?? 'intro')
   /** Floor so a fresh day stays finishable. A resumed day keeps the live base meter. */
@@ -126,6 +131,52 @@ export default function Mission2View({
 
   const lighting = lightingForStep(step)
   const room = roomAccentForStep(step)
+
+  const nutritionBridge = useMemo(
+    () => ({
+      lines: [
+        t('Muscles are warmed up!', BRIDGE_TO_NUTRITION[0]),
+        t('Time to feed your body.', BRIDGE_TO_NUTRITION[1]),
+      ],
+      highlightWords: locale === 'en' ? (['feed'] as const) : (['alimentar'] as const),
+    }),
+    [locale, t],
+  )
+  const hygieneBridge = useMemo(
+    () => ({
+      lines: [
+        t('Meal is all set.', BRIDGE_TO_HYGIENE[0]),
+        t("Now it's time for hygiene in the closed module.", BRIDGE_TO_HYGIENE[1]),
+      ],
+      highlightWords: locale === 'en' ? (['hygiene'] as const) : (['higiene'] as const),
+    }),
+    [locale, t],
+  )
+  const sleepBridge = useMemo(
+    () => ({
+      lines: [
+        t('The day is almost done.', BRIDGE_TO_SLEEP[0]),
+        t('Get the cabin ready and rest.', BRIDGE_TO_SLEEP[1]),
+      ],
+      highlightWords: locale === 'en' ? (['rest'] as const) : (['descanse'] as const),
+    }),
+    [locale, t],
+  )
+  const outroLines = useMemo(
+    () =>
+      locale === 'en'
+        ? [
+            'MISSION 2 DATA STORED.',
+            'TRYING TO CONNECT WITH EARTH CONTROL…',
+            'Health routine saved on board!',
+          ]
+        : [
+            'DADOS DA MISSÃO 2 ARMAZENADOS.',
+            'TENTANDO CONEXÃO COM A CENTRAL TERRESTRE…',
+            'Rotina de saúde salva a bordo!',
+          ],
+    [locale],
+  )
 
   const energySoftLocked =
     !bridge &&
@@ -272,8 +323,8 @@ export default function Mission2View({
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
           onClick={() => onExit(hudStats)}
-          aria-label="Sair da missão"
-          title="Sair"
+          aria-label={t('Leave the mission', 'Sair da missão')}
+          title={t('Leave', 'Sair')}
           style={{ touchAction: 'manipulation' }}
         >
           <svg viewBox="0 0 24 24" className="size-7" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square" strokeLinejoin="miter">
@@ -330,8 +381,8 @@ export default function Mission2View({
           key="bridge-nutrition"
           open
           dialogId="m2-bridge-nutrition"
-          lines={BRIDGE_TO_NUTRITION}
-          highlightWords={['alimentar']}
+          lines={nutritionBridge.lines}
+          highlightWords={nutritionBridge.highlightWords}
           onDone={() => {
             setBridge(null)
             setStep('step2_2_nutrition')
@@ -343,8 +394,8 @@ export default function Mission2View({
           key="bridge-hygiene"
           open
           dialogId="m2-bridge-hygiene"
-          lines={BRIDGE_TO_HYGIENE}
-          highlightWords={['higiene']}
+          lines={hygieneBridge.lines}
+          highlightWords={hygieneBridge.highlightWords}
           onDone={() => {
             setBridge(null)
             setStep('step2_3_hygiene')
@@ -356,8 +407,8 @@ export default function Mission2View({
           key="bridge-sleep"
           open
           dialogId="m2-bridge-sleep"
-          lines={BRIDGE_TO_SLEEP}
-          highlightWords={['descanse']}
+          lines={sleepBridge.lines}
+          highlightWords={sleepBridge.highlightWords}
           onDone={() => {
             setBridge(null)
             setStep('step2_4_sleep_prep')
@@ -387,30 +438,61 @@ export default function Mission2View({
       {step === 'logbook' && (
         <MissionLogbook
           missionId={2}
-          subtitle="Checklist da rotina cumprida"
+          subtitle={t('Daily routine checklist complete', 'Checklist da rotina cumprida')}
           items={[
             {
               label: 'Exercícios do dia concluídos',
-              detail:
-                exercises.flatMap((id) => EXERCISES.find((e) => e.id === id)?.title ?? []).join(' · ') ||
-                `${exercises.length} atividades`,
+              labelEn: "Today's exercises are done",
+              labelPt: 'Exercícios do dia concluídos',
+              detail: exerciseDetail(exercises, 'title') || `${exercises.length} atividades`,
+              detailEn: exerciseDetail(exercises, 'titleEn') || `${exercises.length} activities`,
+              detailPt: exerciseDetail(exercises, 'title') || `${exercises.length} atividades`,
             },
             {
               label: 'Alimentação e hidratação',
+              labelEn: 'Food and water',
+              labelPt: 'Alimentação e hidratação',
               detail: nutritionCards.includes('hydrate')
                 ? 'Refeição equilibrada · água da refeição ok'
                 : 'Refeição em aberto',
+              detailEn: nutritionCards.includes('hydrate')
+                ? 'Balanced meal · meal water is set'
+                : 'Meal not finished yet',
+              detailPt: nutritionCards.includes('hydrate')
+                ? 'Refeição equilibrada · água da refeição ok'
+                : 'Refeição em aberto',
             },
-            { label: 'Higiene do módulo', detail: `${hygieneDone.length} ações registradas` },
-            { label: 'Descanso e Sleep Score', detail: `Score ${scores.sleepScore}/100` },
-            { label: 'Registro científico no diário', detail: 'Rotina de saúde documentada' },
+            {
+              label: 'Higiene do módulo',
+              labelEn: 'Module hygiene',
+              labelPt: 'Higiene do módulo',
+              detail: `${hygieneDone.length} ações registradas`,
+              detailEn: `${hygieneDone.length} actions logged`,
+              detailPt: `${hygieneDone.length} ações registradas`,
+            },
+            {
+              label: 'Descanso e Sleep Score',
+              labelEn: 'Rest and Sleep Score',
+              labelPt: 'Descanso e Sleep Score',
+              detail: `Score ${scores.sleepScore}/100`,
+              detailEn: `Score ${scores.sleepScore}/100`,
+              detailPt: `Score ${scores.sleepScore}/100`,
+            },
+            {
+              label: 'Registro científico no diário',
+              labelEn: 'Science note in the logbook',
+              labelPt: 'Registro científico no diário',
+              detail: 'Rotina de saúde documentada',
+              detailEn: 'Health routine written down',
+              detailPt: 'Rotina de saúde documentada',
+            },
           ]}
           onDone={() => setStep('mission_outro')}
         />
       )}
 
       {step === 'mission_outro' && (
-        <MissionOutro missionId={2} lines={OUTRO_LINES} stats={hudStats} onDone={finish} />
+        <MissionOutro missionId={2} lines={outroLines} stats={hudStats} onDone={finish} />
       )}
 
       {energySoftLocked && <EnergyDepletedOverlay onExit={() => onExit(hudStats)} />}

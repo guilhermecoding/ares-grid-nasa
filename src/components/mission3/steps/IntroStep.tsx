@@ -1,6 +1,13 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
-import { INTRO_HIGHLIGHT_WORDS_M3, INTRO_PARTS_M3, MISSION3_META } from '../../../data/mission3Data'
+import {
+  INTRO_HIGHLIGHT_WORDS_M3,
+  INTRO_HIGHLIGHT_WORDS_M3_EN,
+  INTRO_PARTS_M3,
+  INTRO_PARTS_M3_EN,
+  MISSION3_META,
+} from '../../../data/mission3Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { PixelDialogBox } from '../../../opening/PixelDialogBox'
 import { useHideFollowingDialogs } from '../../../opening/useHideFollowingDialogs'
@@ -13,11 +20,19 @@ interface Props {
 }
 
 export function IntroStep({ energy, waterL, onContinue }: Props) {
+  const { t, locale } = useI18n()
   const [part, setPart] = useState(0)
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
 
-  const lines = INTRO_PARTS_M3[part]!
+  const lines = useMemo(
+    () => (locale === 'en' ? INTRO_PARTS_M3_EN[part]! : INTRO_PARTS_M3[part]!),
+    [locale, part],
+  )
+  const highlightWords = useMemo(
+    () => (locale === 'en' ? INTRO_HIGHLIGHT_WORDS_M3_EN : INTRO_HIGHLIGHT_WORDS_M3),
+    [locale],
+  )
   const isLast = part >= INTRO_PARTS_M3.length - 1
   const { blocked, hideDialog, afterClose } = useHideFollowingDialogs('m3', onContinue)
 
@@ -28,10 +43,15 @@ export function IntroStep({ energy, waterL, onContinue }: Props) {
           <span>
             {MISSION3_META.solLabel} | {MISSION3_META.location}
           </span>
-          <span className="text-energy">Energia Base {Math.round(energy)}%</span>
-          <span className="text-[#7dd3fc]">Reserva de Água {Math.round(waterL)} L</span>
+          <span className="text-energy">
+            {t('Base energy', 'Energia Base')} {Math.round(energy)}%
+          </span>
+          <span className="text-[#7dd3fc]">
+            {t('Water reserve', 'Reserva de Água')} {Math.round(waterL)} L
+          </span>
           <span className="border border-cyan-hud/40 px-1.5 py-0.5">
-            Missão científica · gelo no <SciTermM3 term="Subsolo">subsolo</SciTermM3>
+            {t('Science mission · ice in the', 'Missão científica · gelo no')}{' '}
+            <SciTermM3 term={t('Subsurface', 'Subsolo')} />
           </span>
         </div>
       </div>
@@ -40,7 +60,7 @@ export function IntroStep({ energy, waterL, onContinue }: Props) {
       <PixelDialogBox
         key={`m3-intro-${part}`}
         open={open}
-        lines={[...lines]}
+        lines={lines}
         title="Capi"
         dialogId={`m3-intro-${part}`}
         onSkip={() => {
@@ -49,7 +69,7 @@ export function IntroStep({ energy, waterL, onContinue }: Props) {
         }}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
-        highlightWords={[...INTRO_HIGHLIGHT_WORDS_M3]}
+        highlightWords={highlightWords}
         onTypingComplete={() => setReady(true)}
         onClosed={() => {
           afterClose(isLast, () => {
@@ -65,7 +85,7 @@ export function IntroStep({ energy, waterL, onContinue }: Props) {
               style={{ touchAction: 'manipulation' }}
               onClick={() => setOpen(false)}
             >
-              {isLast ? 'Começar investigação' : 'Continuar'}
+              {isLast ? t('Start the investigation', 'Começar investigação') : t('Continue', 'Continuar')}
             </McButton>
           ) : null
         }

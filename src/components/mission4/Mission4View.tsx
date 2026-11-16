@@ -25,6 +25,7 @@ import { GrowthStep } from '../../missions/mission4-greenhouse/GrowthStep'
 import { MethodStep } from '../../missions/mission4-greenhouse/MethodStep'
 import { PlantStep } from '../../missions/mission4-greenhouse/PlantStep'
 import type { Mission2Choices, Mission2Scores } from '../../data/mission2Data'
+import { useI18n } from '../../i18n/locale'
 import { clearMissionRun, loadProgress, resumeWaterLiters, saveMissionRun } from '../../services/progressStore'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { GreenhouseInteriorBackground } from './GreenhouseInteriorBackground'
@@ -35,48 +36,6 @@ import { Mission4Stage } from './Mission4Stage'
 const DEFAULT_STATS: BaseStats = { energy: 70, water: 55, wellbeing: 72 }
 const EMPTY_CHOICES: Mission2Choices = { exercises: [], foods: [], waterRationL: 0.35, hygieneDone: [] }
 
-const OUTRO_LINES = [
-  'DADOS DA MISSÃO 4 ARMAZENADOS.',
-  'ENVIANDO O RELATÓRIO DA ESTUFA PARA A TERRA…',
-  'Primeira colheita de Marte registrada!',
-] as const
-
-const INTRO_GOALS = [
-  { icon: <Wrench className="size-4" aria-hidden />, label: '4.1 Montar o domo' },
-  { icon: <FlaskConical className="size-4" aria-hidden />, label: '4.2 Escolher o cultivo' },
-  { icon: <Sprout className="size-4" aria-hidden />, label: '4.3 Plantar as espécies' },
-  { icon: <Sprout className="size-4" aria-hidden />, label: '4.4 Cuidar e colher' },
-  { icon: <Recycle className="size-4" aria-hidden />, label: '4.5 Fechar o ciclo' },
-] as const
-
-const ENTER_LINES: Record<Mission4Step, readonly string[]> = {
-  intro: [
-    'Hoje a base ganha uma estufa.',
-    'A gente monta o domo, escolhe o jeito de plantar e cuida das mudas.',
-  ],
-  step4_1_build_greenhouse: [
-    'Cinco módulos encaixam no domo e gastam energia.',
-    'O cabo amarelo traz a energia solar. O tubo azul traz a água potável. Nada começa ligado.',
-  ],
-  step4_2_cultivation_method: [
-    'Três jeitos de cultivar. Compare água e energia.',
-    'O solo cru de Marte tem percloratos. Ele só entra depois do meu aviso.',
-  ],
-  step4_3_select_species: [
-    'Arraste uma espécie de cada grupo até o berço vazio.',
-    'O berço só aceita o grupo certo.',
-  ],
-  step4_4_growth_monitor: [
-    'Luz e temperatura são controles. A água sai do borrifador, em cima das folhas.',
-    'Sem névoa ou com a luz errada, a planta mostra estresse.',
-  ],
-  step4_5_bioregenerative: [
-    'Toque nas setas do ciclo.',
-    'O gás carbônico vira oxigênio, o vapor vira água limpa e o resto vira nutriente.',
-  ],
-  step4_logbook_and_sleep: ['Hora de registrar a estufa no diário.'],
-}
-
 interface Props {
   onComplete: (result: BaseStats) => void
   onExit: (result: BaseStats) => void
@@ -85,11 +44,13 @@ interface Props {
   playerName?: string
 }
 
+type StressFault = 'light' | 'temp' | 'mist'
+
 type Notice =
   | { kind: 'enter'; step: Mission4Step }
   | { kind: 'regolith' }
   | { kind: 'mismatch' }
-  | { kind: 'stress'; text: string }
+  | { kind: 'stress'; fault: StressFault }
   | { kind: 'water' }
 
 function clamp(n: number) {
@@ -107,6 +68,7 @@ export default function Mission4View({
   stats = DEFAULT_STATS,
   playerName,
 }: Props) {
+  const { t } = useI18n()
   const savedRun = useMemo(() => loadProgress().missionRuns.m4, [])
   const finishingRef = useRef(false)
   const [step, setStep] = useState<Mission4Step>(() => savedRun?.step ?? 'intro')
@@ -270,46 +232,141 @@ export default function Mission4View({
   const onPlant = useCallback((group: PlantGroupId, species: SpeciesId) => {
     setPlants((list) => (list.some((item) => item.group === group) ? list : [...list, { group, species }]))
   }, [])
-  const onStress = useCallback((text: string) => setNotice({ kind: 'stress', text }), [])
+  const onStress = useCallback((fault: StressFault) => setNotice({ kind: 'stress', fault }), [])
   const onWaterShort = useCallback(() => setNotice({ kind: 'water' }), [])
+
+  const introGoals = useMemo(
+    () => [
+      { icon: <Wrench className="size-4" aria-hidden />, label: t('4.1 Build the dome', '4.1 Montar o domo') },
+      { icon: <FlaskConical className="size-4" aria-hidden />, label: t('4.2 Choose how to grow', '4.2 Escolher o cultivo') },
+      { icon: <Sprout className="size-4" aria-hidden />, label: t('4.3 Plant the species', '4.3 Plantar as espécies') },
+      { icon: <Sprout className="size-4" aria-hidden />, label: t('4.4 Care and harvest', '4.4 Cuidar e colher') },
+      { icon: <Recycle className="size-4" aria-hidden />, label: t('4.5 Close the cycle', '4.5 Fechar o ciclo') },
+    ],
+    [t],
+  )
+
+  const enterLines = useMemo<Record<Mission4Step, readonly string[]>>(
+    () => ({
+      intro: [
+        t('Today the base gets a greenhouse.', 'Hoje a base ganha uma estufa.'),
+        t('We build the dome, pick how to grow, and take care of the seedlings.', 'A gente monta o domo, escolhe o jeito de plantar e cuida das mudas.'),
+      ],
+      step4_1_build_greenhouse: [
+        t('Five modules snap onto the dome and use energy.', 'Cinco módulos encaixam no domo e gastam energia.'),
+        t(
+          'The yellow cable brings solar energy. The blue tube brings drinking water. Nothing starts out connected.',
+          'O cabo amarelo traz a energia solar. O tubo azul traz a água potável. Nada começa ligado.',
+        ),
+      ],
+      step4_2_cultivation_method: [
+        t('Three ways to grow. Compare water and energy.', 'Três jeitos de cultivar. Compare água e energia.'),
+        t(
+          'Raw Martian soil has perchlorates. It only comes in after my warning.',
+          'O solo cru de Marte tem percloratos. Ele só entra depois do meu aviso.',
+        ),
+      ],
+      step4_3_select_species: [
+        t('Drag one species from each group into the empty bed.', 'Arraste uma espécie de cada grupo até o berço vazio.'),
+        t('The bed only accepts the right group.', 'O berço só aceita o grupo certo.'),
+      ],
+      step4_4_growth_monitor: [
+        t(
+          'Light and temperature are controls. The water comes from the sprayer, above the leaves.',
+          'Luz e temperatura são controles. A água sai do borrifador, em cima das folhas.',
+        ),
+        t(
+          'With no mist, or with the wrong light, the plant shows stress.',
+          'Sem névoa ou com a luz errada, a planta mostra estresse.',
+        ),
+      ],
+      step4_5_bioregenerative: [
+        t('Tap the arrows in the cycle.', 'Toque nas setas do ciclo.'),
+        t(
+          'Carbon dioxide becomes oxygen, vapor becomes clean water, and the leftovers become nutrients.',
+          'O gás carbônico vira oxigênio, o vapor vira água limpa e o resto vira nutriente.',
+        ),
+      ],
+      step4_logbook_and_sleep: [t('Time to write the greenhouse into the logbook.', 'Hora de registrar a estufa no diário.')],
+    }),
+    [t],
+  )
+
+  const lowEnergyLines = useMemo(
+    () => [
+      t('The base is low on energy!', 'A energia da base está baixa!'),
+      t(
+        'Go back to Mission 01 and clean the solar panel to recharge. We will pick up right here.',
+        'Volte para a Missão 01 e limpe o painel solar para recarregar. A gente continua daqui.',
+      ),
+    ],
+    [t],
+  )
+
+  const regolithLines = useMemo(
+    () => [
+      t('Raw regolith has perchlorates, so you cannot plant in it.', 'O regolito cru tem percloratos e não serve para plantar.'),
+      t('Only the treated soil can go in, and even then it is a test.', 'Só a versão tratada entra, e ainda assim é um teste.'),
+    ],
+    [t],
+  )
+
+  const mismatchLines = useMemo(
+    () => [t('This bed only takes the right group.', 'Esse berço só aceita o grupo certo.'), t('Drag the plant again.', 'Arraste a planta de novo.')],
+    [t],
+  )
+
+  const stressFault = notice?.kind === 'stress' ? notice.fault : null
+  const stressLines = useMemo(() => {
+    const first =
+      stressFault === 'light'
+        ? t('The light is wrong. The leaves need the LED on.', 'A luz está errada. As folhas pedem o LED ligado.')
+        : stressFault === 'temp'
+          ? t('The temperature left the mild range. Adjust the control.', 'A temperatura saiu do intervalo ameno. Ajuste o controle.')
+          : t('Without mist, the leaves wilt. Move the sprayer over them.', 'Sem névoa, as folhas murcham. Passe o borrifador sobre elas.')
+    return [first, t('Adjust the light, the temperature, or the mist, and try again.', 'Ajuste luz, temperatura ou a névoa e tente de novo.')]
+  }, [stressFault, t])
+
+  const waterLines = useMemo(
+    () => [
+      t('The water reserve is not enough for this action.', 'A reserva de água não chega para essa ação.'),
+      t('Pick a path that uses less water.', 'Escolha um caminho que gaste menos água.'),
+    ],
+    [t],
+  )
+
+  const outroLines = useMemo(
+    () => [
+      t('MISSION 4 DATA STORED.', 'DADOS DA MISSÃO 4 ARMAZENADOS.'),
+      t('SENDING THE GREENHOUSE REPORT TO EARTH…', 'ENVIANDO O RELATÓRIO DA ESTUFA PARA A TERRA…'),
+      t('First harvest on Mars recorded!', 'Primeira colheita de Marte registrada!'),
+    ],
+    [t],
+  )
 
   const play = phase === 'play'
   const overlay = energySoftLocked ? (
     <CapiBeat
       id="m4-energy-low"
-      lines={[
-        'A energia da base está baixa!',
-        'Volte para a Missão 01 e limpe o painel solar para recarregar. A gente continua daqui.',
-      ]}
-      label="Ir para a Missão 01"
+      lines={lowEnergyLines}
+      label={t('Go to Mission 01', 'Ir para a Missão 01')}
       onDone={leave}
     />
   ) : notice?.kind === 'enter' ? (
-    <CapiBeat id={`m4-enter-${notice.step}`} lines={ENTER_LINES[notice.step]} onDone={() => setNotice(null)} />
+    <CapiBeat id={`m4-enter-${notice.step}`} lines={enterLines[notice.step]} onDone={() => setNotice(null)} />
   ) : notice?.kind === 'regolith' ? (
     <CapiBeat
       id="m4-regolith"
-      lines={[
-        'O regolito cru tem percloratos e não serve para plantar.',
-        'Só a versão tratada entra, e ainda assim é um teste.',
-      ]}
-      label="Usar o solo tratado"
+      lines={regolithLines}
+      label={t('Use the treated soil', 'Usar o solo tratado')}
       onDone={() => applyMethod('regolith')}
     />
   ) : notice?.kind === 'mismatch' ? (
-    <CapiBeat
-      id="m4-mismatch"
-      lines={['Esse berço só aceita o grupo certo.', 'Arraste a planta de novo.']}
-      onDone={() => setNotice(null)}
-    />
+    <CapiBeat id="m4-mismatch" lines={mismatchLines} onDone={() => setNotice(null)} />
   ) : notice?.kind === 'stress' ? (
-    <CapiBeat id="m4-stress" lines={[notice.text, 'Ajuste luz, temperatura ou a névoa e tente de novo.']} onDone={() => setNotice(null)} />
+    <CapiBeat id="m4-stress" lines={stressLines} onDone={() => setNotice(null)} />
   ) : notice?.kind === 'water' ? (
-    <CapiBeat
-      id="m4-water"
-      lines={['A reserva de água não chega para essa ação.', 'Escolha um caminho que gaste menos água.']}
-      onDone={() => setNotice(null)}
-    />
+    <CapiBeat id="m4-water" lines={waterLines} onDone={() => setNotice(null)} />
   ) : null
 
   const nightScores: Mission2Scores = {
@@ -333,7 +390,7 @@ export default function Mission4View({
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100"
           onClick={leave}
-          aria-label="Sair da missão"
+          aria-label={t('Leave the mission', 'Sair da missão')}
           style={{ touchAction: 'manipulation' }}
         >
           <svg viewBox="0 0 24 24" className="size-7" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -365,18 +422,21 @@ export default function Mission4View({
                   />
                   <img
                     src={MEDIA.mission4.dome}
-                    alt="Estufa em domo geodésico"
+                    alt={t('Geodesic dome greenhouse', 'Estufa em domo geodésico')}
                     className="gk-pixelated absolute right-[6%] bottom-[4%] h-[86%] drop-shadow-[0_0_14px_rgba(125,255,224,0.45)]"
                     draggable={false}
                   />
-                  <Tag className="absolute top-2 left-2">Projeto da estufa</Tag>
+                  <Tag className="absolute top-2 left-2">{t('Greenhouse plan', 'Projeto da estufa')}</Tag>
                 </div>
               }
               badge="Sol 04 · Arcadia Planitia"
-              title="A primeira estufa de Marte"
-              lead="Monte o domo, ligue energia e água, plante quatro espécies e feche o ciclo que dá comida e oxigênio para a base."
-              goals={INTRO_GOALS}
-              cta="Montar a estufa"
+              title={t('The first greenhouse on Mars', 'A primeira estufa de Marte')}
+              lead={t(
+                'Build the dome, hook up energy and water, plant four kinds of plants, and close the cycle that gives the base food and oxygen.',
+                'Monte o domo, ligue energia e água, plante quatro espécies e feche o ciclo que dá comida e oxigênio para a base.',
+              )}
+              goals={introGoals}
+              cta={t('Build the greenhouse', 'Montar a estufa')}
               onStart={() => go('step4_1_build_greenhouse')}
             />
           ) : null}
@@ -467,19 +527,48 @@ export default function Mission4View({
       {phase === 'logbook' && method ? (
         <MissionLogbook
           missionId={4}
-          subtitle="Checklist da estufa cumprida"
+          subtitle={t('Greenhouse checklist complete', 'Checklist da estufa cumprida')}
           items={[
-            { label: 'Estufa montada e ligada', detail: 'Energia e água conectadas ao domo' },
+            {
+              label: 'Estufa montada e ligada',
+              labelEn: 'Greenhouse built and powered',
+              labelPt: 'Estufa montada e ligada',
+              detail: 'Energia e água conectadas ao domo',
+              detailEn: 'Energy and water connected to the dome',
+              detailPt: 'Energia e água conectadas ao domo',
+            },
             {
               label: 'Método de cultivo escolhido',
+              labelEn: 'Growing method chosen',
+              labelPt: 'Método de cultivo escolhido',
               detail: CULTIVATION_METHODS.find((item) => item.id === method)?.title ?? method,
+              detailEn: CULTIVATION_METHODS.find((item) => item.id === method)?.titleEn ?? method,
+              detailPt: CULTIVATION_METHODS.find((item) => item.id === method)?.title ?? method,
             },
             {
               label: 'Mudas plantadas e cuidadas',
-              detail: [...new Set(plants.map((item) => speciesLabel(item.species)))].join(' · '),
+              labelEn: 'Seedlings planted and cared for',
+              labelPt: 'Mudas plantadas e cuidadas',
+              detail: [...new Set(plants.map((item) => speciesLabel(item.species, 'pt')))].join(' · '),
+              detailEn: [...new Set(plants.map((item) => speciesLabel(item.species, 'en')))].join(' · '),
+              detailPt: [...new Set(plants.map((item) => speciesLabel(item.species, 'pt')))].join(' · '),
             },
-            { label: 'Primeira colheita de Marte', detail: 'Comida e oxigênio no ciclo bioregenerativo' },
-            { label: 'Registro científico no diário', detail: 'Evento da Missão 4 documentado' },
+            {
+              label: 'Primeira colheita de Marte',
+              labelEn: 'First harvest on Mars',
+              labelPt: 'Primeira colheita de Marte',
+              detail: 'Comida e oxigênio no ciclo bioregenerativo',
+              detailEn: 'Food and oxygen in the bioregenerative cycle',
+              detailPt: 'Comida e oxigênio no ciclo bioregenerativo',
+            },
+            {
+              label: 'Registro científico no diário',
+              labelEn: 'Science note in the logbook',
+              labelPt: 'Registro científico no diário',
+              detail: 'Evento da Missão 4 documentado',
+              detailEn: 'Mission 4 event written down',
+              detailPt: 'Evento da Missão 4 documentado',
+            },
           ]}
           onDone={() => {
             setPhase('night')
@@ -493,13 +582,16 @@ export default function Mission4View({
         playerName={name}
         choices={EMPTY_CHOICES}
         scores={nightScores}
-        researchNote="Diário da estufa: método de cultivo, espécies plantadas e a foto do domo. Comida e oxigênio subiram no ciclo bioregenerativo."
-        doneLabel="Enviar os dados da missão"
+        researchNote={t(
+          'Greenhouse log: the growing method, the plants you chose, and a photo of the dome. Food and oxygen went up in the bioregenerative cycle.',
+          'Diário da estufa: método de cultivo, espécies plantadas e a foto do domo. Comida e oxigênio subiram no ciclo bioregenerativo.',
+        )}
+        doneLabel={t('Send the mission data', 'Enviar os dados da missão')}
         onDone={() => setPhase('outro')}
       />
 
       {phase === 'outro' ? (
-        <MissionOutro missionId={4} lines={OUTRO_LINES} stats={hudStats} onDone={finish} />
+        <MissionOutro missionId={4} lines={outroLines} stats={hudStats} onDone={finish} />
       ) : null}
     </div>
   )

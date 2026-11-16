@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { logbookCaption, missionBadge } from '../../data/missionBadges'
+import { localizedNote, useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { saveLogbookEntry, type LogbookNote } from '../../services/progressStore'
 import { soundEngine } from '../../services/soundEngine'
@@ -55,6 +56,7 @@ function EmptyBox() {
  * science photo. Taking the photo saves the page to the player's logbook.
  */
 export function MissionLogbook({ missionId, subtitle, items, onDone }: Props) {
+  const { locale, t } = useI18n()
   const badge = missionBadge(missionId)
   const caption = logbookCaption(missionId)
   const [revealed, setRevealed] = useState(0)
@@ -87,7 +89,15 @@ export function MissionLogbook({ missionId, subtitle, items, onDone }: Props) {
     saveLogbookEntry(badge.key, {
       capturedAt: Date.now(),
       caption,
-      notes: items.map(({ label, detail }) => (detail ? { label, detail } : { label })),
+      notes: items.map((item) => {
+        const note: LogbookNote = { label: item.labelPt ?? item.label }
+        if (item.detail || item.detailPt) note.detail = item.detailPt ?? item.detail
+        if (item.labelEn) note.labelEn = item.labelEn
+        if (item.labelPt) note.labelPt = item.labelPt
+        if (item.detailEn) note.detailEn = item.detailEn
+        if (item.detailPt) note.detailPt = item.detailPt
+        return note
+      }),
     })
     setPhoto(true)
     soundEngine.success()
@@ -100,15 +110,18 @@ export function MissionLogbook({ missionId, subtitle, items, onDone }: Props) {
         frameClassName="w-full max-w-lg border-4 border-[#1a1c3a] bg-[#f4fff4] text-[#1a1c3a] shadow-[0_0_0_3px_#30346d]"
         className="max-h-[min(92dvh,42rem)] p-4"
       >
-        <p className="font-pixel text-sm tracking-wide uppercase">Diário de Bordo — Missão {missionId}</p>
+        <p className="font-pixel text-sm tracking-wide uppercase">
+          {t(`Logbook — Mission ${missionId}`, `Diário de Bordo — Missão ${missionId}`)}
+        </p>
         <p className="mt-1 font-body text-sm text-[#1a1c3a]/80">{subtitle}</p>
 
-        <ul className="mt-4 space-y-2.5" aria-label="Objetivos cumpridos">
+        <ul className="mt-4 space-y-2.5" aria-label={t('Finished goals', 'Objetivos cumpridos')}>
           {items.map((item, index) => {
+            const shown = localizedNote(item, locale)
             const checked = index < revealed
             return (
               <motion.li
-                key={item.label}
+                key={item.labelPt ?? item.label}
                 layout
                 className={`flex items-start gap-3 rounded-md border-2 px-2.5 py-2.5 sm:px-3 ${
                   checked ? 'border-[#1f8a52]/55 bg-[#e5f8ec]' : 'border-[#30346d]/25 bg-[#f4fff4]'
@@ -127,10 +140,10 @@ export function MissionLogbook({ missionId, subtitle, items, onDone }: Props) {
                       checked ? 'text-[#145c35]' : 'text-[#30346d]/70'
                     }`}
                   >
-                    {item.label}
+                    {shown.label}
                   </p>
-                  {item.detail ? (
-                    <p className="mt-0.5 font-body text-xs text-[#1a1c3a]/70 sm:text-sm">{item.detail}</p>
+                  {shown.detail ? (
+                    <p className="mt-0.5 font-body text-xs text-[#1a1c3a]/70 sm:text-sm">{shown.detail}</p>
                   ) : null}
                 </div>
               </motion.li>
@@ -147,20 +160,20 @@ export function MissionLogbook({ missionId, subtitle, items, onDone }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
             >
-              <p className="font-pixel text-xs text-[#30346d] sm:text-sm">Foto científica</p>
+              <p className="font-pixel text-xs text-[#30346d] sm:text-sm">{t('Science photo', 'Foto científica')}</p>
               <LogbookPhoto badge={badge} caption={caption} captured={photo} className="mx-auto max-w-xs" />
               {photo ? (
                 <>
                   <p className="text-center font-body text-sm font-bold text-[#145c35]" role="status">
-                    Foto salva no seu Diário de Bordo!
+                    {t('Photo saved in your logbook!', 'Foto salva no seu Diário de Bordo!')}
                   </p>
                   <McButton className="min-h-12 w-full px-3 py-2 font-pixel font-bold" onClick={onDone}>
-                    Enviar ao diário
+                    {t('Send to the logbook', 'Enviar ao diário')}
                   </McButton>
                 </>
               ) : (
                 <McButton className="min-h-12 w-full px-3 py-2 font-pixel font-bold" onClick={capture}>
-                  Capturar Foto Científica
+                  {t('Take science photo', 'Capturar Foto Científica')}
                 </McButton>
               )}
             </motion.div>

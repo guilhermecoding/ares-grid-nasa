@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { DRILL_LAYERS } from '../../data/mission3Data'
+import { useI18n } from '../../i18n/locale'
 
 type BgMode = 'surface' | 'cross_section'
 
@@ -16,6 +17,7 @@ export function ArcadiaExplorationBackground({
   drillProgress = 0,
   className = '',
 }: Props) {
+  const { locale } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drillProgressRef = useRef(drillProgress)
 
@@ -119,7 +121,7 @@ export function ArcadiaExplorationBackground({
           ctx.fillStyle = layer.color
           ctx.fillRect(0, top, w, height)
           ctx.fillStyle = 'rgba(244,255,244,0.75)'
-          ctx.fillText(layer.label, 8, top + 13)
+          ctx.fillText(locale === 'en' ? layer.labelEn : layer.label, 8, top + 13)
         }
 
         ctx.fillStyle = 'rgba(255,255,255,0.18)'
@@ -156,7 +158,7 @@ export function ArcadiaExplorationBackground({
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, [mode])
+  }, [locale, mode])
 
   return (
     <div className={`pointer-events-none absolute inset-0 z-0 overflow-hidden bg-[#8a3d22] ${className}`} aria-hidden>

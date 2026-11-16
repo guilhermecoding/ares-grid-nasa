@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ConfettiBurst } from './components/ConfettiBurst'
 import { MissionGateTransition } from './components/MissionGateTransition'
 import { NasaDataModal } from './components/NasaDataModal'
@@ -7,13 +7,14 @@ import { LogbookMenu } from './components/world/LogbookMenu'
 import { WorldScreen } from './components/WorldScreen'
 import { applyWeatherBundle, createWorldState } from './engine/worldEngine'
 import { TOTAL_MISSIONS } from './data/missionBadges'
-import { getMissionNode } from './data/missionNodes'
+import { useI18n } from './i18n/locale'
+import { nodeCopy } from './i18n/worldCopy'
 import { MEDIA } from './constants/mediaAssets'
 import { McButton } from './opening/McButton'
 import { OpeningFlow } from './opening/OpeningFlow'
 import { PixelDialogBox } from './opening/PixelDialogBox'
 import { fetchDonkiBundle } from './services/donkiService'
-import { isDialogGroupSkipped, loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
+import { isDialogGroupSkipped, loadProgress, resetProgress, updateProgress, type PlayerProgress } from './services/progressStore'
 import { setMuted, soundEngine, unlockAudio } from './services/soundEngine'
 import type { DonkiBundle } from './types/nasa'
 import type { BaseStats, ScreenId, WorldState } from './types/game'
@@ -36,22 +37,34 @@ type GateState = {
 /** Dialogs opened from the missions-screen menu. */
 type WorldPanel = 'logbook' | 'certificate' | 'certificate-first' | null
 
-const TUTORIAL_STEPS = [
-  {
-    title: 'Missões em Arcadia',
-    body: 'Este é o mapa de missões! Toque na ilha liberada para começar a aventura científica.',
-  },
-  {
-    title: 'Ilhas e cadeados',
-    body: 'Ilhas com cadeado ainda estão bloqueadas. Complete a missão atual para avançar!',
-  },
-  {
-    title: 'Missão 1 — Energia',
-    body: 'Sua primeira missão: instalar painéis solares com a ajuda da Capi. Boa exploração!',
-  },
-]
-
 export default function App() {
+  const { t } = useI18n()
+  const tutorialSteps = useMemo(
+    () => [
+      {
+        title: t('Missions in Arcadia', 'Missões em Arcadia'),
+        body: t(
+          'This is the mission map! Tap the open island to start the science adventure.',
+          'Este é o mapa de missões! Toque na ilha liberada para começar a aventura científica.',
+        ),
+      },
+      {
+        title: t('Islands and locks', 'Ilhas e cadeados'),
+        body: t(
+          'Islands with a lock are still closed. Finish the current mission to move on!',
+          'Ilhas com cadeado ainda estão bloqueadas. Complete a missão atual para avançar!',
+        ),
+      },
+      {
+        title: t('Mission 1 — Power', 'Missão 1 — Energia'),
+        body: t(
+          'Your first mission: install the solar panels with Capi. Happy exploring!',
+          'Sua primeira missão: instalar painéis solares com a ajuda da Capi. Boa exploração!',
+        ),
+      },
+    ],
+    [t],
+  )
   const [screen, setScreen] = useState<ScreenId>('home')
   const [progress, setProgress] = useState<PlayerProgress>(() => loadProgress())
   const [world, setWorld] = useState<WorldState | null>(null)
@@ -123,23 +136,23 @@ export default function App() {
       const message = completed
         ? missionId === 5
           ? alreadyCleared
-            ? 'Missão 5 refeita — a base segue protegida!'
-            : 'Expedição concluída! A base em Arcádia está pronta.'
+            ? t('Mission 5 replayed — the base stays protected!', 'Missão 5 refeita — a base segue protegida!')
+            : t('Expedition complete! The base in Arcadia is ready.', 'Expedição concluída! A base em Arcádia está pronta.')
           : missionId === 4
             ? alreadyCleared
-              ? 'Missão 4 refeita — a estufa segue no diário!'
-              : 'Missão 4 concluída! O alerta de tempestade aguarda.'
+              ? t('Mission 4 replayed — the greenhouse stays in the logbook!', 'Missão 4 refeita — a estufa segue no diário!')
+              : t('Mission 4 complete! The storm alert is waiting.', 'Missão 4 concluída! O alerta de tempestade aguarda.')
             : missionId === 3
               ? alreadyCleared
-                ? 'Missão 3 refeita — água e indicadores atualizados!'
-                : 'Missão 3 concluída! A primeira estufa aguarda.'
+                ? t('Mission 3 replayed — water and meters updated!', 'Missão 3 refeita — água e indicadores atualizados!')
+                : t('Mission 3 complete! The first greenhouse is waiting.', 'Missão 3 concluída! A primeira estufa aguarda.')
               : missionId === 2
                 ? alreadyCleared
-                  ? 'Missão 2 refeita — indicadores atualizados!'
-                  : 'Missão 2 concluída! O mistério do gelo aguarda.'
+                  ? t('Mission 2 replayed — meters updated!', 'Missão 2 refeita — indicadores atualizados!')
+                  : t('Mission 2 complete! The ice mystery is waiting.', 'Missão 2 concluída! O mistério do gelo aguarda.')
                 : alreadyCleared
-                  ? 'Missão 1 refeita — indicadores atualizados!'
-                  : 'Missão 1 concluída! Nova ilha no mapa.'
+                  ? t('Mission 1 replayed — meters updated!', 'Missão 1 refeita — indicadores atualizados!')
+                  : t('Mission 1 complete! A new island is on the map.', 'Missão 1 concluída! Nova ilha no mapa.')
         : w.message
 
       const next = { ...w, level: nextLevel, xp: nextXp, message, stats: nextStats }
@@ -157,7 +170,7 @@ export default function App() {
         }),
       )
     },
-    [],
+    [t],
   )
 
   const enterWorld = useCallback(async () => {
@@ -184,21 +197,19 @@ export default function App() {
   }, [bundle])
 
   const handleEnterMission = (level: number) => {
-    const node = getMissionNode(level)
     void unlockAudio()
     soundEngine.missionOpen()
     setMissionReady(false)
-    setGate({ missionId: level, title: node.gateTitle, direction: 'enter' })
+    setGate({ missionId: level, title: nodeCopy(level, t).gate, direction: 'enter' })
   }
 
   const leaveMission = (completed: boolean, resultStats?: BaseStats) => {
     const missionId = activeMission ?? 1
-    const node = getMissionNode(missionId)
     void unlockAudio()
     setMissionReady(false)
     setGate({
       missionId,
-      title: node.gateTitle,
+      title: nodeCopy(missionId, t).gate,
       direction: 'exit',
       completed,
       resultStats,
@@ -252,6 +263,19 @@ export default function App() {
     const id = window.setTimeout(() => setCelebrate(false), 3200)
     return () => window.clearTimeout(id)
   }, [celebrate])
+
+  const restartGame = () => {
+    const fresh = resetProgress()
+    setProgress(fresh)
+    setWorld(null)
+    setScreen('home')
+    setActiveMission(null)
+    setGate(null)
+    setWorldPanel(null)
+    setCelebrate(false)
+    setTutorialOpen(false)
+    setNasaOpen(false)
+  }
 
   const finishTutorial = () => {
     setTutorialOpen(false)
@@ -307,6 +331,7 @@ export default function App() {
             soundEngine.click()
             setWorldPanel('certificate')
           }}
+          onRestart={restartGame}
         />
       )}
 
@@ -438,14 +463,14 @@ export default function App() {
             open={tutorialBoxOpen}
             position="center"
             title="Capi"
-            lines={[TUTORIAL_STEPS[tutorialStep]!.title, TUTORIAL_STEPS[tutorialStep]!.body]}
+            lines={[tutorialSteps[tutorialStep]!.title, tutorialSteps[tutorialStep]!.body]}
             dialogId={`map-intro-${tutorialStep}`}
             onSkip={() => setTutorialBoxOpen(false)}
             characterSrc={MEDIA.capi.neutral}
             characterAlt="Capi"
             onTypingComplete={() => setTutorialReady(true)}
             onClosed={() => {
-              if (isDialogGroupSkipped('map') || tutorialStep >= TUTORIAL_STEPS.length - 1) {
+              if (isDialogGroupSkipped('map') || tutorialStep >= tutorialSteps.length - 1) {
                 finishTutorial()
                 return
               }
@@ -459,7 +484,7 @@ export default function App() {
                   className="min-h-12 px-6 font-pixel text-lg font-bold"
                   onClick={() => setTutorialBoxOpen(false)}
                 >
-                  {tutorialStep < TUTORIAL_STEPS.length - 1 ? 'Próximo' : 'Vamos lá!'}
+                  {tutorialStep < tutorialSteps.length - 1 ? t('Next', 'Próximo') : t('Let’s go!', 'Vamos lá!')}
                 </McButton>
               ) : null
             }

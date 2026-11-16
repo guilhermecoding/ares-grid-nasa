@@ -6,6 +6,7 @@ import { Burst, ChallengeBar, GameCta } from '../../components/missionKit/kit'
 import { useDrag } from '../../components/missionKit/useDrag'
 import { MEDIA } from '../../constants/mediaAssets'
 import { PLANT_GROUPS, speciesLabel, type PlantGroupId, type SpeciesId } from '../../data/mission4Data'
+import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
@@ -20,13 +21,12 @@ interface Seed {
   group: PlantGroupId
 }
 
-const GROUP_TITLE = Object.fromEntries(PLANT_GROUPS.map((g) => [g.id, g.title])) as Record<PlantGroupId, string>
-
 function isGroup(value: string | null): value is PlantGroupId {
   return value != null && value in TRAY_BEDS
 }
 
 export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
+  const { t, locale } = useI18n()
   const [wrong, setWrong] = useState<PlantGroupId | null>(null)
   const [fx, setFx] = useState<{ key: number; group: PlantGroupId } | null>(null)
   const count = PLANT_GROUPS.filter((g) => planted[g.id]).length
@@ -58,17 +58,20 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
     <>
       <ChallengeBar
         code="4.3"
-        title="Plante uma espécie em cada berço"
+        title={t('Plant one species in each bed', 'Plante uma espécie em cada berço')}
         icon={<Sprout className="size-5" aria-hidden />}
-        counterLabel="Berços"
+        counterLabel={t('Beds', 'Berços')}
         value={count}
         total={PLANT_GROUPS.length}
-        hint="Arraste a semente até o berço da mesma cor. Cada berço aceita um grupo."
+        hint={t(
+          'Drag the seed to the bed of the same color. Each bed takes one group.',
+          'Arraste a semente até o berço da mesma cor. Cada berço aceita um grupo.',
+        )}
       />
 
       <div className="grid gap-3 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="gk-panel p-3">
-          <p className="font-pixel text-xs text-(--gk-accent) uppercase">Banco de sementes</p>
+          <p className="font-pixel text-xs text-(--gk-accent) uppercase">{t('Seed bank', 'Banco de sementes')}</p>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
             {PLANT_GROUPS.flatMap((group) =>
               group.species.map((species) => {
@@ -86,7 +89,10 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
                       soundEngine.pickup()
                       start({ species: species.id, group: group.id }, e)
                     }}
-                    aria-label={`Arrastar semente: ${species.label}, grupo ${group.title}`}
+                    aria-label={t(
+                      `Drag seed: ${species.labelEn}, ${group.titleEn} group`,
+                      `Arrastar semente: ${species.label}, grupo ${group.title}`,
+                    )}
                     className={`relative flex min-h-16 touch-none items-center gap-2 border-2 bg-[#04080f]/70 px-2 py-1.5 text-left select-none ${
                       used ? '' : groupDone ? 'opacity-35' : dragging ? 'opacity-40' : 'cursor-grab hover:-translate-y-0.5'
                     }`}
@@ -94,14 +100,16 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
                   >
                     <img src={MEDIA.mission4.seeds[species.id]} alt="" className="gk-pixelated size-11 shrink-0" draggable={false} />
                     <span className="min-w-0">
-                      <span className="block font-pixel text-[10px] leading-tight text-[#f4fff4] uppercase sm:text-xs">{species.label}</span>
+                      <span className="block font-pixel text-[10px] leading-tight text-[#f4fff4] uppercase sm:text-xs">
+                        {t(species.labelEn, species.label)}
+                      </span>
                       <span className="mt-0.5 block font-pixel text-[9px] leading-none uppercase" style={{ color: bed.color }}>
-                        {group.title}
+                        {t(group.titleEn, group.title)}
                       </span>
                     </span>
                     {used ? (
                       <span className="gk-pop absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-life text-[#04130c]">
-                        <Check className="size-3" strokeWidth={3} aria-label="Plantado" />
+                        <Check className="size-3" strokeWidth={3} aria-label={t('Planted', 'Plantado')} />
                       </span>
                     ) : null}
                   </button>
@@ -112,7 +120,7 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
         </div>
 
         <div className="gk-panel flex flex-col items-center p-3">
-          <p className="self-start font-pixel text-xs text-(--gk-accent) uppercase">Bandeja de cultivo</p>
+          <p className="self-start font-pixel text-xs text-(--gk-accent) uppercase">{t('Growing tray', 'Bandeja de cultivo')}</p>
           <PlantTray plants={scales} className="mt-1 max-w-xl">
             <svg viewBox={TRAY_VIEWBOX} className="absolute inset-0 h-full w-full">
               {TRAY_ORDER.map((group) => {
@@ -140,6 +148,7 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
             {TRAY_ORDER.map((group) => {
               const bed = TRAY_BEDS[group]
               const species = planted[group]
+              const groupCopy = PLANT_GROUPS.find((item) => item.id === group)
               return (
                 <span
                   key={group}
@@ -151,7 +160,7 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
                     style={{ borderColor: bed.color, color: species ? '#f4fff4' : bed.color }}
                   >
                     {species ? <Check className="size-3 text-life" strokeWidth={3} aria-hidden /> : null}
-                    {species ? speciesLabel(species) : GROUP_TITLE[group]}
+                    {species ? speciesLabel(species, locale) : t(groupCopy?.titleEn ?? group, groupCopy?.title ?? group)}
                   </span>
                   {fx?.group === group ? <Burst key={fx.key} color={bed.color} /> : null}
                 </span>
@@ -161,7 +170,7 @@ export function PlantStep({ planted, onPlant, onMismatch, onDone }: Props) {
         </div>
       </div>
 
-      {full ? <GameCta onClick={onDone}>Acompanhar o crescimento (Desafio 4.4)</GameCta> : null}
+      {full ? <GameCta onClick={onDone}>{t('Watch them grow (Challenge 4.4)', 'Acompanhar o crescimento (Desafio 4.4)')}</GameCta> : null}
 
       {drag ? (
         <img

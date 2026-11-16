@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CapiBeat } from '../../components/mission3/CapiBeat'
 import { Mission3Stage } from '../../components/mission3/Mission3Stage'
 import { SciTermM3 } from '../../components/mission3/SciTermM3'
 import {
   CAPI_DRILL,
+  CAPI_DRILL_EN,
   DRILL_COOL_RATE,
   DRILL_ENERGY_PER_LOG,
   DRILL_LAYERS,
@@ -15,6 +16,7 @@ import {
   drillLayerAt,
   formatDepth,
 } from '../../data/mission3Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
@@ -61,6 +63,7 @@ export function DrillingStep({
   onSpend,
   onExtract,
 }: Props) {
+  const { t, locale } = useI18n()
   const [sim, setSim] = useState<Sim>(() => ({ ...START, depth: initialDepth, logged: initialLogged }))
   const [holding, setHolding] = useState(false)
   const [locked, setLocked] = useState(false)
@@ -176,30 +179,44 @@ export function DrillingStep({
 
   const depthPct = (sim.depth / COLUMN_DEPTH_M) * 100
   const hot = heatColor(sim.heat)
+  const depthLabel = (meters: number) => formatDepth(meters, locale)
+  const layerLabel = (label: string, labelEn: string) => (locale === 'en' ? labelEn : label)
+  const introLines = useMemo(
+    () => (locale === 'en' ? [CAPI_DRILL_EN.start, CAPI_DRILL_EN.rock] : [CAPI_DRILL.start, CAPI_DRILL.rock]),
+    [locale],
+  )
+  const overheatLines = useMemo(() => [locale === 'en' ? CAPI_DRILL_EN.overheat : CAPI_DRILL.overheat], [locale])
+  const doneLines = useMemo(() => (locale === 'en' ? CAPI_DRILL_EN.done : CAPI_DRILL.done), [locale])
 
   return (
     <Mission3Stage
-      title="Desafio 3.3 — Perfuração Exploratória"
+      title={t('Challenge 3.3 — Test Drill', 'Desafio 3.3 — Perfuração Exploratória')}
       subtitle={
         <>
-          {siteName}: desça até o gelo a {formatDepth(DRILL_TARGET_M)} atravessando o{' '}
-          <SciTermM3 term="Regolito">regolito</SciTermM3> e a rocha sem superaquecer a broca.
+          {siteName}: {t('go down to the ice at', 'desça até o gelo a')} {depthLabel(DRILL_TARGET_M)}{' '}
+          {t('through the', 'atravessando o')} <SciTermM3 term={t('Regolith', 'Regolito')} />{' '}
+          {t('and the rock without overheating the drill.', 'e a rocha sem superaquecer a broca.')}
         </>
       }
       energy={energy}
       waterL={waterL}
       overlay={
         introOpen ? (
-          <CapiBeat id="m3-drill-start" lines={[CAPI_DRILL.start, CAPI_DRILL.rock]} onDone={() => setIntroOpen(false)} />
+          <CapiBeat id="m3-drill-start" lines={introLines} onDone={() => setIntroOpen(false)} />
         ) : overheatOpen ? (
-          <CapiBeat id={`m3-drill-hot-${sim.overheats}`} lines={[CAPI_DRILL.overheat]} label="Vou pulsar" onDone={() => setOverheatOpen(false)} />
+          <CapiBeat
+            id={`m3-drill-hot-${sim.overheats}`}
+            lines={overheatLines}
+            label={t('I will tap it', 'Vou pulsar')}
+            onDone={() => setOverheatOpen(false)}
+          />
         ) : null
       }
     >
       <div className="mx-auto grid w-full max-w-6xl gap-3 md:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] md:gap-4">
         <section
           className={`relative h-[22rem] overflow-hidden rounded border-2 bg-[#0a1628]/92 md:h-[26rem] ${done ? 'border-life' : 'border-cyan-hud/30'}`}
-          aria-label="Corte do subsolo"
+          aria-label={t('Underground cross-section', 'Corte do subsolo')}
         >
           {DRILL_LAYERS.map((l) => (
             <div
@@ -221,7 +238,7 @@ export function DrillingStep({
                 animate={layer.id === l.id && holding ? { scale: [1, 1.18, 1], x: [0, 2, 0] } : { scale: layer.id === l.id ? 1.08 : 1 }}
                 transition={layer.id === l.id && holding ? { duration: 0.35, repeat: Infinity } : { type: 'spring', stiffness: 420, damping: 14 }}
               >
-                {l.label}
+                {layerLabel(l.label, l.labelEn)}
               </motion.span>
             </div>
           ))}
@@ -229,7 +246,9 @@ export function DrillingStep({
             className="absolute inset-x-0 border-t-2 border-dashed border-cyan-hud"
             style={{ top: `${(DRILL_TARGET_M / COLUMN_DEPTH_M) * 100}%` }}
           >
-            <span className="absolute -top-4 right-1 font-pixel text-[8px] text-cyan-hud">ALVO {formatDepth(DRILL_TARGET_M)}</span>
+            <span className="absolute -top-4 right-1 font-pixel text-[8px] text-cyan-hud">
+              {t('TARGET', 'ALVO')} {depthLabel(DRILL_TARGET_M)}
+            </span>
           </div>
           <div
             className="absolute left-1/2 w-2 -translate-x-1/2 bg-gradient-to-r from-slate-400 via-slate-200 to-slate-500"
@@ -271,23 +290,24 @@ export function DrillingStep({
         <div className="flex min-w-0 flex-col gap-3">
           <section className="grid gap-3 rounded border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 sm:grid-cols-2 md:p-4">
             <div>
-              <p className="font-pixel text-[10px] text-cyan-hud">PROFUNDIDADE</p>
+              <p className="font-pixel text-[10px] text-cyan-hud">{t('DEPTH', 'PROFUNDIDADE')}</p>
               <p className="font-pixel text-3xl text-[#f4fff4] tabular-nums md:text-4xl" aria-live="polite">
-                {formatDepth(sim.depth)}
+                {depthLabel(sim.depth)}
               </p>
               <p className="text-sm text-void-100/80">
-                Camada atual: <span className="font-semibold text-[#f4fff4]">{layer.label}</span>
+                {t('Current layer', 'Camada atual')}:{' '}
+                <span className="font-semibold text-[#f4fff4]">{layerLabel(layer.label, layer.labelEn)}</span>
               </p>
             </div>
             <div>
               <p className="flex justify-between font-pixel text-[10px] text-cyan-hud">
-                <span>TEMPERATURA DA BROCA</span>
+                <span>{t('DRILL TEMPERATURE', 'TEMPERATURA DA BROCA')}</span>
                 <span style={{ color: hot }}>{Math.round(sim.heat)}%</span>
               </p>
               <div
                 className="mt-2 h-5 border-2 border-black/50 bg-void-900"
                 role="progressbar"
-                aria-label="Temperatura da broca"
+                aria-label={t('Drill temperature', 'Temperatura da broca')}
                 aria-valuenow={Math.round(sim.heat)}
                 aria-valuemin={0}
                 aria-valuemax={100}
@@ -296,16 +316,16 @@ export function DrillingStep({
               </div>
               <p className={`mt-1 text-sm ${locked ? 'font-semibold text-danger' : 'text-void-100/80'}`}>
                 {locked
-                  ? 'Broca travada para resfriar…'
+                  ? t('Drill locked while it cools…', 'Broca travada para resfriar…')
                   : holding
-                    ? 'Perfurando — solte para esfriar.'
-                    : 'Solte o botão para a broca esfriar.'}
+                    ? t('Drilling — let go to cool it.', 'Perfurando — solte para esfriar.')
+                    : t('Let go of the button so the drill can cool.', 'Solte o botão para a broca esfriar.')}
               </p>
             </div>
           </section>
 
           <section className="rounded border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:p-4">
-            <p className="font-pixel text-[10px] text-cyan-hud">REGISTRO DE PROFUNDIDADE</p>
+            <p className="font-pixel text-[10px] text-cyan-hud">{t('DEPTH LOG', 'REGISTRO DE PROFUNDIDADE')}</p>
             <ul className="mt-2 grid gap-1.5 sm:grid-cols-4">
               {DRILL_LOG_DEPTHS_M.map((d, i) => {
                 const ok = i < sim.logged
@@ -314,28 +334,35 @@ export function DrillingStep({
                     key={d}
                     className={`border-2 px-2 py-1.5 text-sm ${ok ? 'border-life bg-life/10 text-[#f4fff4]' : 'border-void-600 text-void-100/50'}`}
                   >
-                    <span className="font-pixel text-xs">{formatDepth(d)}</span>
-                    <span className="block text-xs">{ok ? drillLayerAt(Math.max(0, d - 0.01)).label : 'aguardando'}</span>
+                    <span className="font-pixel text-xs">{depthLabel(d)}</span>
+                    <span className="block text-xs">
+                      {ok ? layerLabel(drillLayerAt(Math.max(0, d - 0.01)).label, drillLayerAt(Math.max(0, d - 0.01)).labelEn) : t('waiting', 'aguardando')}
+                    </span>
                   </li>
                 )
               })}
             </ul>
             <p className="mt-2 text-xs text-void-100/70">
-              Cada registro gasta {DRILL_ENERGY_PER_LOG}% de energia. Superaquecer custa mais {DRILL_OVERHEAT_ENERGY}%.
-              {sim.overheats > 0 ? ` Superaquecimentos: ${sim.overheats}.` : ''}
+              {t(
+                `Each log uses ${DRILL_ENERGY_PER_LOG}% energy. Overheating costs ${DRILL_OVERHEAT_ENERGY}% more.`,
+                `Cada registro gasta ${DRILL_ENERGY_PER_LOG}% de energia. Superaquecer custa mais ${DRILL_OVERHEAT_ENERGY}%.`,
+              )}
+              {sim.overheats > 0
+                ? t(` Overheats: ${sim.overheats}.`, ` Superaquecimentos: ${sim.overheats}.`)
+                : ''}
             </p>
           </section>
 
           {done ? (
             <section className="rounded border-2 border-life bg-[#0a1628]/92 p-3 md:p-4">
-              <p className="font-pixel text-xs text-life">GELO SUBTERRÂNEO ALCANÇADO</p>
-              {CAPI_DRILL.done.map((line) => (
+              <p className="font-pixel text-xs text-life">{t('UNDERGROUND ICE REACHED', 'GELO SUBTERRÂNEO ALCANÇADO')}</p>
+              {doneLines.map((line) => (
                 <p key={line} className="mt-1 text-sm text-[#f4fff4] md:text-base">
                   {line}
                 </p>
               ))}
               <McButton className="mc-btn-green mt-3 min-h-12 px-5 font-pixel" onClick={onExtract}>
-                Extrair cilindro de gelo
+                {t('Pull out the ice cylinder', 'Extrair cilindro de gelo')}
               </McButton>
             </section>
           ) : (
@@ -365,7 +392,7 @@ export function DrillingStep({
               }}
               onBlur={stopHold}
             >
-              {locked ? '🔥 RESFRIANDO A BROCA…' : '⚙️ SEGURAR PARA PERFURAR'}
+              {locked ? t('🔥 COOLING THE DRILL…', '🔥 RESFRIANDO A BROCA…') : t('⚙️ HOLD TO DRILL', '⚙️ SEGURAR PARA PERFURAR')}
             </button>
           )}
         </div>

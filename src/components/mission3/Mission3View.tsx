@@ -16,6 +16,7 @@ import {
   type PotabilityId,
   type SiteId,
 } from '../../data/mission3Data'
+import { useI18n } from '../../i18n/locale'
 import { DrillingStep } from '../../missions/mission3-ice/DrillingStep'
 import { SampleCollectionStep } from '../../missions/mission3-ice/SampleCollectionStep'
 import { CapiBeat } from './CapiBeat'
@@ -33,12 +34,6 @@ import { PotabilityStep } from './steps/PotabilityStep'
 
 const DEFAULT_STATS: BaseStats = { energy: 70, water: 55, wellbeing: 72 }
 
-const OUTRO_LINES = [
-  'Retornando à espaçonave com a amostra selada…',
-  'DADOS DA MISSÃO 3 ARMAZENADOS.',
-  `Gelo de Arcadia virou +${WATER_REWARD_L} L de água potável!`,
-] as const
-
 interface Props {
   onComplete: (result: BaseStats) => void
   onExit: (result: BaseStats) => void
@@ -52,6 +47,7 @@ function clamp(n: number) {
 
 /** Mission 03 orchestrator — Arcadia ice exploration. */
 export default function Mission3View({ onComplete, onExit, onReady, stats = DEFAULT_STATS }: Props) {
+  const { t } = useI18n()
   const savedRun = useMemo(() => loadProgress().missionRuns.m3, [])
   const drillDepthRef = useRef(savedRun?.drillDepth ?? 0)
   const finishingRef = useRef(false)
@@ -68,7 +64,7 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
   const [processDone, setProcessDone] = useState(() => savedRun?.processDone ?? 0)
   const [potabilityTreated, setPotabilityTreated] = useState(() => savedRun?.potabilityTreated ?? false)
   const [potabilityAnalyzed, setPotabilityAnalyzed] = useState<PotabilityId[]>(() => savedRun?.potabilityAnalyzed ?? [])
-  const [bridge, setBridge] = useState<{ lines: string[]; next: Mission3Step } | null>(null)
+  const [bridgeNext, setBridgeNext] = useState<Mission3Step | null>(null)
   const [energyShort, setEnergyShort] = useState(false)
 
   const hudStats: BaseStats = useMemo(
@@ -77,10 +73,97 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
   )
 
   const siteInfo = SITES.find((s) => s.id === site) ?? SITES.find((s) => s.id === IDEAL_SITE)!
+  const siteName = t(siteInfo.nameEn, siteInfo.name)
+
+  const bridgeLines = useMemo(() => {
+    if (bridgeNext === 'step3_2_layered_map') {
+      return [
+        t('Protocol understood!', 'Protocolo entendido!'),
+        t('Now turn on the map layers and find the best sector.', 'Agora ligue as camadas do mapa e ache o melhor setor.'),
+      ]
+    }
+    if (bridgeNext === 'step3_5_ice_processing') {
+      return [
+        t('Sample sealed at −73 °C.', 'Amostra selada a −73 °C.'),
+        t('In the lab, we will turn ice into water.', 'No laboratório, vamos transformar gelo em água.'),
+      ]
+    }
+    return []
+  }, [bridgeNext, t])
+
+  const energyLines = useMemo(
+    () => [
+      t('The base is low on energy!', 'A energia da base está baixa!'),
+      t(
+        'Go back to Mission 01 and clean the solar panel to recharge. We will continue from here.',
+        'Volte para a Missão 01 e limpe o painel solar para recarregar. A gente continua daqui.',
+      ),
+    ],
+    [t],
+  )
+
+  const outroLines = useMemo(
+    () => [
+      t('Flying back to the spaceship with the sealed sample…', 'Retornando à espaçonave com a amostra selada…'),
+      t('MISSION 3 DATA SAVED.', 'DADOS DA MISSÃO 3 ARMAZENADOS.'),
+      t(
+        `Ice from Arcadia became +${WATER_REWARD_L} L of drinking water!`,
+        `Gelo de Arcadia virou +${WATER_REWARD_L} L de água potável!`,
+      ),
+    ],
+    [t],
+  )
+
+  const logbookItems = useMemo(() => {
+    const depthPt = formatDepth(DRILL_TARGET_M, 'pt')
+    const depthEn = formatDepth(DRILL_TARGET_M, 'en')
+    return [
+      {
+        label: 'Radar SHARAD analisado',
+        labelPt: 'Radar SHARAD analisado',
+        labelEn: 'SHARAD radar checked',
+        detail: 'Gelo localizado embaixo do solo',
+        detailPt: 'Gelo localizado embaixo do solo',
+        detailEn: 'Ice found under the ground',
+      },
+      {
+        label: 'Local de perfuração escolhido',
+        labelPt: 'Local de perfuração escolhido',
+        labelEn: 'Drill spot chosen',
+        detail: `${siteInfo.name}, plano e estável`,
+        detailPt: `${siteInfo.name}, plano e estável`,
+        detailEn: `${siteInfo.nameEn}, flat and stable`,
+      },
+      {
+        label: 'Perfuração concluída',
+        labelPt: 'Perfuração concluída',
+        labelEn: 'Drill finished',
+        detail: `Amostra a ${depthPt} de profundidade`,
+        detailPt: `Amostra a ${depthPt} de profundidade`,
+        detailEn: `Sample at ${depthEn} deep`,
+      },
+      {
+        label: 'Gelo transformado em água',
+        labelPt: 'Gelo transformado em água',
+        labelEn: 'Ice turned into water',
+        detail: `+${WATER_REWARD_L} L aprovados para consumo`,
+        detailPt: `+${WATER_REWARD_L} L aprovados para consumo`,
+        detailEn: `+${WATER_REWARD_L} L approved to drink`,
+      },
+      {
+        label: 'Registro científico no diário',
+        labelPt: 'Registro científico no diário',
+        labelEn: 'Science note in the logbook',
+        detail: 'Evento da Missão 3 documentado',
+        detailPt: 'Evento da Missão 3 documentado',
+        detailEn: 'Mission 3 event written down',
+      },
+    ]
+  }, [siteInfo.name, siteInfo.nameEn])
 
   const nextProcessCost = PROCESS_STEPS[processDone]?.energyCost ?? 0
   const energySoftLocked =
-    !bridge &&
+    !bridgeNext &&
     phase === 'play' &&
     step !== 'intro' &&
     step !== 'step3_1_methodology' &&
@@ -165,7 +248,7 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
   }
 
   const bgMode = isCrossSectionStep(step) ? 'cross_section' : 'surface'
-  const play = phase === 'play' && !bridge
+  const play = phase === 'play' && !bridgeNext
 
   return (
     <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-[#8a3d22]" style={{ touchAction: 'manipulation' }}>
@@ -179,8 +262,8 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
           onClick={leave}
-          aria-label="Sair da missão"
-          title="Sair"
+          aria-label={t('Leave the mission', 'Sair da missão')}
+          title={t('Leave', 'Sair')}
           style={{ touchAction: 'manipulation' }}
         >
           <svg
@@ -210,10 +293,7 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
           energy={energy}
           waterL={waterL}
           onContinue={() =>
-            setBridge({
-              lines: ['Protocolo entendido!', 'Agora ligue as camadas do mapa e ache o melhor setor.'],
-              next: 'step3_2_layered_map',
-            })
+            setBridgeNext('step3_2_layered_map')
           }
         />
       )}
@@ -235,7 +315,7 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
 
       {play && step === 'step3_3_drilling' && (
         <DrillingStep
-          siteName={siteInfo.name}
+          siteName={siteName}
           energy={energy}
           waterL={waterL}
           initialDepth={savedRun?.step === 'step3_3_drilling' ? savedRun.drillDepth : 0}
@@ -252,14 +332,11 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
 
       {play && step === 'step3_4_sample_collection' && (
         <SampleCollectionStep
-          siteName={siteInfo.name}
+          siteName={siteName}
           energy={energy}
           waterL={waterL}
           onContinue={() =>
-            setBridge({
-              lines: ['Amostra selada a −73 °C.', 'No laboratório, vamos transformar gelo em água.'],
-              next: 'step3_5_ice_processing',
-            })
+            setBridgeNext('step3_5_ice_processing')
           }
         />
       )}
@@ -296,14 +373,14 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
         />
       )}
 
-      {bridge && (
+      {bridgeNext && (
         <CapiBridgeM3
-          key={bridge.next}
-          dialogId={`m3-bridge-${bridge.next}`}
-          lines={bridge.lines}
+          key={bridgeNext}
+          dialogId={`m3-bridge-${bridgeNext}`}
+          lines={bridgeLines}
           onDone={() => {
-            const next = bridge.next
-            setBridge(null)
+            const next = bridgeNext
+            setBridgeNext(null)
             setStep(next)
           }}
         />
@@ -312,28 +389,19 @@ export default function Mission3View({ onComplete, onExit, onReady, stats = DEFA
       {phase === 'logbook' && (
         <MissionLogbook
           missionId={3}
-          subtitle="Checklist da exploração cumprida"
-          items={[
-            { label: 'Radar SHARAD analisado', detail: 'Gelo localizado embaixo do solo' },
-            { label: 'Local de perfuração escolhido', detail: `${siteInfo.name}, plano e estável` },
-            { label: 'Perfuração concluída', detail: `Amostra a ${formatDepth(DRILL_TARGET_M)} de profundidade` },
-            { label: 'Gelo transformado em água', detail: `+${WATER_REWARD_L} L aprovados para consumo` },
-            { label: 'Registro científico no diário', detail: 'Evento da Missão 3 documentado' },
-          ]}
+          subtitle={t('Exploration checklist complete', 'Checklist da exploração cumprida')}
+          items={logbookItems}
           onDone={() => setPhase('outro')}
         />
       )}
 
-      {phase === 'outro' && <MissionOutro missionId={3} lines={OUTRO_LINES} stats={hudStats} onDone={finish} />}
+      {phase === 'outro' && <MissionOutro missionId={3} lines={outroLines} stats={hudStats} onDone={finish} />}
 
       {energySoftLocked && (
         <CapiBeat
           id="m3-energy-low"
-          lines={[
-            'A energia da base está baixa!',
-            'Volte para a Missão 01 e limpe o painel solar para recarregar. A gente continua daqui.',
-          ]}
-          label="Ir para a Missão 01"
+          lines={energyLines}
+          label={t('Go to Mission 01', 'Ir para a Missão 01')}
           onDone={leave}
         />
       )}

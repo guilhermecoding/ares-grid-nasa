@@ -2,6 +2,8 @@ import { Lock, X } from 'lucide-react'
 import { MEDIA } from '../../constants/mediaAssets'
 import { completedMissions, MISSION_BADGES, TOTAL_MISSIONS, TROPHY_SPRITE } from '../../data/missionBadges'
 import { INSIGNIAS, type InsigniaId } from '../../data/openingData'
+import { GAME_TITLE, useI18n } from '../../i18n/locale'
+import { badgeCopy, formatLongDate } from '../../i18n/worldCopy'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 import { ConfettiBurst } from '../ConfettiBurst'
@@ -19,8 +21,6 @@ interface Props {
   celebrate?: boolean
   onClose: () => void
 }
-
-const DATE_FORMAT = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
 /** The patch the player picked for the suit in the opening. */
 function SuitInsignia({ id }: { id: InsigniaId }) {
@@ -42,11 +42,13 @@ function SuitInsignia({ id }: { id: InsigniaId }) {
 
 /** Player certificate: name, insignias and missions completed. */
 export function CertificateModal({ playerName, insignia, level, completedAt, celebrate = false, onClose }: Props) {
+  const { locale, t } = useI18n()
   useEscapeKey(onClose)
   const done = completedMissions(level)
   const earned = done >= TOTAL_MISSIONS
-  const name = playerName.trim() || 'Astronauta'
-  const insigniaLabel = INSIGNIAS.find((item) => item.id === insignia)?.label ?? 'Ares'
+  const name = playerName.trim() || t('Astronaut', 'Astronauta')
+  const patch = INSIGNIAS.find((item) => item.id === insignia)
+  const insigniaLabel = patch ? t(patch.en, patch.label) : 'Ares'
 
   return (
     <div
@@ -65,7 +67,7 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
           <button
             type="button"
             autoFocus
-            aria-label="Fechar o certificado"
+            aria-label={t('Close the certificate', 'Fechar o certificado')}
             className="absolute top-2 right-2 flex size-11 items-center justify-center border-2 border-[#1a1c3a] bg-[#30346d] text-[#fff8e6]"
             style={{ touchAction: 'manipulation' }}
             onClick={() => {
@@ -77,39 +79,51 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
           </button>
 
           <p className="mx-12 font-pixel text-[10px] tracking-widest text-[#8a5a12] uppercase sm:text-xs">
-            Expedição Ares Grid · Arcadia Planitia, Marte
+            {t(`${GAME_TITLE} expedition · Arcadia Planitia, Mars`, `Expedição ${GAME_TITLE} · Arcadia Planitia, Marte`)}
           </p>
           <h2 id="certificate-title" className="mt-2 font-pixel text-lg leading-tight uppercase sm:text-2xl">
-            {earned ? 'Certificado de Conclusão' : 'Certificado em preparação'}
+            {earned ? t('Certificate of Completion', 'Certificado de Conclusão') : t('Certificate in progress', 'Certificado em preparação')}
           </h2>
 
           <p className="mt-3 font-body text-sm text-[#1a1c3a]/80 sm:text-base">
-            {earned ? 'Este certificado comprova que' : 'Este certificado está sendo preparado para'}
+            {earned
+              ? t('This certificate shows that', 'Este certificado comprova que')
+              : t('This certificate is being prepared for', 'Este certificado está sendo preparado para')}
           </p>
           <p className="mx-auto mt-1 w-fit max-w-full border-b-4 border-[#c9962b] px-3 pb-1 font-pixel text-2xl break-words text-[#8a3d22] sm:text-3xl">
             {name}
           </p>
           <p className="mx-auto mt-3 max-w-md font-body text-sm leading-relaxed sm:text-base">
             {earned
-              ? 'concluiu as 5 missões científicas da expedição e deixou a base de Arcadia Planitia pronta para os próximos astronautas.'
-              : `já concluiu ${done} de ${TOTAL_MISSIONS} missões científicas. Complete todas as missões para receber o certificado com o troféu da expedição.`}
+              ? t(
+                  'finished the 5 science missions of the expedition and left the Arcadia Planitia base ready for the next astronauts.',
+                  'concluiu as 5 missões científicas da expedição e deixou a base de Arcadia Planitia pronta para os próximos astronautas.',
+                )
+              : t(
+                  `has already finished ${done} of ${TOTAL_MISSIONS} science missions. Finish every mission to receive the certificate with the expedition trophy.`,
+                  `já concluiu ${done} de ${TOTAL_MISSIONS} missões científicas. Complete todas as missões para receber o certificado com o troféu da expedição.`,
+                )}
           </p>
 
-          <p className="mt-4 font-pixel text-[10px] tracking-widest text-[#8a5a12] uppercase sm:text-xs">Insígnias</p>
-          <ul className="mt-2 grid grid-cols-5 gap-1 sm:gap-2" aria-label="Insígnias das missões">
+          <p className="mt-4 font-pixel text-[10px] tracking-widest text-[#8a5a12] uppercase sm:text-xs">{t('Insignias', 'Insígnias')}</p>
+          <ul className="mt-2 grid grid-cols-5 gap-1 sm:gap-2" aria-label={t('Mission insignias', 'Insígnias das missões')}>
             {MISSION_BADGES.map((badge) => {
               const has = level > badge.id
+              const copy = badgeCopy(badge.id, t)
               return (
                 <li
                   key={badge.id}
                   className="flex flex-col items-center gap-1"
-                  aria-label={`${badge.title}: ${has ? 'conquistada' : 'bloqueada'}`}
+                  aria-label={t(
+                    `${copy.title}: ${has ? 'earned' : 'locked'}`,
+                    `${copy.title}: ${has ? 'conquistada' : 'bloqueada'}`,
+                  )}
                 >
                   <MissionMedal badge={badge} earned={has} sizeClass="size-11 sm:size-14" iconClass="size-5 sm:size-7" />
                   <span
                     className={`font-body text-[11px] leading-tight font-bold sm:text-xs ${has ? '' : 'text-[#1a1c3a]/45'}`}
                   >
-                    {badge.title}
+                    {copy.title}
                   </span>
                 </li>
               )
@@ -118,23 +132,27 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
 
           <dl className="mt-4 grid grid-cols-2 gap-2 text-left sm:grid-cols-3">
             <div className="border-2 border-[#c9962b]/60 bg-white/55 px-3 py-2">
-              <dt className="font-pixel text-[10px] text-[#8a5a12] uppercase">Missões concluídas</dt>
+              <dt className="font-pixel text-[10px] text-[#8a5a12] uppercase">{t('Missions complete', 'Missões concluídas')}</dt>
               <dd className="font-pixel text-xl tabular-nums">
                 {done}
-                <span className="text-sm text-[#1a1c3a]/60"> de {TOTAL_MISSIONS}</span>
+                <span className="text-sm text-[#1a1c3a]/60"> {t('of', 'de')} {TOTAL_MISSIONS}</span>
               </dd>
             </div>
             <div className="border-2 border-[#c9962b]/60 bg-white/55 px-3 py-2">
-              <dt className="font-pixel text-[10px] text-[#8a5a12] uppercase">Insígnia do traje</dt>
+              <dt className="font-pixel text-[10px] text-[#8a5a12] uppercase">{t('Suit insignia', 'Insígnia do traje')}</dt>
               <dd className="mt-0.5 flex items-center gap-2 font-pixel text-sm">
                 <SuitInsignia id={insignia} />
                 {insigniaLabel}
               </dd>
             </div>
             <div className="col-span-2 border-2 border-[#c9962b]/60 bg-white/55 px-3 py-2 sm:col-span-1">
-              <dt className="font-pixel text-[10px] text-[#8a5a12] uppercase">{earned ? 'Concluído em' : 'Situação'}</dt>
+              <dt className="font-pixel text-[10px] text-[#8a5a12] uppercase">{earned ? t('Finished on', 'Concluído em') : t('Status', 'Situação')}</dt>
               <dd className="font-body text-sm font-bold sm:text-base">
-                {earned ? (completedAt ? DATE_FORMAT.format(completedAt) : 'Expedição completa') : 'Expedição em andamento'}
+                {earned
+                  ? completedAt
+                    ? formatLongDate(completedAt, locale)
+                    : t('Expedition complete', 'Expedição completa')
+                  : t('Expedition in progress', 'Expedição em andamento')}
               </dd>
             </div>
           </dl>
@@ -150,13 +168,13 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
               />
               <div>
                 <p className="border-b-2 border-[#1a1c3a]/50 pr-4 font-pixel text-sm">Capi</p>
-                <p className="mt-0.5 font-body text-xs text-[#1a1c3a]/75">Guia da expedição</p>
+                <p className="mt-0.5 font-body text-xs text-[#1a1c3a]/75">{t('Expedition guide', 'Guia da expedição')}</p>
               </div>
             </div>
             {earned ? (
               <img
                 src={TROPHY_SPRITE}
-                alt="Troféu da expedição"
+                alt={t('Expedition trophy', 'Troféu da expedição')}
                 width={96}
                 height={96}
                 draggable={false}
@@ -167,7 +185,7 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
               <span
                 className="flex size-16 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[#8a5a12]/60 text-[#8a5a12]/70"
                 role="img"
-                aria-label="Troféu bloqueado"
+                aria-label={t('Trophy locked', 'Troféu bloqueado')}
               >
                 <Lock className="size-6" aria-hidden />
               </span>
@@ -175,7 +193,7 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
           </div>
 
           <McButton className="mt-4 min-h-12 w-full px-3 font-pixel text-base font-bold" onClick={onClose}>
-            Voltar ao mapa
+            {t('Back to the map', 'Voltar ao mapa')}
           </McButton>
         </div>
       </ScrollHintArea>

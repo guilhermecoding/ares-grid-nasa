@@ -72,8 +72,13 @@ export interface PlayerProgress {
 }
 
 export interface LogbookNote {
+  /** Text saved before both languages were stored. New pages also fill the fields below. */
   label: string
   detail?: string
+  labelEn?: string
+  labelPt?: string
+  detailEn?: string
+  detailPt?: string
 }
 
 /** One saved logbook page: the photo caption and the checklist of that visit. */
@@ -218,6 +223,21 @@ export function loadProgress(): PlayerProgress {
 export function saveProgress(progress: PlayerProgress): void {
   if (!canUseStorage()) return
   localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
+}
+
+/** Clears missions, the logbook and the certificate. Language choice stays in its own key. */
+export function resetProgress(): PlayerProgress {
+  const fresh: PlayerProgress = {
+    ...DEFAULT_PROGRESS,
+    baseStats: { ...DEFAULT_BASE_STATS },
+    unlockedTools: ['walk', 'clean'],
+    seenDialogIds: [],
+    skippedDialogGroups: [],
+    missionRuns: {},
+    logbook: {},
+  }
+  saveProgress(fresh)
+  return fresh
 }
 
 export function updateProgress(patch: Partial<PlayerProgress>): PlayerProgress {
@@ -506,8 +526,14 @@ function parseLogbook(raw: unknown): LogbookEntries {
     const notes = Array.isArray(entry.notes)
       ? entry.notes.flatMap((note): LogbookNote[] => {
           if (!note || typeof note !== 'object' || typeof (note as LogbookNote).label !== 'string') return []
-          const { label, detail } = note as LogbookNote
-          return [typeof detail === 'string' ? { label, detail } : { label }]
+          const raw = note as LogbookNote
+          const saved: LogbookNote = { label: raw.label }
+          if (typeof raw.detail === 'string') saved.detail = raw.detail
+          if (typeof raw.labelEn === 'string') saved.labelEn = raw.labelEn
+          if (typeof raw.labelPt === 'string') saved.labelPt = raw.labelPt
+          if (typeof raw.detailEn === 'string') saved.detailEn = raw.detailEn
+          if (typeof raw.detailPt === 'string') saved.detailPt = raw.detailPt
+          return [saved]
         })
       : []
     entries[key] = { capturedAt: entry.capturedAt, caption: entry.caption, notes }

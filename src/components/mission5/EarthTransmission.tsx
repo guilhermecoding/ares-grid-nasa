@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Droplets, HeartPulse, RadioTower, SatelliteDish, ShieldAlert, Sprout, Sun, type LucideIcon } from 'lucide-react'
 import { EXPEDITION_MISSIONS } from '../../data/mission5Data'
+import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
 import { BarMeter, GameCta, Tag } from '../missionKit/kit'
 import { MISSION_THEMES } from '../missionKit/themes'
@@ -20,19 +21,22 @@ const STARS = [
   [8, 20], [17, 62], [24, 12], [33, 40], [41, 78], [47, 18], [55, 55], [62, 28], [69, 80], [76, 14], [84, 48], [93, 70],
 ] as const
 
-const STATUS: Record<Stage, string> = {
-  idle: 'Pacote preparado',
-  search: 'Buscando sinal com a Terra…',
-  send: 'Conexão estabelecida · enviando dados',
-  done: 'Dados recebidos na Terra',
-}
-
 /** Cena 6: the five mission reports travel from Mars to Earth one packet at a time. */
 export function EarthTransmission({ onDone }: Props) {
+  const { t, locale } = useI18n()
   const reduceMotion = useReducedMotion()
   const [stage, setStage] = useState<Stage>('idle')
   const [sent, setSent] = useState(0)
   const total = EXPEDITION_MISSIONS.length
+  const status = useMemo<Record<Stage, string>>(
+    () => ({
+      idle: t('Packet ready', 'Pacote preparado'),
+      search: t('Searching for a signal from Earth…', 'Buscando sinal com a Terra…'),
+      send: t('Link open · sending data', 'Conexão estabelecida · enviando dados'),
+      done: t('Data received on Earth', 'Dados recebidos na Terra'),
+    }),
+    [t],
+  )
 
   useEffect(() => {
     if (stage !== 'search') return
@@ -65,10 +69,10 @@ export function EarthTransmission({ onDone }: Props) {
     <div className="gk-panel mx-auto flex max-h-full w-full max-w-3xl flex-col gap-3 overflow-y-auto p-3 md:p-4" style={MISSION_THEMES.comms}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-pixel text-sm text-(--gk-accent) uppercase md:text-base">
-          <SatelliteDish className="size-5" aria-hidden /> Central de comunicação
+          <SatelliteDish className="size-5" aria-hidden /> {t('Communication center', 'Central de comunicação')}
         </h2>
         <Tag tone={stage === 'done' ? 'accent' : stage === 'idle' ? 'muted' : 'energy'}>
-          <span className={stage === 'search' || stage === 'send' ? 'gk-blink' : ''}>●</span> {STATUS[stage]}
+          <span className={stage === 'search' || stage === 'send' ? 'gk-blink' : ''}>●</span> {status[stage]}
         </Tag>
       </div>
 
@@ -82,7 +86,7 @@ export function EarthTransmission({ onDone }: Props) {
             aria-hidden
           />
         ))}
-        <svg viewBox="0 0 600 150" className="absolute inset-0 h-full w-full" role="img" aria-label={`Ligação entre Marte e a Terra: ${STATUS[stage]}`}>
+        <svg viewBox="0 0 600 150" className="absolute inset-0 h-full w-full" role="img" aria-label={t(`Link between Mars and Earth: ${status[stage]}`, `Ligação entre Marte e a Terra: ${status[stage]}`)}>
           <path
             d={LINK}
             fill="none"
@@ -119,10 +123,10 @@ export function EarthTransmission({ onDone }: Props) {
           </span>
         ) : null}
         <Tag tone="energy" className="absolute bottom-1.5 left-1.5">
-          <RadioTower className="size-3" aria-hidden /> Marte · Arcádia
+          <RadioTower className="size-3" aria-hidden /> {t('Mars · Arcadia Planitia', 'Marte · Arcadia Planitia')}
         </Tag>
         <Tag tone="water" className="absolute right-1.5 bottom-1.5">
-          Terra · NASA
+          {t('Earth · NASA', 'Terra · NASA')}
         </Tag>
       </div>
 
@@ -134,7 +138,7 @@ export function EarthTransmission({ onDone }: Props) {
           const sending = stage === 'send' && index === sent
           return (
             <li
-              key={mission}
+              key={mission.en}
               className={`relative flex min-h-20 flex-col items-center justify-center gap-1 border-2 px-1.5 py-2 text-center ${
                 ok ? 'gk-pop border-life bg-life/15' : sending ? 'gk-pulse border-energy bg-[#1c1608]' : 'border-[#30346d] bg-[#04080f]/70'
               } ${index === 4 ? 'col-span-2 sm:col-span-1' : ''}`}
@@ -142,10 +146,10 @@ export function EarthTransmission({ onDone }: Props) {
             >
               <Icon className={`size-6 ${ok ? 'text-[#7dffb0]' : sending ? 'text-energy' : 'text-[#f4fff4]/60'}`} aria-hidden />
               <span className="font-pixel text-[9px] leading-tight text-[#f4fff4] uppercase sm:text-[10px]">
-                {index + 1}. {mission}
+                {index + 1}. {mission[locale]}
               </span>
               <span className={`font-pixel text-[8px] uppercase ${ok ? 'text-[#7dffb0]' : sending ? 'text-energy' : 'text-[#f4fff4]/45'}`}>
-                {ok ? 'Recebido' : sending ? 'Enviando…' : 'Pronto'}
+                {ok ? t('Received', 'Recebido') : sending ? t('Sending…', 'Enviando…') : t('Ready', 'Pronto')}
               </span>
               {ok ? (
                 <span className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full border-2 border-[#04080f] bg-life text-[#04140a]">
@@ -157,7 +161,7 @@ export function EarthTransmission({ onDone }: Props) {
         })}
       </ol>
 
-      <BarMeter label="Relatório transmitido" value={(sent / total) * 100} display={`${sent}/${total}`} color="#5ecf9a" />
+      <BarMeter label={t('Report sent', 'Relatório transmitido')} value={(sent / total) * 100} display={`${sent}/${total}`} color="#5ecf9a" />
 
       {stage === 'idle' ? (
         <GameCta
@@ -166,13 +170,13 @@ export function EarthTransmission({ onDone }: Props) {
             setStage('search')
           }}
         >
-          Transmitir relatório para a Terra
+          {t('Send the report to Earth', 'Transmitir relatório para a Terra')}
         </GameCta>
       ) : stage === 'done' ? (
-        <GameCta onClick={onDone}>Ver a base pronta</GameCta>
+        <GameCta onClick={onDone}>{t('See the finished base', 'Ver a base pronta')}</GameCta>
       ) : (
         <p className="min-h-14 text-center font-pixel text-xs leading-[3.5rem] text-energy uppercase" aria-live="polite">
-          {STATUS[stage]}
+          {status[stage]}
         </p>
       )}
     </div>

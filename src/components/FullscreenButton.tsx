@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useI18n } from '../i18n/locale'
 
 interface Props {
   className: string
@@ -27,6 +28,7 @@ function exitGameFullscreen() {
 
 /** Toggle fullscreen. Sits beside the leave button on the map and in missions. */
 export function FullscreenButton({ className }: Props) {
+  const { t } = useI18n()
   const [active, setActive] = useState(() => isFullscreen())
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export function FullscreenButton({ className }: Props) {
     }
   }, [])
 
-  const label = active ? 'Sair da tela cheia' : 'Tela cheia'
+  const label = active ? t('Exit full screen', 'Sair da tela cheia') : t('Full screen', 'Tela cheia')
 
   return (
     <button

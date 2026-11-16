@@ -1,6 +1,7 @@
 import { Brush } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PANEL_CLEAN_COOLDOWN_MS, PANEL_CLEAN_EMERGENCY_MAX } from '../../data/mission1Data'
+import { useI18n } from '../../i18n/locale'
 import { loadProgress } from '../../services/progressStore'
 
 interface Props {
@@ -22,8 +23,9 @@ function unlockProgress(anchor: number, now: number): number {
 
 /** Round broom button with red progress ring until clean unlocks. */
 export function PanelCleanButton({ firstInstalledAt, lastCleanedAt, onClean, className = '' }: Props) {
+  const { t } = useI18n()
   const [now, setNow] = useState(() => Date.now())
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState(false)
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 250)
@@ -34,15 +36,17 @@ export function PanelCleanButton({ firstInstalledAt, lastCleanedAt, onClean, cla
   const progress = unlockProgress(anchor, now)
   const emergency = loadProgress().baseStats.energy <= PANEL_CLEAN_EMERGENCY_MAX
   const unlocked = emergency || progress >= 1
-  const label = unlocked
-    ? 'Limpar painel'
-    : 'O painel não está muito sujo ainda. Volte mais tarde.'
+  const lockedLabel = t(
+    'The panel is not very dusty yet. Come back later.',
+    'O painel não está muito sujo ainda. Volte mais tarde.',
+  )
+  const label = unlocked ? t('Clean the panel', 'Limpar painel') : lockedLabel
 
   const dashOffset = RING * (1 - progress)
 
   useEffect(() => {
     if (!toast) return
-    const id = window.setTimeout(() => setToast(null), 2200)
+    const id = window.setTimeout(() => setToast(false), 2200)
     return () => clearTimeout(id)
   }, [toast])
 
@@ -62,7 +66,7 @@ export function PanelCleanButton({ firstInstalledAt, lastCleanedAt, onClean, cla
           style={{ touchAction: 'manipulation' }}
           onClick={() => {
             if (!unlocked) {
-              setToast(label)
+              setToast(true)
               return
             }
             onClean()
@@ -87,7 +91,7 @@ export function PanelCleanButton({ firstInstalledAt, lastCleanedAt, onClean, cla
 
         {toast ? (
           <div className="absolute bottom-[calc(100%+0.5rem)] left-1/2 z-30 w-max max-w-[14rem] -translate-x-1/2 rounded border border-danger/50 bg-[#0a1628] px-2 py-1.5 font-pixel text-[9px] leading-snug text-[#ffd0d8] shadow-lg sm:text-[10px]">
-            {toast}
+            {lockedLabel}
           </div>
         ) : null}
       </div>

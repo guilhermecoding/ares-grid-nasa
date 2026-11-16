@@ -1,5 +1,7 @@
 import { Check, Lock, NotebookPen, X } from 'lucide-react'
 import { completedMissions, logbookCaption, MISSION_BADGES, TOTAL_MISSIONS, type MissionBadge } from '../../data/missionBadges'
+import { localizedNote, useI18n } from '../../i18n/locale'
+import { badgeCopy, formatLongDate } from '../../i18n/worldCopy'
 import type { LogbookEntries, LogbookEntry } from '../../services/progressStore'
 import { soundEngine } from '../../services/soundEngine'
 import { LogbookPhoto } from '../logbook/LogbookPhoto'
@@ -12,9 +14,9 @@ interface Props {
   onClose: () => void
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
-
 function LogbookPage({ badge, entry, done }: { badge: MissionBadge; entry?: LogbookEntry; done: boolean }) {
+  const { locale, t } = useI18n()
+  const copy = badgeCopy(badge.id, t)
   const Icon = badge.icon
   return (
     <li className="border-2 border-[#30346d]/40 bg-white/60 p-3">
@@ -28,10 +30,14 @@ function LogbookPage({ badge, entry, done }: { badge: MissionBadge; entry?: Logb
         </span>
         <div className="min-w-0">
           <p className="font-pixel text-xs leading-snug uppercase sm:text-sm">
-            Missão {badge.id} · {badge.title}
+            {t(`Mission ${badge.id}`, `Missão ${badge.id}`)} · {copy.title}
           </p>
           <p className="font-body text-xs text-[#1a1c3a]/70 sm:text-sm">
-            {entry ? `Registrada em ${DATE_FORMAT.format(entry.capturedAt)}` : done ? 'Missão concluída' : badge.mission}
+            {entry
+              ? t(`Saved on ${formatLongDate(entry.capturedAt, locale)}`, `Registrada em ${formatLongDate(entry.capturedAt, locale)}`)
+              : done
+                ? t('Mission complete', 'Missão concluída')
+                : copy.mission}
           </p>
         </div>
       </div>
@@ -40,22 +46,28 @@ function LogbookPage({ badge, entry, done }: { badge: MissionBadge; entry?: Logb
         <div className="mt-3 grid gap-3 sm:grid-cols-[13rem_1fr]">
           <LogbookPhoto badge={badge} caption={entry?.caption ?? logbookCaption(badge.id)} captured className="self-start" />
           {entry && entry.notes.length > 0 ? (
-            <ul className="grid content-start gap-1.5" aria-label={`Anotações da Missão ${badge.id}`}>
-              {entry.notes.map((note) => (
-                <li key={note.label} className="flex items-start gap-2">
+            <ul className="grid content-start gap-1.5" aria-label={t(`Notes for Mission ${badge.id}`, `Anotações da Missão ${badge.id}`)}>
+              {entry.notes.map((note) => {
+                const shown = localizedNote(note, locale)
+                return (
+                <li key={shown.label} className="flex items-start gap-2">
                   <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center bg-[#1f8a52]" aria-hidden>
                     <Check className="size-3.5 text-white" strokeWidth={3.5} />
                   </span>
                   <span className="min-w-0 font-body text-sm leading-snug">
-                    <strong className="text-[#145c35]">{note.label}</strong>
-                    {note.detail ? <span className="block text-[#1a1c3a]/75">{note.detail}</span> : null}
+                    <strong className="text-[#145c35]">{shown.label}</strong>
+                    {shown.detail ? <span className="block text-[#1a1c3a]/75">{shown.detail}</span> : null}
                   </span>
                 </li>
-              ))}
+                )
+              })}
             </ul>
           ) : (
             <p className="self-center font-body text-sm text-[#1a1c3a]/75">
-              Jogue esta missão de novo para anotar os detalhes da visita nesta página.
+              {t(
+                'Play this mission again to write the notes for this page.',
+                'Jogue esta missão de novo para anotar os detalhes da visita nesta página.',
+              )}
             </p>
           )}
         </div>
@@ -63,7 +75,10 @@ function LogbookPage({ badge, entry, done }: { badge: MissionBadge; entry?: Logb
         <div className="mt-3 flex items-center gap-3 border-2 border-dashed border-[#30346d]/35 px-3 py-4">
           <Lock className="size-5 shrink-0 text-[#30346d]/60" aria-hidden />
           <p className="font-body text-sm text-[#1a1c3a]/75">
-            Conclua a Missão {badge.id} para tirar a foto científica desta página.
+            {t(
+              `Finish Mission ${badge.id} to take the science photo for this page.`,
+              `Conclua a Missão ${badge.id} para tirar a foto científica desta página.`,
+            )}
           </p>
         </div>
       )}
@@ -73,6 +88,7 @@ function LogbookPage({ badge, entry, done }: { badge: MissionBadge; entry?: Logb
 
 /** Missions-screen menu with every photo and note the player saved. */
 export function LogbookMenu({ level, entries, onClose }: Props) {
+  const { t } = useI18n()
   useEscapeKey(onClose)
   const pages = completedMissions(level)
 
@@ -92,16 +108,19 @@ export function LogbookMenu({ level, entries, onClose }: Props) {
           <div className="min-w-0">
             <h2 id="logbook-menu-title" className="flex items-center gap-2 font-pixel text-sm tracking-wide uppercase sm:text-base">
               <NotebookPen className="size-5 shrink-0" aria-hidden />
-              Diário de Bordo
+              {t('Logbook', 'Diário de Bordo')}
             </h2>
             <p className="mt-1 font-body text-sm text-[#1a1c3a]/80">
-              {pages} de {TOTAL_MISSIONS} páginas registradas em Arcadia Planitia
+              {t(
+                `${pages} of ${TOTAL_MISSIONS} pages saved in Arcadia Planitia`,
+                `${pages} de ${TOTAL_MISSIONS} páginas registradas em Arcadia Planitia`,
+              )}
             </p>
           </div>
           <button
             type="button"
             autoFocus
-            aria-label="Fechar o diário"
+            aria-label={t('Close the logbook', 'Fechar o diário')}
             className="flex size-11 shrink-0 items-center justify-center border-2 border-[#1a1c3a] bg-[#30346d] text-[#f4fff4]"
             style={{ touchAction: 'manipulation' }}
             onClick={() => {

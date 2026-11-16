@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
 import type { MissionBadge } from '../../data/missionBadges'
+import { useI18n } from '../../i18n/locale'
+import { badgeCopy } from '../../i18n/worldCopy'
 
 interface Props {
   badge: MissionBadge
@@ -18,12 +20,14 @@ const CORNERS = [
 
 /** Science photo of a mission: viewfinder before the shot, stamped print after. */
 export function LogbookPhoto({ badge, caption, captured, className = '' }: Props) {
+  const { t } = useI18n()
+  const copy = badgeCopy(badge.id, t)
   return (
     <figure className={`border-2 border-[#30346d] bg-white p-1.5 shadow-[3px_3px_0_#30346d] ${className}`}>
       <div className="relative aspect-[4/3] overflow-hidden bg-[#1a1c3a]">
         <img
           src={badge.photo}
-          alt={badge.photoAlt}
+          alt={copy.photoAlt}
           width={480}
           height={360}
           draggable={false}
@@ -47,7 +51,7 @@ export function LogbookPhoto({ badge, caption, captured, className = '' }: Props
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 420, damping: 16, delay: 0.25 }}
             >
-              Missão {badge.id}
+              {t(`Mission ${badge.id}`, `Missão ${badge.id}`)}
             </motion.span>
           </>
         ) : (
@@ -57,7 +61,7 @@ export function LogbookPhoto({ badge, caption, captured, className = '' }: Props
             ))}
             <span className="absolute top-1/2 left-1/2 size-6 -translate-1/2 rounded-full border-2 border-white/80" />
             <span className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[#0a1628]/80 px-2 py-0.5 font-pixel text-[10px] tracking-widest text-white uppercase">
-              Câmera pronta
+              {t('Camera ready', 'Câmera pronta')}
             </span>
           </div>
         )}

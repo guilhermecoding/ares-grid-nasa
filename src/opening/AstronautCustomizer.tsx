@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import {
   BACKPACK_STYLES,
-  CAPI_CONFIRM_TEMPLATE,
+  CAPI_CONFIRM,
   HELMET_STYLES,
   INSIGNIAS,
   NAME_SUGGESTIONS,
@@ -13,6 +13,7 @@ import {
   type SuitColorId,
 } from '../data/openingData'
 import { MEDIA } from '../constants/mediaAssets'
+import { useI18n } from '../i18n/locale'
 import { CapiDialog } from './CapiDialog'
 import { LaunchSpaceCanvas } from './LaunchSpaceCanvas'
 import { McButton } from './McButton'
@@ -105,6 +106,8 @@ function SelectChip({
 }
 
 export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerProps) {
+  const { t } = useI18n()
+  const gear = (item: { en: string; label: string }) => t(item.en, item.label)
   const [name, setName] = useState(initial?.name ?? '')
   const [suitColor, setSuitColor] = useState<SuitColorId>(initial?.suitColor ?? 'nasa-white')
   const [helmet, setHelmet] = useState<HelmetId>(initial?.helmet ?? 'classic')
@@ -113,14 +116,14 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
   const [confirmed, setConfirmed] = useState(false)
 
   const profile: AstronautProfile = {
-    name: name.trim() || 'Astronauta',
+    name: name.trim() || t('Astronaut', 'Astronauta'),
     suitColor,
     helmet,
     backpack,
     insignia,
   }
 
-  const confirmLine = CAPI_CONFIRM_TEMPLATE.replace('{name}', profile.name)
+  const confirmLine = t(CAPI_CONFIRM.en, CAPI_CONFIRM.pt).replace('{name}', profile.name)
 
   if (confirmed) {
     return (
@@ -146,7 +149,7 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
         <header className="mb-2 flex shrink-0 items-end justify-between gap-2 border-b border-cyan-hud/30 pb-2 sm:mb-3">
           <div>
             <p className="font-pixel text-[9px] tracking-[0.22em] text-cyan-hud/70 uppercase sm:text-[10px]">SYS // LOADOUT</p>
-            <h2 className="font-pixel text-lg leading-none text-void-100 sm:text-2xl md:text-3xl">Monte seu astronauta</h2>
+            <h2 className="font-pixel text-lg leading-none text-void-100 sm:text-2xl md:text-3xl">{t('Build your astronaut', 'Monte seu astronauta')}</h2>
           </div>
           <p className="hidden font-pixel text-[10px] text-void-300 sm:block">SLOT 01</p>
         </header>
@@ -157,7 +160,7 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
           <section className="relative flex shrink-0 flex-col items-center justify-center bg-[#0a1628]/85 px-2 py-2 sm:py-3 landscape:h-full md:h-full">
             <HudCorners />
             <div className="pointer-events-none absolute inset-1 border border-cyan-hud/25" aria-hidden />
-            <p className="mb-1 font-pixel text-[9px] tracking-widest text-cyan-hud/60 uppercase">Preview</p>
+            <p className="mb-1 font-pixel text-[9px] tracking-widest text-cyan-hud/60 uppercase">{t('Preview', 'Prévia')}</p>
             <div className="relative flex items-center justify-center">
               <div className="absolute inset-0 m-auto h-24 w-24 rounded-full bg-cyan-hud/10 blur-2xl sm:h-32 sm:w-32" aria-hidden />
               <AstronautPreview profile={profile} compact />
@@ -166,7 +169,7 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
             <div className="mt-1 flex gap-1.5">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: SUIT_COLORS.find((c) => c.id === suitColor)?.hex }} />
               <span className="font-pixel text-[9px] text-void-300 uppercase">
-                {HELMET_STYLES.find((h) => h.id === helmet)?.label}
+                {gear(HELMET_STYLES.find((h) => h.id === helmet) ?? HELMET_STYLES[0])}
               </span>
             </div>
           </section>
@@ -179,12 +182,12 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
               <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 sm:gap-2.5 md:grid-cols-2 md:gap-x-4 md:gap-y-2">
                 {/* Name — full width */}
                 <div className="md:col-span-2">
-                  <SlotLabel>Callsign</SlotLabel>
+                  <SlotLabel>{t('Callsign', 'Nome')}</SlotLabel>
                   <input
                     type="text"
                     value={name}
                     maxLength={16}
-                    placeholder="Digite seu nome"
+                    placeholder={t('Type your name', 'Digite seu nome')}
                     className="min-h-10 w-full border-2 border-[#f4fff4]/35 bg-[#1a1c3a] px-3 font-pixel text-sm text-[#f4fff4] placeholder:text-[#f4fff4]/40 focus:border-cyan-hud focus:outline-none sm:min-h-11"
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -207,14 +210,14 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
                 </div>
 
                 <div>
-                  <SlotLabel>Traje</SlotLabel>
+                  <SlotLabel>{t('Suit', 'Traje')}</SlotLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {SUIT_COLORS.map((c) => (
                       <button
                         key={c.id}
                         type="button"
-                        title={c.label}
-                        aria-label={c.label}
+                        title={gear(c)}
+                        aria-label={gear(c)}
                         className={`h-9 w-9 border-2 sm:h-10 sm:w-10 ${
                           suitColor === c.id
                             ? 'border-cyan-hud shadow-[0_0_10px_rgba(94,231,255,0.55)]'
@@ -228,14 +231,14 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
                 </div>
 
                 <div>
-                  <SlotLabel>Insígnia</SlotLabel>
+                  <SlotLabel>{t('Insignia', 'Insígnia')}</SlotLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {INSIGNIAS.map((i) => (
                       <SelectChip
                         key={i.id}
                         dense
                         active={insignia === i.id}
-                        label={i.label}
+                        label={gear(i)}
                         onClick={() => setInsignia(i.id)}
                       />
                     ))}
@@ -243,14 +246,14 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
                 </div>
 
                 <div>
-                  <SlotLabel>Visor</SlotLabel>
+                  <SlotLabel>{t('Visor', 'Visor')}</SlotLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {HELMET_STYLES.map((h) => (
                       <SelectChip
                         key={h.id}
                         dense
                         active={helmet === h.id}
-                        label={h.label}
+                        label={gear(h)}
                         onClick={() => setHelmet(h.id)}
                       />
                     ))}
@@ -258,14 +261,14 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
                 </div>
 
                 <div>
-                  <SlotLabel>Mochila</SlotLabel>
+                  <SlotLabel>{t('Backpack', 'Mochila')}</SlotLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {BACKPACK_STYLES.map((b) => (
                       <SelectChip
                         key={b.id}
                         dense
                         active={backpack === b.id}
-                        label={b.label}
+                        label={gear(b)}
                         onClick={() => setBackpack(b.id)}
                       />
                     ))}
@@ -278,7 +281,7 @@ export function AstronautCustomizer({ initial, onConfirm }: AstronautCustomizerP
                   className="min-h-11 w-full px-4 font-pixel text-base font-bold sm:min-h-12 sm:text-lg"
                   onClick={() => setConfirmed(true)}
                 >
-                  Confirmar Astronauta
+                  {t('Confirm astronaut', 'Confirmar astronauta')}
                 </McButton>
               </div>
             </div>

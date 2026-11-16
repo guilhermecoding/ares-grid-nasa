@@ -13,16 +13,25 @@ import {
   type SiteId,
 } from '../../data/mission1Data'
 import { ScrollHintArea } from '../../components/ScrollHintArea'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
 import { marsSolarAtArcadia, type MarsSolarReading, type SolarClockId } from '../../services/mars24'
 import { EfficiencyGauge } from '../EfficiencyGauge'
 import { SciTerm } from '../SciTerm'
 
-const CLOCK_LABELS: Record<SolarClockId, string> = {
-  morning: 'Manhã (09:00)',
-  noon: 'Meio-dia (12:00)',
-  afternoon: 'Tarde (15:00)',
+const CLOCK_LABELS: Record<SolarClockId, { en: string; pt: string }> = {
+  morning: { en: 'Morning (09:00)', pt: 'Manhã (09:00)' },
+  noon: { en: 'Noon (12:00)', pt: 'Meio-dia (12:00)' },
+  afternoon: { en: 'Afternoon (15:00)', pt: 'Tarde (15:00)' },
+}
+
+function cardinalName(azimuth: number, t: (en: string, pt: string) => string) {
+  const word = azimuthCardinal(azimuth)
+  if (word === 'Norte') return t('North', 'Norte')
+  if (word === 'Leste') return t('East', 'Leste')
+  if (word === 'Oeste') return t('West', 'Oeste')
+  return t('South', 'Sul')
 }
 
 type ClockChoice = 'now' | SolarClockId
@@ -47,12 +56,6 @@ function solarView(reading: MarsSolarReading, choice: ClockChoice) {
   }
 }
 
-const FORMULA_LINES = [
-  'Aqui está a fórmula Mars24 da NASA para a altura do Sol!',
-  MARS24_FORMULA,
-  'Com ela a gente calcula a elevação solar e ajusta o painel.',
-] as const
-
 interface Props {
   site: SiteId
   /** Restore last saved panel orientation when replaying Missão 01. */
@@ -74,6 +77,7 @@ export function SolarCalcChallenge({
   onConfirm,
   onSeasonChange,
 }: Props) {
+  const { t } = useI18n()
   const [season, setSeason] = useState<SeasonId>(initialSeason)
   const [asked, setAsked] = useState(restoreLayout)
   const [formulaOpen, setFormulaOpen] = useState(false)
@@ -88,6 +92,20 @@ export function SolarCalcChallenge({
   const efficiency = useMemo(
     () => estimatePanelEfficiency({ season, azimuth, tilt, site }),
     [season, azimuth, tilt, site],
+  )
+  const formulaLines = useMemo(
+    () => [
+      t(
+        'Here is the NASA Mars24 formula for the height of the Sun!',
+        'Aqui está a fórmula Mars24 da NASA para a altura do Sol!',
+      ),
+      MARS24_FORMULA,
+      t(
+        'We use it to find the solar elevation and aim the panel.',
+        'Com ela a gente calcula a elevação solar e ajusta o painel.',
+      ),
+    ],
+    [t],
   )
   const generationWatts = estimateGenerationWatts(efficiency)
   const seasonIdeal = SEASONS.find((item) => item.id === season)?.idealTilt ?? 35
@@ -134,12 +152,12 @@ export function SolarCalcChallenge({
               />
             </div>
             <div className="min-w-0 rounded bg-[#0a1628]/80 px-1.5 py-1 shadow-[0_4px_16px_rgba(0,0,0,0.4)] sm:px-2 sm:py-1.5">
-              <p className="font-pixel text-[9px] text-cyan-hud sm:text-[10px]">Geração estimada</p>
+              <p className="font-pixel text-[9px] text-cyan-hud sm:text-[10px]">{t('Estimated power', 'Geração estimada')}</p>
               <p className="font-pixel text-xs text-[#f4fff4] sm:text-sm">
                 {generationWatts} W ({efficiency}%)
               </p>
               <p className="text-[9px] leading-tight text-void-300 sm:text-[10px] sm:leading-snug">
-                Estimativa do jogo, não é medida da NASA.
+                {t('A game estimate, not a NASA measurement.', 'Estimativa do jogo, não é medida da NASA.')}
               </p>
             </div>
           </div>
@@ -147,7 +165,7 @@ export function SolarCalcChallenge({
           <div className="absolute inset-x-[4%] bottom-[6%] flex justify-center sm:inset-x-[8%] sm:bottom-[8%]">
             <img
               src={MEDIA.mission1.panel}
-              alt="Painel solar"
+              alt={t('Solar panel', 'Painel solar')}
               draggable={false}
               className="w-[min(92%,26rem)] origin-bottom drop-shadow-[0_16px_28px_rgba(0,0,0,0.45)] transition-transform duration-150 sm:w-[min(88%,30rem)]"
               style={{
@@ -168,7 +186,7 @@ export function SolarCalcChallenge({
                 fontSize="4"
                 fontFamily="monospace"
               >
-                Arco do Sol
+                {t('Path of the Sun', 'Arco do Sol')}
               </text>
             </svg>
           )}
@@ -180,13 +198,15 @@ export function SolarCalcChallenge({
           frameClassName="max-h-[48%] min-h-0 md:max-h-none md:w-[min(100%,22rem)] md:shrink-0"
           className="flex max-h-[48%] min-h-0 flex-col gap-2 rounded-none border-2 border-cyan-hud/40 bg-[#0a1628]/92 p-3 md:max-h-none"
         >
-          <p className="font-pixel text-sm text-cyan-hud">Desafio 1.2 — Cálculo solar</p>
+          <p className="font-pixel text-sm text-cyan-hud">
+            {t('Challenge 1.2 — Solar calculation', 'Desafio 1.2 — Cálculo solar')}
+          </p>
           <p className="text-xs text-void-200">
             <SciTerm term="Arcadia Planitia" /> · Lat {MISSION1_META.lat} · Lon {MISSION1_META.lon}
           </p>
 
           <McButton className="min-h-11 w-full font-pixel text-xs font-bold" onClick={() => readSolarTime('now')}>
-            Horário solar da NASA
+            {t('NASA solar time', 'Horário solar da NASA')}
           </McButton>
           <div className="grid grid-cols-3 gap-1">
             {(Object.keys(CLOCK_LABELS) as SolarClockId[]).map((id) => (
@@ -198,40 +218,47 @@ export function SolarCalcChallenge({
                 }`}
                 onClick={() => readSolarTime(id)}
               >
-                {CLOCK_LABELS[id]}
+                {t(CLOCK_LABELS[id].en, CLOCK_LABELS[id].pt)}
               </button>
             ))}
           </div>
           {view ? (
             <div className="grid grid-cols-3 gap-1 text-center">
               <div className="border border-cyan-hud/30 px-1 py-1">
-                <p className="text-[10px] text-void-300">Elevação (h)</p>
+                <p className="text-[10px] text-void-300">{t('Elevation (h)', 'Elevação (h)')}</p>
                 <p className="font-pixel text-sm text-[#f4fff4]">{Math.round(view.elevationDeg)}°</p>
               </div>
               <div className="border border-cyan-hud/30 px-1 py-1">
-                <p className="text-[10px] text-void-300">Zênite (Z)</p>
+                <p className="text-[10px] text-void-300">{t('Zenith (Z)', 'Zênite (Z)')}</p>
                 <p className="font-pixel text-sm text-[#f4fff4]">{Math.round(view.zenithDeg)}°</p>
               </div>
               <div className="border border-cyan-hud/30 px-1 py-1">
-                <p className="text-[10px] text-void-300">Alvo</p>
-                <p className="font-pixel text-xs text-energy">Sul · {view.suggestedTilt}°</p>
+                <p className="text-[10px] text-void-300">{t('Target', 'Alvo')}</p>
+                <p className="font-pixel text-xs text-energy">
+                  {t('South', 'Sul')} · {view.suggestedTilt}°
+                </p>
               </div>
             </div>
           ) : null}
           {view ? (
             <p className="text-sm text-void-100">
-              Horário solar {view.lmst}.
-              {view.sunUp ? '' : ' O Sol está abaixo do horizonte.'}
+              {t(`Solar time ${view.lmst}.`, `Horário solar ${view.lmst}.`)}
+              {view.sunUp ? '' : t(' The Sun is below the horizon.', ' O Sol está abaixo do horizonte.')}
             </p>
           ) : null}
           {solarError ? (
-            <p className="text-sm text-danger">Não consegui ler o horário agora. Use a fórmula Mars24.</p>
+            <p className="text-sm text-danger">
+              {t(
+                'I could not read the time right now. Use the Mars24 formula.',
+                'Não consegui ler o horário agora. Use a fórmula Mars24.',
+              )}
+            </p>
           ) : null}
           <McButton className="min-h-11 w-full font-pixel text-xs font-bold" onClick={applyRecommended}>
-            Ajustar para Sul e {recommendedTilt}°
+            {t(`Aim south at ${recommendedTilt}°`, `Ajustar para Sul e ${recommendedTilt}°`)}
           </McButton>
 
-          <p className="font-pixel text-[10px] text-void-300">Estação marciana</p>
+          <p className="font-pixel text-[10px] text-void-300">{t('Martian season', 'Estação marciana')}</p>
           <div className="flex flex-wrap gap-2">
             {SEASONS.map((s) => (
               <button
@@ -242,18 +269,18 @@ export function SolarCalcChallenge({
                 }`}
                 onClick={() => changeSeason(s.id)}
               >
-                {s.label}
+                {t(s.label.en, s.label.pt)}
               </button>
             ))}
           </div>
 
           {!asked ? (
             <McButton className="min-h-12 w-full font-pixel font-bold" onClick={() => setAsked(true)}>
-              Pedir Cálculo à Capi
+              {t('Ask Capi for the calculation', 'Pedir Cálculo à Capi')}
             </McButton>
           ) : (
             <>
-              <p className="text-sm text-void-100">{MARS24_KID}</p>
+              <p className="text-sm text-void-100">{t(MARS24_KID.en, MARS24_KID.pt)}</p>
               <button
                 type="button"
                 className="min-h-11 shrink-0 border border-cyan-hud/40 px-3 text-left text-xs text-cyan-hud"
@@ -262,7 +289,7 @@ export function SolarCalcChallenge({
                   setFormulaOpen(true)
                 }}
               >
-                Ver fórmula da NASA (Mars24)
+                {t('See the NASA formula (Mars24)', 'Ver fórmula da NASA (Mars24)')}
               </button>
 
               <McButton
@@ -273,7 +300,7 @@ export function SolarCalcChallenge({
                   onConfirm({ season, azimuth, tilt, efficiency })
                 }}
               >
-                {installed ? 'Painel ativo!' : 'Confirmar instalação'}
+                {installed ? t('Panel is on!', 'Painel ativo!') : t('Confirm installation', 'Confirmar instalação')}
               </McButton>
             </>
           )}
@@ -286,7 +313,7 @@ export function SolarCalcChallenge({
           <div className="mx-auto grid max-w-3xl grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
             <div>
               <label className="block font-pixel text-xs text-void-200 sm:text-sm">
-                Azimute · {azimuthCardinal(azimuth)} ({azimuth}°)
+                {t('Azimuth', 'Azimute')} · {cardinalName(azimuth, t)} ({azimuth}°)
                 <input
                   type="range"
                   min={-180}
@@ -309,14 +336,14 @@ export function SolarCalcChallenge({
                       }`}
                       onClick={() => setAzimuth(point.azimuth)}
                     >
-                      {point.label}
+                      {t(point.label.en, point.label.pt)}
                     </button>
                   )
                 })}
               </div>
             </div>
             <label className="block font-pixel text-xs text-void-200 sm:text-sm">
-              Inclinação · {tilt}°
+              {t('Tilt', 'Inclinação')} · {tilt}°
               <input
                 type="range"
                 min={0}
@@ -332,7 +359,7 @@ export function SolarCalcChallenge({
 
       <PixelDialogBox
         open={formulaOpen}
-        lines={FORMULA_LINES}
+        lines={formulaLines}
         title="Capi"
         dialogId="m1-mars24-formula"
         onSkip={() => setFormulaOpen(false)}

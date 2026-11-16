@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useEffect } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
@@ -10,6 +11,7 @@ interface Props {
 
 /** Full-screen GAME OVER when outdoor wellbeing hits zero. */
 export function GameOverOverlay({ onExit }: Props) {
+  const { t } = useI18n()
   useEffect(() => {
     soundEngine.fail()
   }, [])
@@ -37,10 +39,13 @@ export function GameOverOverlay({ onExit }: Props) {
           GAME OVER
         </h2>
         <p id="m1-game-over-body" className="mt-3 font-pixel text-[11px] leading-snug text-[#f4fff4] sm:text-sm">
-          A saúde chegou a zero — volte à base! A Saúde volta a 70. Se a missão não foi concluída, ela começa do início.
+          {t(
+            'Health hit zero — head back to base! Health goes back to 70. If you did not finish the mission, it starts over.',
+            'A saúde chegou a zero — volte à base! A Saúde volta a 70. Se a missão não foi concluída, ela começa do início.',
+          )}
         </p>
         <McButton className="mt-5 min-h-12 w-full font-pixel text-lg font-bold" onClick={onExit}>
-          Voltar ao mapa
+          {t('Back to the map', 'Voltar ao mapa')}
         </McButton>
       </motion.div>
     </div>

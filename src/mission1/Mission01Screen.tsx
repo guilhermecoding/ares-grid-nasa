@@ -26,6 +26,7 @@ import {
   type Mission1PanelSave,
 } from '../services/progressStore'
 import type { BaseStats } from '../types/game'
+import { useI18n } from '../i18n/locale'
 import { MarsBackground } from './MarsBackground'
 import { GameOverOverlay } from './steps/GameOverOverlay'
 import { IntroHud } from './steps/IntroHud'
@@ -102,6 +103,7 @@ export default function Mission01Screen({
   onReady,
   stats = DEFAULT_STATS,
 }: Props) {
+  const { t } = useI18n()
   const savedPanel = useMemo(() => loadProgress().mission1Panel, [])
   const savedRun = useMemo(() => loadProgress().missionRuns.m1, [])
   const hasSavedPanel = !!savedPanel
@@ -152,7 +154,8 @@ export default function Mission01Screen({
   const outdoor = isOutdoorMission1Step(step)
   /** The panel-test dialog sits in the center — park indicators next to exit. */
   const indicatorsBesideExit = step === 'step3_panel_test'
-  const siteLabel = INSTALL_SITES.find((s) => s.id === site)?.name ?? site
+  const siteOption = INSTALL_SITES.find((item) => item.id === site)
+  const transmissionLines = useMemo(() => TRANSMISSION_LINES.map((line) => t(line.en, line.pt)), [t])
 
   const hudStats = useMemo(
     () => deriveMissionStats(stats, step, efficiency, panelInstalled, panelTest, wellbeingLive),
@@ -283,8 +286,8 @@ export default function Mission01Screen({
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
           onClick={() => onExit(hudStats)}
-          aria-label="Sair da missão"
-          title="Sair"
+          aria-label={t('Leave the mission', 'Sair da missão')}
+          title={t('Leave', 'Sair')}
         >
           <svg viewBox="0 0 24 24" className="size-7" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="square" strokeLinejoin="miter">
             <path d="M4 3h10v18H4z" />
@@ -383,17 +386,53 @@ export default function Mission01Screen({
           <MarsBackground hour={hour} season={season} storm={false} dustIntensity={0.25} />
           <MissionLogbook
             missionId={1}
-            subtitle="Checklist da missão cumprida"
+            subtitle={t('Mission checklist complete', 'Checklist da missão cumprida')}
             items={[
-              { label: 'Local de instalação escolhido', detail: siteLabel },
-              { label: 'Painéis solares ajustados', detail: `Inclinação ${tilt}°` },
+              {
+                label: 'Local de instalação escolhido',
+                labelPt: 'Local de instalação escolhido',
+                labelEn: 'Install site chosen',
+                detail: siteOption?.name.pt ?? site,
+                detailPt: siteOption?.name.pt ?? site,
+                detailEn: siteOption?.name.en ?? site,
+              },
+              {
+                label: 'Painéis solares ajustados',
+                labelPt: 'Painéis solares ajustados',
+                labelEn: 'Solar panels adjusted',
+                detail: `Inclinação ${tilt}°`,
+                detailPt: `Inclinação ${tilt}°`,
+                detailEn: `Tilt ${tilt}°`,
+              },
               {
                 label: 'Condição do painel testada',
+                labelPt: 'Condição do painel testada',
+                labelEn: 'Panel condition tested',
                 detail:
                   panelTest === 'dust' ? 'Poeira cobriu as células e a eficiência caiu' : 'Limpeza removeu a poeira',
+                detailPt:
+                  panelTest === 'dust' ? 'Poeira cobriu as células e a eficiência caiu' : 'Limpeza removeu a poeira',
+                detailEn:
+                  panelTest === 'dust'
+                    ? 'Dust covered the cells and efficiency dropped'
+                    : 'Cleaning cleared the dust',
               },
-              { label: 'Energia externa ativada', detail: 'Base pronta para explorar' },
-              { label: 'Registro científico no diário', detail: 'Evento da Missão 1 documentado' },
+              {
+                label: 'Energia externa ativada',
+                labelPt: 'Energia externa ativada',
+                labelEn: 'Outside power is on',
+                detail: 'Base pronta para explorar',
+                detailPt: 'Base pronta para explorar',
+                detailEn: 'The base is ready to explore',
+              },
+              {
+                label: 'Registro científico no diário',
+                labelPt: 'Registro científico no diário',
+                labelEn: 'Science note in the logbook',
+                detail: 'Evento da Missão 1 documentado',
+                detailPt: 'Evento da Missão 1 documentado',
+                detailEn: 'Mission 1 event written down',
+              },
             ]}
             onDone={() => setStep('step5_transmission')}
           />
@@ -401,7 +440,7 @@ export default function Mission01Screen({
       )}
 
       {!gameOver && step === 'step5_transmission' && (
-        <MissionOutro missionId={1} lines={TRANSMISSION_LINES} stats={hudStats} onDone={finish} />
+        <MissionOutro missionId={1} lines={transmissionLines} stats={hudStats} onDone={finish} />
       )}
 
       {gameOver && <GameOverOverlay onExit={handleGameOverExit} />}
