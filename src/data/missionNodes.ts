@@ -13,7 +13,7 @@ export interface MissionNode {
 }
 
 /** Missions that currently have a dedicated playable screen. */
-export const PLAYABLE_MISSION_LEVELS = [1, 2] as const
+export const PLAYABLE_MISSION_LEVELS = [1, 2, 3, 4, 5] as const
 
 export function isPlayableMission(level: number): boolean {
   return (PLAYABLE_MISSION_LEVELS as readonly number[]).includes(level)
@@ -50,7 +50,7 @@ export const MISSION_NODES: readonly MissionNode[] = [
     id: 'm3-gelo',
     level: 3,
     title: 'Gelo de Marte',
-    gateTitle: 'O MISTÉRIO DO GELO DE MARTE',
+    gateTitle: 'O mistério do gelo de Marte',
     lockedHint: 'Ainda não!',
     soonHint: 'Em breve!',
     leftPct: 48,

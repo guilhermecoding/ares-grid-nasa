@@ -110,6 +110,8 @@ export function OpeningFlow({
               open={takeoffDialogOpen}
               lines={TAKEOFF_HUD_LINES}
               title="SYS // DECOLAGEM"
+              dialogId="opening-takeoff"
+              onSkip={() => setTakeoffDialogOpen(false)}
               onTypingComplete={() => {
                 setHologram(true)
                 setTakeoffReady(true)
@@ -144,7 +146,11 @@ export function OpeningFlow({
         <div className="relative h-full w-full">
           <LaunchSpaceCanvas warp={0.4} hologramActive={capiSceneReady} paused={capiSceneReady} />
           {capiSceneReady && (
-            <CapiDialog lines={CAPI_INTRO_LINES} onComplete={() => setPhase('scene3_1_customizer')} />
+            <CapiDialog
+              dialogId="opening-capi"
+              lines={CAPI_INTRO_LINES}
+              onComplete={() => setPhase('scene3_1_customizer')}
+            />
           )}
           <motion.div
             className="pointer-events-none absolute inset-0 z-30"

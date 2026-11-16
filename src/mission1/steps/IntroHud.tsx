@@ -3,6 +3,7 @@ import { MEDIA } from '../../constants/mediaAssets'
 import { INTRO_HIGHLIGHT_WORDS, INTRO_PARTS } from '../../data/mission1Data'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
+import { useHideFollowingDialogs } from '../../opening/useHideFollowingDialogs'
 import { SciTerm } from '../SciTerm'
 
 interface Props {
@@ -16,6 +17,7 @@ export function IntroHud({ onContinue }: Props) {
 
   const lines = INTRO_PARTS[part]!
   const isLast = part >= INTRO_PARTS.length - 1
+  const { blocked, hideDialog, afterClose } = useHideFollowingDialogs('m1', onContinue)
 
   return (
     <>
@@ -29,23 +31,27 @@ export function IntroHud({ onContinue }: Props) {
         </div>
       </div>
 
+      {!blocked && (
       <PixelDialogBox
         key={`m1-intro-${part}`}
         open={open}
         lines={[...lines]}
         title="Capi"
+        dialogId={`m1-intro-${part}`}
+        onSkip={() => {
+          hideDialog()
+          setOpen(false)
+        }}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
         highlightWords={part === 1 ? INTRO_HIGHLIGHT_WORDS : undefined}
         onTypingComplete={() => setReady(true)}
         onClosed={() => {
-          if (!isLast) {
+          afterClose(isLast, () => {
             setReady(false)
             setPart((p) => p + 1)
             setOpen(true)
-            return
-          }
-          onContinue()
+          })
         }}
         footer={
           ready ? (
@@ -59,6 +65,7 @@ export function IntroHud({ onContinue }: Props) {
           ) : null
         }
       />
+      )}
     </>
   )
 }

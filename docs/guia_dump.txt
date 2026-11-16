@@ -1,0 +1,360 @@
+MARS ADVENTURIES
+Guia Oficial do Jovem Astronauta — Treinamento em Arcadia Planitia
+Público: Cadetes Espaciais de 7 a 12 anos | Base Científica: NASA Space Apps Challenge |
+Plataforma: Computador, Tablet ou Celular
+
+1.
+
+Apresentação do Jogo e da Missão
+
+Bem-vindo ao espaço profundo, jovem explorador(a)! No jogo Mars Adventuries, você
+faz parte de um grupo pioneiro da NASA enviado ao Planeta Vermelho para
+transformar um mundo selvagem em uma base segura e cheia de vida.
+O nosso ponto de pouso é Arcadia Planitia (Setor AP-1). Cientistas de verdade da
+NASA escolheram essa região porque ela é muito plana (o que facilita o pouso da
+nave) e esconde enormes camadas de gelo subterrâneo a poucos centímetros da
+superfície!
+A Sua Grande Missão Marciana Assim que a nave toca o solo, você descobre que os
+sistemas externos ainda não têm eletricidade! Sua missão é instalar fontes de energia
+limpa, cuidar do seu corpo em um planeta com gravidade menor que a da Terra, extrair
+água congelada, cultivar alimentos e proteger tudo de tempestades solares intensas.
+[INTERFACE]
+
+Cena de chegada em Marte: A nave espacial pousada no vasto horizonte avermelhado de Arcadia
+Planitia com montanhas e crateras distantes.
+
+2.
+
+O Objetivo Principal
+
+O objetivo central em Mars Adventuries é sobreviver, construir e prosperar em
+Marte, completando o treinamento oficial de jovem astronauta da NASA em uma
+jornada dividida em 5 Grandes Missões em cadeia:
+Missão
+
+Tema & Desafio
+
+O Que Você Irá Aprender e Fazer
+
+Missão 1
+
+⚡
+Energia
+para Explorar
+
+Escolher o melhor local em Arcadia Planitia,
+
+Marte
+
+calcular a inclinação solar e ativar os
+painéis solares para carregar as baterias da
+
+1
+
+Missão
+
+Tema & Desafio
+
+O Que Você Irá Aprender e Fazer
+base.
+
+Missão 2
+
+❤
+Cuidando do Astronauta
+
+Fazer exercícios na esteira e elásticos,
+montar pratos balanceados, gerenciar a
+cota de água e ter uma boa noite de sono
+reparador.
+
+Missão 3
+
+O Mistério do Gelo
+
+Utilizar radares SWIM da NASA para
+localizar gelo sob a poeira, perfurar o solo e
+derreter água limpa para a colônia.
+
+Missão 4
+
+A Primeira Estufa
+
+Construir cúpulas hidropônicas para plantar
+vegetais nutritivos usando água reciclada e
+luz solar controlada.
+
+Missão 5
+
+Alerta! Tempestades
+
+Monitorar dados reais do Sol (NASA
+DONKI), recolher equipamentos e usar
+regolito para proteger a base contra
+radiação extrema.
+
+3.
+
+Apresentando os Personagens
+O Astronauta (Você!)
+
+O líder e pesquisador da
+
+Capi (Robô
+Inteligente)
+
+O Rover Explorador
+Seu veículo e braço
+
+expedição! No início, você
+
+Uma adorável e sábia
+
+mecânico de apoio na
+
+personaliza seu
+
+capivara robótica que atua
+
+superfície. Com rodas
+
+personagem escolhendo a
+
+como assistente virtual de
+
+feitas para rochas afiadas,
+
+cor do traje (Branco NASA,
+
+bordo. Ela calcula ângulos
+
+ele transporta ferramentas
+
+Laranja Missão, Azul
+
+solares, dá conselhos de
+
+pesadas, brocas e
+
+Cobalto ou Verde
+
+saúde, conta fatos da NASA
+
+amostras de gelo coletadas
+
+Explorador), o tipo de
+
+e acompanha você do bom-
+
+em Arcadia Planitia.
+
+capacete, mochila e o
+
+dia até a hora de dormir.
+
+emblema de peito.
+
+[INTERFACE]
+
+2
+
+Tela de Customização do Astronauta: Seleção de cores de trajes espaciais, capacetes com visor
+dourado/ciano e mochilas de exploração.
+[INTERFACE]
+
+Apresentação da Capi: A capivara robô cumprimentando o jogador em sua janela holográfica com
+visor digital animado.
+
+4.
+
+Apresentando a Interface (HUD do
+
+Astronauta)
+Toda a tecnologia da sua nave está condensada em mostradores simples e fáceis de
+ler no visor do seu capacete ou tablet de bordo:
+[INTERFACE]
+
+Visão Geral da Tela Principal (HUD) Mostrando o mapa de exploração no centro, a Barra Superior
+no topo, medidores de recursos e os botões de ação tátil.
+
+Componentes da Interface:
+
+Barra Superior de Status (Top Bar): Indica o seu Nível atual (ex.: Nv. 1 ·
+Fazendeiro Solar), o Sol atual (o dia em Marte), o horário marciano e o radar do
+clima solar DONKI.
+Mostradores de Recursos Vitais: Três círculos coloridos que mostram de 0 a
+100% a sua carga de
+⚡
+Bateria
+, reserva de
+Botão Ciência NASA (
+
+Água e o estado de
+❤
+Saúde
+.
+
+): Um botão rápido que abre relatórios reais com fotos
+
+de satélites e termos astronômicos explicados de forma simples.
+Botões de Atalho: Botão de Som (
+Cheia (
+
+) e Botão Casinha (
+
+/
+
+) para ajustar o áudio retrô, Botão de Tela
+
+) para voltar ao mapa principal.
+
+Caixa de Diálogo da Capi (PixelDialogBox): Janela clássica estilo videogame
+onde a Capi conversa com você, ensina segredos da missão e avança a história.
+[INTERFACE]
+
+Detalhe da Barra de Recursos: Zoom nos 3 ícones circulares (Energia Amarela, Água Azul e Saúde
+Rosa) com porcentagens em destaque.
+[INTERFACE]
+
+Caixa de Diálogo da Capi com moldura pixel-art, retrato expressivo da capivara e botão luminoso de
+"Continuar".
+3
+
+5.
+
+Como Jogar
+
+A) Como Realizar Movimento e Navegar
+Explorar Marte é super natural, seja você um jogador de computador ou de telas de
+toque (tablets e smartphones):
+No Computador (Teclado): Use as Setas Direcionais
+(⬆
+Cima,
+⬇
+Baixo,
+⬅
+Esquerda,
+➡
+Direita)
+ou as teclas W, A, S, D para caminhar pelo terreno.
+No Tablet ou Celular (Toque / Touch): Toque no D-Pad virtual (as 4 setas
+localizadas no canto inferior direito da tela) ou simplesmente dê um toque na
+célula vizinha para onde você quer que o astronauta ande.
+Navegação no Mapa Geral: Arraste o dedo ou o mouse para rolar o mapa de
+Arcadia Planitia. Use o movimento de pinça com dois dedos (no celular/tablet) ou
+a rodinha do mouse para dar zoom!
+Custo de Movimento: Cada passo gasta um pouquinho da bateria do seu traje.
+Planeje bem seu trajeto para não ficar sem energia longe da base!
+[INTERFACE]
+
+Esquema dos Controles: Demonstração visual do teclado (setas/WASD) e dos botões táteis D-Pad
+na tela touch.
+
+B) Como Interagir e Executar Tarefas
+Botão Interagir (Mãozinha): Aperte a tecla E ou a Barra de Espaço no
+computador, ou toque no botão com o ícone de mão na tela. Serve para operar
+terminais, recolher amostras e limpar placas solares.
+Acessar Missões: No mapa de ilhas, toque na ilha da missão liberada para ver o
+brasão e atravessar os portões de Arcadia Planitia.
+Botão Dormir (Caminha): Fica disponível quando você está dentro da cabine
+habitacional ao entardecer. Dormir conclui o Sol e restaura suas forças!
+
+6.
+
+Como Administrar Recursos de Energia,
+
+Saúde e Hidratação
+Sobreviver em Marte é um jogo de estratégia científica. Conheça as três réguas vitais
+4
+
+que você deve monitorar para nunca ficar no sufoco:
+⚡
+1.
+Energia da Base e Bateria (Raio Amarelo)
+
+O que é: A eletricidade que mantém a base aquecida, as lâmpadas acesas, o oxigênio
+fluindo e seu traje funcionando do lado de fora.
+O que gasta: Caminhar muito pelo solo arenoso, operar ferramentas mecânicas
+pesadas e usar computadores da estação científica.
+Como administrar e recarregar:
+Na Missão 1, oriente seus painéis solares para o ângulo ideal de captação de luz.
+Monitore a poeira: o vento de Marte cobre os painéis de terra vermelha. Use o
+botão de interagir para espaná-los e recuperar 100% da eficiência!
+Volte para a casinha ao anoitecer para colocar os sistemas em recarga noturna.
+[INTERFACE]
+
+Desafio Solar da Missão 1 Regulagem da inclinação e azimute dos painéis solares em Arcadia
+Planitia.
+
+2. Hidratação e Reserva de Água (Gota Azul)
+
+O que é: A água potável indispensável para seu corpo e para irrigar as futuras
+mudinhas da estufa espacial.
+O que gasta: O consumo biológico diário do astronauta (especialmente após exercícios
+intensos) e o preparo de alimentos desidratados.
+Como administrar sem desperdício:
+Use o controle deslizante de hidratação na Missão 2: encontre a quantidade
+certa para seu corpo sem esvaziar os tanques da nave.
+Se beber pouca água, o astronauta fica desidratado e acorda cansado. Se beber
+água demais, faltará para as outras funções da base!
+Na Missão 3, você perfurará o solo com auxílio do radar SWIM para derreter gelo
+e repor os tanques com água fresquinha.
+[INTERFACE]
+
+Painel Nutricional da Missão 2 Montagem da bandeja de refeições e controle do slider diário de
+hidratação em litros.
+
+❤
+3.
+Saúde e Bem-Estar Físico (Coração Vermelho)
+5
+
+O que é: A resistência dos seus ossos, força muscular, condicionamento
+cardiovascular e imunidade.
+O grande desafio marciano: Marte tem apenas 38% da gravidade da Terra. Sem o
+peso do corpo, os músculos e ossos começam a atrofiar rapidamente se você ficar
+parado! Além disso, a radiação do Sol pode atingir a pele se você ficar muito tempo
+desprotegido.
+Como manter a saúde no máximo:
+Exercícios diários: Complete os treinos de esteira (coração), elásticos de
+resistência (ossos e músculos) e alongamentos no módulo de treinamento.
+Higiene pessoal rigorosa: Limpe a poeira de regolito marciano do traje para
+evitar respirar partículas microscópicas.
+Sono regulado: Durma nas horas certas para que a Capi gere o relatório de
+saúde com nota máxima e recupere 100% da sua disposição!
+[INTERFACE]
+
+Relatório Noturno da Capi: Painel mostrando a qualidade do sono, frequência cardíaca simulada e o
+diário científico registrado.
+
+7.
+
+Dicas de Ouro da Capi & Glossário Espacial
+Segredos para ser um Astronauta Nota 10
+Olhe o Clima Espacial: Antes de sair da base, confira o ícone DONKI na barra
+superior. Se houver tempestade solar, adie os passeios longos!
+Não deixe para amanhã: Mantenha as baterias sempre acima de 30% para
+emergências.
+Converse com a Capi: Ela sempre avisa quando um sistema precisa de atenção
+imediata.
+
+Minidicionário da NASA para Crianças Curiosas:
+
+Sol: O nome que damos a um dia completo em Marte (dura 24 horas e 39
+minutos — quase igual à Terra!).
+Arcadia Planitia: Uma imensa planície marciana cheia de gelo de água escondido
+debaixo do chão.
+NASA DONKI Um sistema real da NASA que monitora tempestades e labaredas
+solares em todo o Sistema Solar.
+6
+
+NASA SWIM Projeto científico que mapeia onde existe gelo subterrâneo em
+Marte para as futuras colônias humanas.
+Regolito: O pó fino e avermelhado que recobre todo o chão de Marte.
+Mars Adventuries — Projeto Educacional Júnior Astronauta © NASA Space Apps Challenge.
+Desenvolvido com carinho para inspirar a próxima geração de cientistas, astronautas e exploradores
+espaciais!
+
+7
+
+

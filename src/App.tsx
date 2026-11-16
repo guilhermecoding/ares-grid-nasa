@@ -1,20 +1,28 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { ConfettiBurst } from './components/ConfettiBurst'
-import { DialogBox } from './components/DialogBox'
 import { MissionGateTransition } from './components/MissionGateTransition'
 import { NasaDataModal } from './components/NasaDataModal'
+import { CertificateModal } from './components/world/CertificateModal'
+import { LogbookMenu } from './components/world/LogbookMenu'
 import { WorldScreen } from './components/WorldScreen'
 import { applyWeatherBundle, createWorldState } from './engine/worldEngine'
+import { TOTAL_MISSIONS } from './data/missionBadges'
 import { getMissionNode } from './data/missionNodes'
+import { MEDIA } from './constants/mediaAssets'
+import { McButton } from './opening/McButton'
 import { OpeningFlow } from './opening/OpeningFlow'
+import { PixelDialogBox } from './opening/PixelDialogBox'
 import { fetchDonkiBundle } from './services/donkiService'
-import { loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
+import { isDialogGroupSkipped, loadProgress, updateProgress, type PlayerProgress } from './services/progressStore'
 import { setMuted, soundEngine, unlockAudio } from './services/soundEngine'
 import type { DonkiBundle } from './types/nasa'
 import type { BaseStats, ScreenId, WorldState } from './types/game'
 
 const Mission01Screen = lazy(() => import('./mission1/Mission01Screen'))
 const Mission2View = lazy(() => import('./components/mission2/Mission2View'))
+const Mission3View = lazy(() => import('./components/mission3/Mission3View'))
+const Mission4View = lazy(() => import('./components/mission4/Mission4View'))
+const Mission5View = lazy(() => import('./components/mission5/Mission5View'))
 
 type GateState = {
   missionId: number
@@ -24,6 +32,9 @@ type GateState = {
   /** Final mission meters to persist when completing. */
   resultStats?: BaseStats
 }
+
+/** Dialogs opened from the missions-screen menu. */
+type WorldPanel = 'logbook' | 'certificate' | 'certificate-first' | null
 
 const TUTORIAL_STEPS = [
   {
@@ -46,8 +57,11 @@ export default function App() {
   const [world, setWorld] = useState<WorldState | null>(null)
   const [bundle, setBundle] = useState<DonkiBundle | null>(null)
   const [nasaOpen, setNasaOpen] = useState(false)
+  const [worldPanel, setWorldPanel] = useState<WorldPanel>(null)
   const [tutorialStep, setTutorialStep] = useState(0)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [tutorialBoxOpen, setTutorialBoxOpen] = useState(true)
+  const [tutorialReady, setTutorialReady] = useState(false)
   const [activeMission, setActiveMission] = useState<number | null>(null)
   const [gate, setGate] = useState<GateState | null>(null)
   const [missionReady, setMissionReady] = useState(false)
@@ -93,26 +107,53 @@ export default function App() {
 
       const alreadyCleared = w.level > missionId
       const nextLevel = completed ? Math.max(w.level, missionId + 1) : w.level
-      const xpGain = completed && !alreadyCleared ? (missionId === 2 ? 50 : 40) : 0
+      const xpGain =
+        completed && !alreadyCleared
+          ? missionId === 5
+            ? 80
+            : missionId === 4
+              ? 70
+              : missionId === 3
+                ? 60
+                : missionId === 2
+                  ? 50
+                  : 40
+          : 0
       const nextXp = w.xp + xpGain
       const message = completed
-        ? missionId === 2
+        ? missionId === 5
           ? alreadyCleared
-            ? 'Missão 2 refeita — indicadores atualizados!'
-            : 'Missão 2 concluída! O mistério do gelo aguarda.'
-          : alreadyCleared
-            ? 'Missão 1 refeita — indicadores atualizados!'
-            : 'Missão 1 concluída! Nova ilha no mapa.'
+            ? 'Missão 5 refeita — a base segue protegida!'
+            : 'Expedição concluída! A base em Arcádia está pronta.'
+          : missionId === 4
+            ? alreadyCleared
+              ? 'Missão 4 refeita — a estufa segue no diário!'
+              : 'Missão 4 concluída! O alerta de tempestade aguarda.'
+            : missionId === 3
+              ? alreadyCleared
+                ? 'Missão 3 refeita — água e indicadores atualizados!'
+                : 'Missão 3 concluída! A primeira estufa aguarda.'
+              : missionId === 2
+                ? alreadyCleared
+                  ? 'Missão 2 refeita — indicadores atualizados!'
+                  : 'Missão 2 concluída! O mistério do gelo aguarda.'
+                : alreadyCleared
+                  ? 'Missão 1 refeita — indicadores atualizados!'
+                  : 'Missão 1 concluída! Nova ilha no mapa.'
         : w.message
 
       const next = { ...w, level: nextLevel, xp: nextXp, message, stats: nextStats }
       setWorld(next)
+      // Read the store again: the mission logbook saved its photo while playing.
+      const stored = loadProgress()
       setProgress(
         updateProgress({
           level: nextLevel,
           xp: nextXp,
           unlockedTools: next.unlockedTools,
           baseStats: nextStats,
+          expeditionCompletedAt:
+            stored.expeditionCompletedAt ?? (nextLevel > TOTAL_MISSIONS ? Date.now() : null),
         }),
       )
     },
@@ -132,8 +173,12 @@ export default function App() {
     w = applyWeatherBundle(w, nextBundle)
     setWorld(w)
     setScreen('world')
+    // A save that finished the expedition before the certificate existed gets it now.
+    if (p.level > TOTAL_MISSIONS && !p.certificateSeen) setWorldPanel('certificate-first')
     if (!p.tutorialDone) {
       setTutorialStep(0)
+      setTutorialReady(false)
+      setTutorialBoxOpen(true)
       setTutorialOpen(true)
     }
   }, [bundle])
@@ -185,7 +230,21 @@ export default function App() {
     const celebrateExit = g?.direction === 'exit' && !!g.completed
     setGate(null)
     setMissionReady(false)
-    if (celebrateExit) setCelebrate(true)
+    if (!celebrateExit) return
+    // First time all five missions are done: hand over the certificate (it brings its own confetti).
+    const stored = loadProgress()
+    if (stored.level > TOTAL_MISSIONS && !stored.certificateSeen) setWorldPanel('certificate-first')
+    else setCelebrate(true)
+  }, [])
+
+  const closeLogbook = useCallback(() => setWorldPanel(null), [])
+
+  const closeCertificate = useCallback(() => {
+    setWorldPanel(null)
+    const stored = loadProgress()
+    if (stored.level > TOTAL_MISSIONS && !stored.certificateSeen) {
+      setProgress(updateProgress({ certificateSeen: true }))
+    }
   }, [])
 
   useEffect(() => {
@@ -240,6 +299,14 @@ export default function App() {
             if (world) syncProgressFromWorld(world)
             setScreen('home')
           }}
+          onLogbook={() => {
+            soundEngine.click()
+            setWorldPanel('logbook')
+          }}
+          onCertificate={() => {
+            soundEngine.click()
+            setWorldPanel('certificate')
+          }}
         />
       )}
 
@@ -278,6 +345,64 @@ export default function App() {
         </Suspense>
       )}
 
+      {screen === 'mission' && activeMission === 3 && (
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center bg-void-950 font-pixel text-cyan-hud">
+              Carregando missão…
+            </div>
+          }
+        >
+          <Mission3View
+            stats={world?.stats}
+            onComplete={(result) => leaveMission(true, result)}
+            onExit={(result) => leaveMission(false, result)}
+            onReady={() => setMissionReady(true)}
+          />
+        </Suspense>
+      )}
+
+      {screen === 'mission' && activeMission === 4 && (
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center bg-void-950 font-pixel text-cyan-hud">
+              Carregando missão…
+            </div>
+          }
+        >
+          <Mission4View
+            stats={world?.stats}
+            playerName={progress.playerName}
+            onComplete={(result) => leaveMission(true, result)}
+            onExit={(result) => leaveMission(false, result)}
+            onReady={() => setMissionReady(true)}
+          />
+        </Suspense>
+      )}
+
+      {screen === 'mission' && activeMission === 5 && (
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center bg-void-950 font-pixel text-cyan-hud">
+              Carregando missão…
+            </div>
+          }
+        >
+          <Mission5View
+            stats={world?.stats}
+            playerName={progress.playerName}
+            spaceWeatherLabel={
+              bundle && bundle.mode !== 'curated' && bundle.flares[0]
+                ? `Erupção solar classe ${bundle.flares[0].classType}`
+                : undefined
+            }
+            onComplete={(result) => leaveMission(true, result)}
+            onExit={(result) => leaveMission(false, result)}
+            onReady={() => setMissionReady(true)}
+          />
+        </Suspense>
+      )}
+
       <MissionGateTransition
         open={!!gate}
         contentReady={missionReady}
@@ -289,20 +414,58 @@ export default function App() {
 
       <NasaDataModal open={nasaOpen} weather={world?.weather ?? null} onClose={() => setNasaOpen(false)} />
 
+      {screen === 'world' && world && worldPanel === 'logbook' ? (
+        <LogbookMenu level={world.level} entries={progress.logbook} onClose={closeLogbook} />
+      ) : null}
+
+      {screen === 'world' && world && (worldPanel === 'certificate' || worldPanel === 'certificate-first') ? (
+        <CertificateModal
+          playerName={progress.playerName}
+          insignia={progress.insignia}
+          level={world.level}
+          completedAt={progress.expeditionCompletedAt ?? progress.logbook.m5?.capturedAt ?? null}
+          celebrate={worldPanel === 'certificate-first'}
+          onClose={closeCertificate}
+        />
+      ) : null}
+
       {celebrate && <ConfettiBurst />}
 
-      <DialogBox
-        open={tutorialOpen}
-        title={TUTORIAL_STEPS[tutorialStep]!.title}
-        body={TUTORIAL_STEPS[tutorialStep]!.body}
-        primaryLabel={tutorialStep < TUTORIAL_STEPS.length - 1 ? 'Próximo' : 'Vamos lá!'}
-        secondaryLabel="Pular"
-        onSecondary={finishTutorial}
-        onPrimary={() => {
-          if (tutorialStep < TUTORIAL_STEPS.length - 1) setTutorialStep((s) => s + 1)
-          else finishTutorial()
-        }}
-      />
+      {tutorialOpen && (
+        <div className="fixed inset-0 z-[80]">
+          <PixelDialogBox
+            key={`map-intro-${tutorialStep}`}
+            open={tutorialBoxOpen}
+            position="center"
+            title="Capi"
+            lines={[TUTORIAL_STEPS[tutorialStep]!.title, TUTORIAL_STEPS[tutorialStep]!.body]}
+            dialogId={`map-intro-${tutorialStep}`}
+            onSkip={() => setTutorialBoxOpen(false)}
+            characterSrc={MEDIA.capi.neutral}
+            characterAlt="Capi"
+            onTypingComplete={() => setTutorialReady(true)}
+            onClosed={() => {
+              if (isDialogGroupSkipped('map') || tutorialStep >= TUTORIAL_STEPS.length - 1) {
+                finishTutorial()
+                return
+              }
+              setTutorialReady(false)
+              setTutorialStep((step) => step + 1)
+              setTutorialBoxOpen(true)
+            }}
+            footer={
+              tutorialReady ? (
+                <McButton
+                  className="min-h-12 px-6 font-pixel text-lg font-bold"
+                  onClick={() => setTutorialBoxOpen(false)}
+                >
+                  {tutorialStep < TUTORIAL_STEPS.length - 1 ? 'Próximo' : 'Vamos lá!'}
+                </McButton>
+              ) : null
+            }
+          />
+        </div>
+      )}
     </div>
   )
 }

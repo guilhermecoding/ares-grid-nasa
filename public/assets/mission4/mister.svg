@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
+  <!-- bottle -->
+  <path d="M18 30h24v26a4 4 0 0 1-4 4H22a4 4 0 0 1-4-4z" fill="#38bdf8" stroke="#04080f" stroke-width="3"/>
+  <rect x="21" y="40" width="18" height="17" fill="#7dd3fc"/>
+  <rect x="23" y="34" width="4" height="20" fill="#e0f7ff"/>
+  <!-- neck and head -->
+  <rect x="24" y="22" width="12" height="8" fill="#f4fff4" stroke="#04080f" stroke-width="3"/>
+  <path d="M16 10h24v12H22l-6-4z" fill="#ff8a3c" stroke="#04080f" stroke-width="3"/>
+  <!-- trigger -->
+  <path d="M36 22h6v10h-4z" fill="#ff8a3c" stroke="#04080f" stroke-width="3"/>
+  <!-- nozzle -->
+  <rect x="8" y="12" width="8" height="6" fill="#f4fff4" stroke="#04080f" stroke-width="3"/>
+  <!-- mist -->
+  <rect x="1" y="6" width="3" height="3" fill="#7dffe0"/>
+  <rect x="0" y="14" width="4" height="3" fill="#7dffe0"/>
+  <rect x="2" y="22" width="3" height="3" fill="#7dffe0"/>
+</svg>

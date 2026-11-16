@@ -1,5 +1,3 @@
-import { useCallback, useMemo } from 'react'
-import { MEDIA } from '../../../constants/mediaAssets'
 import {
   HYGIENE_ACTIONS,
   HYGIENE_BONUS_CARD,
@@ -7,35 +5,11 @@ import {
 } from '../../../data/mission2Data'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
-import { StageCostBadge, StageHeader, SwipeDeck, type ActivityCardModel } from '../ActivityCard'
+import { Mission2Stage } from '../Mission2Stage'
 import { SciTermM2 } from '../SciTermM2'
+import { HygieneBay } from './HygieneBay'
 
 type HygieneCardId = HygieneId | typeof HYGIENE_BONUS_CARD.id
-
-const HYGIENE_CARDS = [
-  ...HYGIENE_ACTIONS.map((a) => ({
-    id: a.id as HygieneCardId,
-    title: a.title,
-    detail: a.detail,
-    energyCost: a.energyCost,
-    waterCostL: a.waterCostL,
-    wellbeingGain: a.wellbeingGain,
-    color: a.color,
-    contaminationDrop: a.contaminationDrop,
-    isBonus: false as const,
-  })),
-  {
-    id: HYGIENE_BONUS_CARD.id as HygieneCardId,
-    title: HYGIENE_BONUS_CARD.title,
-    detail: HYGIENE_BONUS_CARD.detail,
-    energyCost: HYGIENE_BONUS_CARD.energyCost,
-    waterCostL: HYGIENE_BONUS_CARD.waterCostL,
-    wellbeingGain: HYGIENE_BONUS_CARD.wellbeingGain,
-    color: HYGIENE_BONUS_CARD.color,
-    contaminationDrop: 0,
-    isBonus: true as const,
-  },
-]
 
 interface Props {
   energyPct: number
@@ -53,6 +27,7 @@ interface Props {
   onContinue: () => void
 }
 
+/** Desafio 2.3 — three hygiene actions. Contamination falls as each one is done. */
 export function HygieneStep({
   energyPct,
   waterL,
@@ -62,112 +37,33 @@ export function HygieneStep({
   onCompleteOne,
   onContinue,
 }: Props) {
-  const doneSet = useMemo(() => {
-    const s = new Set<string>(completedIds)
-    if (cabinDone) s.add(HYGIENE_BONUS_CARD.id)
-    return s
-  }, [cabinDone, completedIds])
-
-  const energySpent = useMemo(() => {
-    let s = HYGIENE_ACTIONS.filter((a) => completedIds.includes(a.id)).reduce((acc, a) => acc + a.energyCost, 0)
-    if (cabinDone) s += HYGIENE_BONUS_CARD.energyCost
-    return s
-  }, [cabinDone, completedIds])
-
-  const waterSpent = useMemo(() => {
-    let s = HYGIENE_ACTIONS.filter((a) => completedIds.includes(a.id)).reduce((acc, a) => acc + a.waterCostL, 0)
-    if (cabinDone) s += HYGIENE_BONUS_CARD.waterCostL
-    return s
-  }, [cabinDone, completedIds])
-
   const requiredDone = completedIds.length >= HYGIENE_ACTIONS.length
-  const ready = requiredDone
 
-  const selectedIds = useMemo(() => [...doneSet], [doneSet])
+  const canAfford = (id: HygieneId) => {
+    const action = HYGIENE_ACTIONS.find((item) => item.id === id)
+    return Boolean(action && action.energyCost <= energyPct && action.waterCostL <= waterL)
+  }
 
-  const deckCards: ActivityCardModel[] = useMemo(
-    () =>
-      HYGIENE_CARDS.filter((card) => {
-        // Bonus only enters after required actions (or if already selected)
-        if (card.isBonus && !requiredDone && !doneSet.has(card.id)) return false
-        return true
-      }).map((card) => ({
-        id: card.id,
-        title: card.title,
-        detail: card.detail,
-        color: card.color,
-        energyCost: card.energyCost,
-        waterCostL: card.waterCostL,
-        wellbeingGain: card.wellbeingGain,
-        iconNode: (
-          <span className="font-pixel text-2xl" style={{ color: card.color }}>
-            {card.isBonus ? '✓' : '◆'}
-          </span>
-        ),
-      })),
-    [doneSet, requiredDone],
-  )
-
-  const canAccept = useCallback(
-    (id: string) => {
-      const card = HYGIENE_CARDS.find((c) => c.id === id)
-      if (!card) return false
-      if (card.isBonus && !requiredDone) return false
-      return card.energyCost <= energyPct && card.waterCostL <= waterL
-    },
-    [energyPct, requiredDone, waterL],
-  )
-
-  const handleAccept = useCallback(
-    (id: string) => {
-      const card = HYGIENE_CARDS.find((c) => c.id === id)
-      if (!card) return
-      if (card.isBonus ? cabinDone : completedIds.includes(card.id as HygieneId)) return
-      if (card.isBonus && !requiredDone) return
-      if (card.energyCost > energyPct || card.waterCostL > waterL) return
-      onCompleteOne(card.id, card.energyCost, card.waterCostL, card.wellbeingGain, card.contaminationDrop)
-    },
-    [cabinDone, completedIds, energyPct, onCompleteOne, requiredDone, waterL],
-  )
+  const run = (
+    id: HygieneCardId,
+    energyCost: number,
+    waterCostL: number,
+    wellbeingGain: number,
+    contaminationDrop: number,
+    already: boolean,
+  ) => {
+    if (already) return
+    if (energyCost > energyPct || waterCostL > waterL) return
+    onCompleteOne(id, energyCost, waterCostL, wellbeingGain, contaminationDrop)
+    soundEngine.success()
+  }
 
   return (
-    <div className="absolute inset-0 z-20 flex flex-col" style={{ touchAction: 'manipulation' }}>
-      <StageHeader
-        title="Etapa — Higiene"
-        subtitle={
-          <span className="flex items-start gap-2">
-            <img
-              src={MEDIA.mission2.hygiene}
-              alt=""
-              className="mt-0.5 size-6 shrink-0 object-contain"
-              draggable={false}
-            />
-            <span className="min-w-0">
-              Reduza <SciTermM2 term="Contaminação" />. Complete as 3 ações (4º card é bônus). Risco:{' '}
-              <strong className={contaminationRisk === 0 ? 'text-[#4ade80]' : 'text-danger'}>
-                {contaminationRisk}%
-              </strong>
-            </span>
-          </span>
-        }
-      />
-
-      <div className="flex min-h-0 flex-1 flex-col pt-16 pb-[4.75rem] sm:pt-[4.5rem]">
-        <SwipeDeck
-          cards={deckCards}
-          selectedIds={selectedIds}
-          canAccept={canAccept}
-          onAccept={handleAccept}
-          emptyMessage={requiredDone ? 'Higiene ok — continue (bônus opcional).' : 'Higiene completa — continue.'}
-        />
-      </div>
-
-      <StageCostBadge energySpent={energySpent} waterSpentL={waterSpent} label="Custo da higiene" />
-
-      <div className="absolute inset-x-0 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-end px-3 sm:px-4">
+    <Mission2Stage
+      footer={
         <McButton
-          className="min-h-12 min-w-[10rem] font-pixel text-lg font-bold disabled:opacity-40"
-          disabled={!ready}
+          className="min-h-12 min-w-[12rem] font-pixel text-lg font-bold disabled:opacity-40"
+          disabled={!requiredDone}
           onClick={() => {
             soundEngine.harvest()
             onContinue()
@@ -175,7 +71,63 @@ export function HygieneStep({
         >
           Continuar
         </McButton>
+      }
+      title="Desafio 2.3 — Higiene pessoal"
+      subtitle={
+        <>
+          Esfregue, lave e limpe a bancada para zerar a <SciTermM2 term="Contaminação" />. Risco agora:{' '}
+          <strong className={contaminationRisk === 0 ? 'text-life' : 'text-danger'}>{contaminationRisk}%</strong>
+        </>
+      }
+    >
+      <div className="mx-auto h-3 w-full max-w-6xl overflow-hidden bg-void-950">
+        <div
+          className={`h-full ${contaminationRisk === 0 ? 'bg-life' : 'bg-danger'}`}
+          style={{ width: `${contaminationRisk}%` }}
+        />
       </div>
-    </div>
+
+      <HygieneBay
+        done={{
+          teeth: completedIds.includes('teeth'),
+          body: completedIds.includes('body'),
+          sensors: completedIds.includes('sensors'),
+        }}
+        blocked={{
+          teeth: !completedIds.includes('teeth') && !canAfford('teeth'),
+          body: !completedIds.includes('body') && !canAfford('body'),
+          sensors: !completedIds.includes('sensors') && !canAfford('sensors'),
+        }}
+        onDone={(id) => {
+          const action = HYGIENE_ACTIONS.find((item) => item.id === id)
+          if (!action) return
+          run(action.id, action.energyCost, action.waterCostL, action.wellbeingGain, action.contaminationDrop, completedIds.includes(id))
+        }}
+      />
+
+      {requiredDone ? (
+        <div className="mx-auto w-full max-w-6xl border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:max-w-md">
+          <p className="font-pixel text-sm text-cyan-hud">{HYGIENE_BONUS_CARD.title}</p>
+          <p className="mt-1 text-sm text-void-100">{HYGIENE_BONUS_CARD.detail}</p>
+          <McButton
+            className={`mt-3 min-h-12 w-full font-pixel text-base font-bold ${cabinDone ? 'mc-btn-green' : ''}`}
+            disabled={cabinDone || HYGIENE_BONUS_CARD.waterCostL > waterL}
+            onClick={() =>
+              run(
+                HYGIENE_BONUS_CARD.id,
+                HYGIENE_BONUS_CARD.energyCost,
+                HYGIENE_BONUS_CARD.waterCostL,
+                HYGIENE_BONUS_CARD.wellbeingGain,
+                0,
+                cabinDone,
+              )
+            }
+          >
+            {cabinDone ? 'Cabine revisada' : 'Revisar cabine'}
+          </McButton>
+        </div>
+      ) : null}
+
+    </Mission2Stage>
   )
 }

@@ -1,11 +1,14 @@
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FullscreenButton } from '../FullscreenButton'
 import { StatusIndicators } from '../StatusIndicators'
 import {
   BRIDGE_TO_HYGIENE,
   BRIDGE_TO_NUTRITION,
   BRIDGE_TO_SLEEP,
   HYGIENE_BONUS_CARD,
+  BALANCED_MEAL_BONUS,
+  EXERCISES,
   computeMission2Scores,
   isMission2EnergySoftLocked,
   lightingForStep,
@@ -17,12 +20,13 @@ import {
   type Mission2Step,
   type NutritionCardId,
 } from '../../data/mission2Data'
+import { clearMissionRun, loadProgress, resumeWaterLiters, saveMissionRun } from '../../services/progressStore'
 import { MAX_WATER_RESERVE_L, type BaseStats } from '../../types/game'
 import { CapiBridgeDialog } from './CapiBridgeDialog'
 import { EnergyDepletedOverlay } from './EnergyDepletedOverlay'
 import { HabitatInteriorBackground } from './HabitatInteriorBackground'
-import { Mission2Logbook } from './Mission2Logbook'
-import { Mission2Outro } from './Mission2Outro'
+import { MissionLogbook } from '../logbook/MissionLogbook'
+import { MissionOutro } from '../MissionOutro'
 import { NightReportModal } from './NightReportModal'
 import { ExerciseStep } from './steps/ExerciseStep'
 import { HygieneStep } from './steps/HygieneStep'
@@ -32,6 +36,12 @@ import { NutritionStep } from './steps/NutritionStep'
 import { SleepPrepStep } from './steps/SleepPrepStep'
 
 const DEFAULT_STATS: BaseStats = { energy: 68, water: 85, wellbeing: 70 }
+
+const OUTRO_LINES = [
+  'DADOS DA MISSÃO 2 ARMAZENADOS.',
+  'TENTANDO CONEXÃO COM A CENTRAL TERRESTRE…',
+  'Rotina de saúde salva a bordo!',
+] as const
 
 interface Props {
   /** Final meters after the day (energy/water spent stay saved for the base). */
@@ -63,19 +73,23 @@ export default function Mission2View({
   stats = DEFAULT_STATS,
   playerName = 'Comandante',
 }: Props) {
-  const [step, setStep] = useState<Mission2Step>('intro')
-  /** Floor so a weak Missão 01 storm still leaves a finishable day (max path ~16%). */
-  const [baseEnergy, setBaseEnergy] = useState(() => clamp(Math.max(stats.energy, 28)))
-  const [waterL, setWaterL] = useState(() => pctToLiters(stats.water))
-  const [wellbeingBoost, setWellbeingBoost] = useState(0)
-  const [contaminationRisk, setContaminationRisk] = useState(100)
-  const [exercises, setExercises] = useState<ExerciseId[]>([])
-  const [foods, setFoods] = useState<string[]>([])
-  const [nutritionCards, setNutritionCards] = useState<NutritionCardId[]>([])
-  const [waterRationL, setWaterRationL] = useState(2.2)
-  const [hygieneDone, setHygieneDone] = useState<HygieneId[]>([])
-  const [cabinDone, setCabinDone] = useState(false)
-  const [nightOpen, setNightOpen] = useState(false)
+  const savedRun = useMemo(() => loadProgress().missionRuns.m2, [])
+  const [step, setStep] = useState<Mission2Step>(() => savedRun?.step ?? 'intro')
+  /** Floor so a fresh day stays finishable. A resumed day keeps the live base meter. */
+  const [baseEnergy, setBaseEnergy] = useState(() => clamp(savedRun ? stats.energy : Math.max(stats.energy, 28)))
+  const [waterL, setWaterL] = useState(() =>
+    savedRun ? resumeWaterLiters(savedRun.waterL, savedRun.waterPct, stats.water) : pctToLiters(stats.water),
+  )
+  const [wellbeingBoost, setWellbeingBoost] = useState(() => savedRun?.wellbeingBoost ?? 0)
+  const [contaminationRisk, setContaminationRisk] = useState(() => savedRun?.contaminationRisk ?? 100)
+  const [exercises, setExercises] = useState<ExerciseId[]>(() => savedRun?.exercises ?? [])
+  const [foods, setFoods] = useState<string[]>(() => savedRun?.foods ?? [])
+  const [nutritionCards, setNutritionCards] = useState<NutritionCardId[]>(() => savedRun?.nutritionCards ?? [])
+  const [waterRationL, setWaterRationL] = useState(() => savedRun?.waterRationL ?? 0.35)
+  const [hygieneDone, setHygieneDone] = useState<HygieneId[]>(() => savedRun?.hygieneDone ?? [])
+  const [cabinDone, setCabinDone] = useState(() => savedRun?.cabinDone ?? false)
+  const [nightOpen, setNightOpen] = useState(() => savedRun?.step === 'special_capi_night_report')
+  const finishingRef = useRef(false)
   const [bridge, setBridge] = useState<Mission2Bridge | null>(null)
 
   const choices: Mission2Choices = useMemo(
@@ -148,29 +162,15 @@ export default function Mission2View({
     [gainWellbeing, spend],
   )
 
-  const onNutritionOne = useCallback(
-    (
-      id: NutritionCardId,
-      energyCost: number,
-      waterCostL: number,
-      wellbeingGain: number,
-      foodIds: string[],
-      ration?: number,
-    ) => {
-      spend(energyCost, waterCostL)
-      gainWellbeing(wellbeingGain)
-      setNutritionCards((prev) => (prev.includes(id) ? prev : [...prev, id]))
-      if (foodIds.length) {
-        setFoods((prev) => {
-          const next = new Set(prev)
-          for (const f of foodIds) next.add(f)
-          return [...next]
-        })
-      }
-      if (ration != null) setWaterRationL(ration)
-    },
-    [gainWellbeing, spend],
-  )
+  const onNutritionConfirm = useCallback((foodsPicked: string[], waterMl: number) => {
+    setFoods(foodsPicked)
+    setNutritionCards(['protein', 'veggie', 'carb', 'hydrate'])
+    setWaterRationL(waterMl / 1000)
+    setWaterL((w) => Math.max(0, Math.round((w - waterMl / 1000) * 10) / 10))
+    setWellbeingBoost((b) => b + BALANCED_MEAL_BONUS.wellbeing)
+    setBaseEnergy((e) => clamp(e + BALANCED_MEAL_BONUS.energy))
+    setBridge('hygiene')
+  }, [])
 
   const onHygieneOne = useCallback(
     (
@@ -193,6 +193,47 @@ export default function Mission2View({
     },
     [gainWellbeing, spend],
   )
+
+  useEffect(() => {
+    if (finishingRef.current) return
+    const waterPct = litersToPct(waterL)
+    saveMissionRun(
+      'm2',
+      {
+        step,
+        waterL,
+        waterPct,
+        wellbeingBoost,
+        contaminationRisk,
+        exercises,
+        foods,
+        nutritionCards,
+        waterRationL,
+        hygieneDone,
+        cabinDone,
+      },
+      { energy: baseEnergy, water: waterPct, wellbeing: wellbeingLive },
+    )
+  }, [
+    baseEnergy,
+    cabinDone,
+    contaminationRisk,
+    exercises,
+    foods,
+    hygieneDone,
+    nutritionCards,
+    step,
+    waterL,
+    waterRationL,
+    wellbeingBoost,
+    wellbeingLive,
+  ])
+
+  const finish = () => {
+    finishingRef.current = true
+    clearMissionRun('m2')
+    onComplete(hudStats)
+  }
 
   const onSleep = () => {
     setNightOpen(true)
@@ -225,7 +266,8 @@ export default function Mission2View({
         <StatusIndicators stats={hudStats} placement="mission" />
       )}
 
-      <div className="absolute top-3 right-3 z-50">
+      <div className="absolute top-3 right-3 z-50 flex items-center gap-2">
+        <FullscreenButton className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud" />
         <button
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
@@ -256,13 +298,7 @@ export default function Mission2View({
       )}
 
       {step === 'step2_2_nutrition' && !bridge && (
-        <NutritionStep
-          energyPct={baseEnergy}
-          waterL={waterL}
-          completedIds={nutritionCards}
-          onCompleteOne={onNutritionOne}
-          onContinue={() => setBridge('hygiene')}
-        />
+        <NutritionStep onConfirm={onNutritionConfirm} />
       )}
 
       {step === 'step2_3_hygiene' && !bridge && (
@@ -293,6 +329,7 @@ export default function Mission2View({
         <CapiBridgeDialog
           key="bridge-nutrition"
           open
+          dialogId="m2-bridge-nutrition"
           lines={BRIDGE_TO_NUTRITION}
           highlightWords={['alimentar']}
           onDone={() => {
@@ -305,6 +342,7 @@ export default function Mission2View({
         <CapiBridgeDialog
           key="bridge-hygiene"
           open
+          dialogId="m2-bridge-hygiene"
           lines={BRIDGE_TO_HYGIENE}
           highlightWords={['higiene']}
           onDone={() => {
@@ -317,6 +355,7 @@ export default function Mission2View({
         <CapiBridgeDialog
           key="bridge-sleep"
           open
+          dialogId="m2-bridge-sleep"
           lines={BRIDGE_TO_SLEEP}
           highlightWords={['descanse']}
           onDone={() => {
@@ -346,17 +385,32 @@ export default function Mission2View({
       )}
 
       {step === 'logbook' && (
-        <Mission2Logbook
-          exercises={exercises}
-          nutritionCards={nutritionCards}
-          hygieneDone={hygieneDone}
-          sleepScore={scores.sleepScore}
+        <MissionLogbook
+          missionId={2}
+          subtitle="Checklist da rotina cumprida"
+          items={[
+            {
+              label: 'Exercícios do dia concluídos',
+              detail:
+                exercises.flatMap((id) => EXERCISES.find((e) => e.id === id)?.title ?? []).join(' · ') ||
+                `${exercises.length} atividades`,
+            },
+            {
+              label: 'Alimentação e hidratação',
+              detail: nutritionCards.includes('hydrate')
+                ? 'Refeição equilibrada · água da refeição ok'
+                : 'Refeição em aberto',
+            },
+            { label: 'Higiene do módulo', detail: `${hygieneDone.length} ações registradas` },
+            { label: 'Descanso e Sleep Score', detail: `Score ${scores.sleepScore}/100` },
+            { label: 'Registro científico no diário', detail: 'Rotina de saúde documentada' },
+          ]}
           onDone={() => setStep('mission_outro')}
         />
       )}
 
       {step === 'mission_outro' && (
-        <Mission2Outro stats={hudStats} onDone={() => onComplete(hudStats)} />
+        <MissionOutro missionId={2} lines={OUTRO_LINES} stats={hudStats} onDone={finish} />
       )}
 
       {energySoftLocked && <EnergyDepletedOverlay onExit={() => onExit(hudStats)} />}

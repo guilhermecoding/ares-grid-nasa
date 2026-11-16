@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import { MEDIA } from '../constants/mediaAssets'
 import { ARCADIA_MAP_SRC } from '../data/mapPois'
+import { TOTAL_MISSIONS, TROPHY_SPRITE } from '../data/missionBadges'
 import { getMissionNode, isPlayableMission, MISSION_NODES, missionPathD } from '../data/missionNodes'
 import { LOCK_SPRITE } from '../data/tileSprites'
 import { McButton } from '../opening/McButton'
@@ -22,10 +23,10 @@ function dayOverlay(hour: number): string {
 function MarsMapComponent({ state, onEnterMission }: Props) {
   const storm = state.weather.intensity > 45
   const current = getMissionNode(state.level)
+  const expeditionDone = state.level > TOTAL_MISSIONS
   const [hintId, setHintId] = useState<string | null>(null)
   const [hintText, setHintText] = useState('')
   const [replayLevel, setReplayLevel] = useState<number | null>(null)
-  const [replayReady, setReplayReady] = useState(false)
   const hintTimer = useRef(0)
 
   useEffect(() => {
@@ -63,7 +64,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
       )}
 
       <svg
-        className="pointer-events-none absolute inset-0 z-[2] h-full w-full opacity-50"
+        className="pointer-events-none absolute inset-0 z-[2] h-full w-full"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden
@@ -75,6 +76,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
           strokeWidth="0.6"
           strokeDasharray="1.8 1.6"
           strokeLinecap="round"
+          opacity="0.5"
         />
       </svg>
 
@@ -109,7 +111,6 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
                     showHint(node.id, node.soonHint)
                     return
                   }
-                  setReplayReady(false)
                   setReplayLevel(node.level)
                   return
                 }
@@ -140,6 +141,20 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
                   />
                 </span>
               )}
+
+              {expeditionDone && node.level === TOTAL_MISSIONS ? (
+                <span className="lock-float pointer-events-none absolute -top-12 z-10 sm:-top-14">
+                  <img
+                    src={TROPHY_SPRITE}
+                    alt="Troféu: as 5 missões concluídas"
+                    width={96}
+                    height={96}
+                    draggable={false}
+                    className="trophy-glow size-16 object-contain sm:size-20"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                </span>
+              ) : null}
 
               <span
                 className={`relative flex size-[min(20vw,6.25rem)] items-center justify-center rounded-full border-2 transition ${
@@ -190,7 +205,9 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
       })}
 
       <div
-        className="pointer-events-none absolute z-[4] -translate-x-1/2 -translate-y-[95%] transition-[left,top] duration-300 ease-out"
+        className={`pointer-events-none absolute z-[4] transition-[left,top] duration-300 ease-out ${
+          expeditionDone ? '-translate-x-[135%] -translate-y-[30%]' : '-translate-x-1/2 -translate-y-[95%]'
+        }`}
         style={{ left: `${current.leftPct}%`, top: `${current.topPct}%` }}
       >
         <img
@@ -208,36 +225,23 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         title="Capi"
         characterSrc={MEDIA.capi.neutral}
         lines={['Ops, parece que você já passou por aqui.', 'Quer entrar de novo?']}
-        onTypingComplete={() => setReplayReady(true)}
-        onClosed={() => {
-          setReplayLevel(null)
-          setReplayReady(false)
-        }}
+        onClosed={() => setReplayLevel(null)}
         footer={
-          replayReady ? (
-            <div className="flex flex-wrap justify-center gap-2">
-              <McButton
-                className="min-h-12 px-4 font-pixel"
-                onClick={() => {
-                  setReplayReady(false)
-                  setReplayLevel(null)
-                }}
-              >
-                Cancelar
-              </McButton>
-              <McButton
-                className="mc-btn-green min-h-12 px-4 font-pixel font-bold"
-                onClick={() => {
-                  const level = replayLevel
-                  setReplayReady(false)
-                  setReplayLevel(null)
-                  if (level !== null) onEnterMission(level)
-                }}
-              >
-                Quero
-              </McButton>
-            </div>
-          ) : null
+          <div className="flex flex-wrap justify-center gap-2">
+            <McButton className="min-h-12 px-4 font-pixel" onClick={() => setReplayLevel(null)}>
+              Cancelar
+            </McButton>
+            <McButton
+              className="mc-btn-green min-h-12 px-4 font-pixel font-bold"
+              onClick={() => {
+                const level = replayLevel
+                setReplayLevel(null)
+                if (level !== null) onEnterMission(level)
+              }}
+            >
+              Quero
+            </McButton>
+          </div>
         }
       />
     </div>

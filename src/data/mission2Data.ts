@@ -124,104 +124,88 @@ export const EXERCISES: readonly ExerciseOption[] = [
 
 export const EXERCISE_REQUIRED_COUNT = 2
 
-export type FoodGroupId = 'protein' | 'veggie' | 'fruit'
+export type FoodGroupId = 'protein' | 'veggie' | 'carb'
+
+export type MealVerdict = 'low' | 'balanced' | 'high'
 
 export interface FoodItem {
   id: string
   group: FoodGroupId
   label: string
-  energyCost: number
-  waterCostL: number
+  kcal: number
+  intensity: string
 }
 
+/** Fixed educational spend from the Sol 02 workout plus mission prep. */
+export const ACTIVITY_ENERGY_KCAL = 740
+export const MEAL_KCAL_MIN = 650
+export const MEAL_KCAL_MAX = 820
+/** Bar scale so an over-target tray still fits on screen. */
+export const MEAL_KCAL_SCALE = 1000
+
+export const WATER_DISPENSER = {
+  minMl: 300,
+  maxMl: 400,
+  stepMl: 10,
+  defaultMl: 350,
+} as const
+
+/** Ideal meal bonus: health and a little base energy. */
+export const BALANCED_MEAL_BONUS = { wellbeing: 18, energy: 6 } as const
+
 export const FOOD_ITEMS: readonly FoodItem[] = [
-  { id: 'beans', group: 'protein', label: 'Feijão espacial', energyCost: 2, waterCostL: 0.15 },
-  { id: 'tofu', group: 'protein', label: 'Proteína de soja', energyCost: 2, waterCostL: 0.1 },
-  { id: 'grain', group: 'protein', label: 'Grãos integrais', energyCost: 1, waterCostL: 0.1 },
-  { id: 'lettuce', group: 'veggie', label: 'Folhas hidropônicas', energyCost: 1, waterCostL: 0.05 },
-  { id: 'carrot', group: 'veggie', label: 'Cenoura da estufa', energyCost: 1, waterCostL: 0.08 },
-  { id: 'pepper', group: 'veggie', label: 'Pimentão vermelho', energyCost: 1, waterCostL: 0.06 },
-  { id: 'apple', group: 'fruit', label: 'Maçã desidratada', energyCost: 1, waterCostL: 0.04 },
-  { id: 'berry', group: 'fruit', label: 'Frutas vermelhas', energyCost: 1, waterCostL: 0.05 },
-  { id: 'banana', group: 'fruit', label: 'Barra de banana', energyCost: 1, waterCostL: 0.03 },
+  { id: 'tofu', group: 'protein', label: 'Tofu Proteico', kcal: 140, intensity: 'Leve' },
+  { id: 'chickpea', group: 'protein', label: 'Grão-de-bico Espacial', kcal: 250, intensity: 'Moderado' },
+  { id: 'fish', group: 'protein', label: 'Peixe Selado NASA', kcal: 360, intensity: 'Alta Energia' },
+  { id: 'salad', group: 'veggie', label: 'Salada de Folhas Verdes', kcal: 35, intensity: 'Ultra Leve' },
+  { id: 'tomato', group: 'veggie', label: 'Tomates-cereja', kcal: 70, intensity: 'Leve' },
+  { id: 'broccoli', group: 'veggie', label: 'Brócolis da Estufa', kcal: 130, intensity: 'Nutritivo' },
+  { id: 'tortilla', group: 'carb', label: 'Tortilha Integral', kcal: 190, intensity: 'Leve' },
+  { id: 'quinoa', group: 'carb', label: 'Quinoa Espacial', kcal: 290, intensity: 'Moderado' },
+  { id: 'rice', group: 'carb', label: 'Arroz Integral', kcal: 410, intensity: 'Alta Energia' },
 ] as const
 
-export const FOOD_GROUPS: Record<FoodGroupId, { label: string; short: string }> = {
-  protein: { label: 'Proteínas / Grãos', short: 'Proteína' },
-  veggie: { label: 'Vegetais / Hortaliças', short: 'Vegetais' },
-  fruit: { label: 'Frutas / Energia', short: 'Frutas' },
+export const FOOD_GROUPS: Record<FoodGroupId, { label: string; hint: string }> = {
+  protein: { label: 'Proteínas', hint: 'Músculos' },
+  veggie: { label: 'Vegetais', hint: 'Vitaminas e fibras' },
+  carb: { label: 'Carboidratos', hint: 'Energia' },
+}
+
+export const MEAL_GROUP_ORDER: readonly FoodGroupId[] = ['protein', 'veggie', 'carb']
+
+export const CAPI_MEAL_LINES: Record<MealVerdict, readonly string[]> = {
+  low: [
+    'Atenção, comandante! Você gastou muita energia nos exercícios e essa refeição tem poucas calorias.',
+    'O astronauta vai ficar sem força — troque por alimentos mais energéticos!',
+  ],
+  balanced: [
+    'Combinação perfeita! Você repôs exatamente a energia gasta nos treinos com proteínas, vitaminas e carboidratos na medida certa!',
+  ],
+  high: [
+    'Essa refeição ultrapassou o gasto energético do dia!',
+    'Muita energia acumulada pode causar desconforto antes da próxima atividade. Tente equilibrar um item mais leve.',
+  ],
 }
 
 export type NutritionCardId = FoodGroupId | 'hydrate'
 
-export interface NutritionCard {
-  id: NutritionCardId
-  title: string
-  detail: string
-  energyCost: number
-  waterCostL: number
-  wellbeingGain: number
-  color: string
-  /** Food item ids added when this group card is completed. */
-  foodIds?: string[]
-  /** Water ration set when hydrate card is completed. */
-  waterRationL?: number
+const FOOD_BY_ID = new Map(FOOD_ITEMS.map((item) => [item.id, item]))
+
+export function foodById(id: string): FoodItem | undefined {
+  return FOOD_BY_ID.get(id)
 }
 
-/** Four nutrition cards — complete at least 3 (incl. hydrate). Food uses water, not battery. */
-export const NUTRITION_CARDS: readonly NutritionCard[] = [
-  {
-    id: 'protein',
-    title: 'Proteínas',
-    detail: 'Feijão + soja',
-    energyCost: 0,
-    waterCostL: 0.25,
-    wellbeingGain: 8,
-    color: '#f0b429',
-    foodIds: ['beans', 'tofu'],
-  },
-  {
-    id: 'veggie',
-    title: 'Vegetais',
-    detail: 'Folhas da estufa',
-    energyCost: 0,
-    waterCostL: 0.15,
-    wellbeingGain: 7,
-    color: '#5ecf9a',
-    foodIds: ['lettuce', 'carrot'],
-  },
-  {
-    id: 'fruit',
-    title: 'Frutas',
-    detail: 'Energia rápida',
-    energyCost: 0,
-    waterCostL: 0.1,
-    wellbeingGain: 6,
-    color: '#ff6b8a',
-    foodIds: ['apple', 'berry'],
-  },
-  {
-    id: 'hydrate',
-    title: 'Hidratação',
-    detail: '2.2 L no dia',
-    energyCost: 0,
-    waterCostL: 2.2,
-    wellbeingGain: 10,
-    color: '#38bdf8',
-    waterRationL: 2.2,
-  },
-] as const
+export function mealKcal(foodIds: readonly string[]): number {
+  let total = 0
+  for (const id of foodIds) total += FOOD_BY_ID.get(id)?.kcal ?? 0
+  return total
+}
 
-export const NUTRITION_REQUIRED_COUNT = 3
-
-export const WATER_RATION = {
-  minL: 1.5,
-  maxL: 3.0,
-  idealMinL: 2.0,
-  idealMaxL: 2.5,
-  /** Extra liters above idealMax drain the base reserve harder. */
-  wasteThresholdL: 2.5,
-} as const
+export function mealVerdict(kcal: number): MealVerdict {
+  if (kcal < MEAL_KCAL_MIN) return 'low'
+  if (kcal > MEAL_KCAL_MAX) return 'high'
+  return 'balanced'
+}
 
 export type HygieneId = 'teeth' | 'body' | 'sensors'
 
@@ -312,15 +296,16 @@ function clamp(n: number, min = 0, max = 100) {
 }
 
 export function nutritionBalance(foodIds: string[]): number {
-  const groups = new Set(
-    foodIds
-      .map((id) => FOOD_ITEMS.find((f) => f.id === id)?.group)
-      .filter(Boolean),
-  )
+  const groups = new Set<FoodGroupId>()
+  for (const id of foodIds) {
+    const group = FOOD_BY_ID.get(id)?.group
+    if (group) groups.add(group)
+  }
   if (groups.size === 0) return 0
   if (groups.size === 1) return 35
-  if (groups.size === 2) return 70
-  return 100
+  if (groups.size < MEAL_GROUP_ORDER.length) return 70
+  const verdict = mealVerdict(mealKcal(foodIds))
+  return verdict === 'balanced' ? 100 : 55
 }
 
 /** True when the current stage cannot be finished because energy is too low. */
@@ -328,7 +313,7 @@ export function isMission2EnergySoftLocked(
   step: Mission2Step,
   energyPct: number,
   exercises: readonly ExerciseId[],
-  nutritionCards: readonly NutritionCardId[],
+  _nutritionCards: readonly NutritionCardId[],
   hygieneDone: readonly HygieneId[],
 ): boolean {
   if (step === 'step2_1_exercise') {
@@ -338,20 +323,7 @@ export function isMission2EnergySoftLocked(
     return affordable.length < need
   }
 
-  if (step === 'step2_2_nutrition') {
-    const done = new Set(nutritionCards)
-    if (done.size >= NUTRITION_REQUIRED_COUNT && done.has('hydrate')) return false
-    const remaining = NUTRITION_CARDS.filter((c) => !done.has(c.id) && c.energyCost <= energyPct)
-    const need = Math.max(0, NUTRITION_REQUIRED_COUNT - done.size)
-    if (need === 0) return !done.has('hydrate') && !remaining.some((c) => c.id === 'hydrate')
-    if (!done.has('hydrate')) {
-      const hydrateOk = remaining.some((c) => c.id === 'hydrate')
-      if (!hydrateOk) return true
-      const others = remaining.filter((c) => c.id !== 'hydrate')
-      return others.length < need - 1
-    }
-    return remaining.length < need
-  }
+  if (step === 'step2_2_nutrition') return false
 
   if (step === 'step2_3_hygiene') {
     const need = HYGIENE_ACTIONS.length - hygieneDone.length
@@ -369,17 +341,6 @@ export function exerciseCosts(ids: ExerciseId[]): { energy: number; waterL: numb
       const ex = EXERCISES.find((e) => e.id === id)
       if (!ex) return acc
       return { energy: acc.energy + ex.energyCost, waterL: acc.waterL + ex.waterCostL }
-    },
-    { energy: 0, waterL: 0 },
-  )
-}
-
-export function foodCosts(foodIds: string[]): { energy: number; waterL: number } {
-  return foodIds.reduce(
-    (acc, id) => {
-      const f = FOOD_ITEMS.find((x) => x.id === id)
-      if (!f) return acc
-      return { energy: acc.energy + f.energyCost, waterL: acc.waterL + f.waterCostL }
     },
     { energy: 0, waterL: 0 },
   )
@@ -410,11 +371,13 @@ export function computeMission2Scores(choices: Mission2Choices, baseEnergySeed: 
   const sleepBonusEx = ex.reduce((s, e) => s + e.sleepBonus, 0)
   const balance = nutritionBalance(choices.foods)
 
-  const ration = choices.waterRationL
-  let hydration = 50
-  if (ration < WATER_RATION.idealMinL) hydration = 35 + (ration - WATER_RATION.minL) * 20
-  else if (ration <= WATER_RATION.idealMaxL) hydration = 78 + (ration - WATER_RATION.idealMinL) * 20
-  else hydration = 88 - (ration - WATER_RATION.idealMaxL) * 18
+  const mealMl = Math.round(choices.waterRationL * 1000)
+  const hydration =
+    mealMl >= WATER_DISPENSER.minMl && mealMl <= WATER_DISPENSER.maxMl
+      ? 92
+      : mealMl < WATER_DISPENSER.minMl
+        ? 28 + mealMl / 20
+        : 78 - (mealMl - WATER_DISPENSER.maxMl) / 25
 
   const hygieneComplete = choices.hygieneDone.length >= HYGIENE_ACTIONS.length
   const contDrop = hygieneCosts(choices.hygieneDone).contaminationDrop
@@ -423,7 +386,8 @@ export function computeMission2Scores(choices: Mission2Choices, baseEnergySeed: 
   const physicalHealth = clamp(42 + physicalFromEx * 0.9 + (balance >= 70 ? 8 : 0))
 
   let sleepScore = 48 + sleepBonusEx + (balance >= 100 ? 12 : balance >= 70 ? 6 : 0)
-  sleepScore += ration < WATER_RATION.idealMinL ? -14 : ration > WATER_RATION.wasteThresholdL ? -6 : 10
+  const waterInRange = mealMl >= WATER_DISPENSER.minMl && mealMl <= WATER_DISPENSER.maxMl
+  sleepScore += waterInRange ? 10 : -10
   sleepScore += hygieneComplete ? 8 : -10
   sleepScore += baseEnergySeed >= 55 ? 4 : 0
   sleepScore = clamp(sleepScore)

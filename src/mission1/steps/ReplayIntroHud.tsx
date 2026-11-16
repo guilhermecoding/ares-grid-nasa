@@ -3,6 +3,7 @@ import { MEDIA } from '../../constants/mediaAssets'
 import { REPLAY_INTRO_HIGHLIGHT_WORDS, REPLAY_INTRO_PARTS } from '../../data/mission1Data'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
+import { useHideFollowingDialogs } from '../../opening/useHideFollowingDialogs'
 import { PanelCleanButton } from './PanelCleanButton'
 
 interface Props {
@@ -76,6 +77,7 @@ export function ReplayIntroHud({
 
   const lines = REPLAY_INTRO_PARTS[part]!
   const isLast = part >= REPLAY_INTRO_PARTS.length - 1
+  const { blocked, hideDialog, afterClose } = useHideFollowingDialogs('m1', onContinue)
 
   const cleanButton = (
     <PanelCleanButton
@@ -99,23 +101,27 @@ export function ReplayIntroHud({
       <StatusBanner efficiency={efficiency} />
       <ConfiguredPanel tilt={tilt} azimuth={azimuth} cleanButton={cleanButton} />
 
+      {!blocked && (
       <PixelDialogBox
         key={`m1-replay-${part}`}
         open={open}
         lines={[...lines]}
         title="Capi"
+        dialogId={`m1-replay-${part}`}
+        onSkip={() => {
+          hideDialog()
+          setOpen(false)
+        }}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
         highlightWords={part === 1 ? REPLAY_INTRO_HIGHLIGHT_WORDS : undefined}
         onTypingComplete={() => setReady(true)}
         onClosed={() => {
-          if (!isLast) {
+          afterClose(isLast, () => {
             setReady(false)
             setPart((p) => p + 1)
             setOpen(true)
-            return
-          }
-          onContinue()
+          })
         }}
         footer={
           ready ? (
@@ -129,6 +135,7 @@ export function ReplayIntroHud({
           ) : null
         }
       />
+      )}
     </>
   )
 }

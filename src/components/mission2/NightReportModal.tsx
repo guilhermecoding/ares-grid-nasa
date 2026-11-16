@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
 import {
   EXERCISES,
-  FOOD_ITEMS,
+  foodById,
+  mealKcal,
   HYGIENE_ACTIONS,
   MISSION2_META,
   NIGHT_REPORT_STEPS,
@@ -19,18 +20,33 @@ interface Props {
   choices: Mission2Choices
   scores: Mission2Scores
   onDone: () => void
+  /** Extra diary line for later missions. Mission 2 keeps its own sentence when this is omitted. */
+  researchNote?: string
+  /** Extra health lines. Mission 2 keeps its three indicators when this is omitted. */
+  healthExtra?: readonly string[]
+  doneLabel?: string
 }
 
 /** Reusable holographic night panel — 7 steps with kid-friendly progress. */
-export function NightReportModal({ open, playerName, choices, scores, onDone }: Props) {
+export function NightReportModal({
+  open,
+  playerName,
+  choices,
+  scores,
+  onDone,
+  researchNote,
+  healthExtra,
+  doneLabel = 'Amanhecer',
+}: Props) {
   const [step, setStep] = useState(0)
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (!open) setStep(0)
+  }
 
   useEffect(() => {
-    if (!open) {
-      setStep(0)
-      return
-    }
-    soundEngine.telemetry()
+    if (open) soundEngine.telemetry()
   }, [open])
 
   useEffect(() => {
@@ -55,9 +71,8 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
     .join(', ')
 
   const foodLabels = choices.foods
-    .map((id) => FOOD_ITEMS.find((f) => f.id === id)?.label)
+    .map((id) => foodById(id)?.label)
     .filter(Boolean)
-    .slice(0, 4)
     .join(', ')
 
   const hygieneOk = choices.hygieneDone.length >= HYGIENE_ACTIONS.length
@@ -106,6 +121,9 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
                   <li>Saúde física: {scores.physicalHealth}%</li>
                   <li>Hidratação: {scores.hydration}%</li>
                   <li>FC repouso (simulada): {58 + Math.floor((100 - scores.physicalHealth) / 8)} bpm</li>
+                  {healthExtra?.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
                 </ul>
               )}
               {current.id === 'sleep' && (
@@ -118,15 +136,17 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
               {current.id === 'activities' && (
                 <ul className="mt-2 space-y-1 font-pixel text-[10px] text-void-200 sm:text-xs">
                   <li>Exercícios: {exerciseLabels || '—'}</li>
-                  <li>Refeição: {foodLabels || '—'}…</li>
-                  <li>Água do dia: {choices.waterRationL.toFixed(1)}L</li>
+                  <li>
+                    Refeição: {foodLabels || '—'} · {mealKcal(choices.foods)} kcal
+                  </li>
+                  <li>Água da refeição: {Math.round(choices.waterRationL * 1000)} ml</li>
                   <li>Higiene: {hygieneOk ? 'completa' : 'parcial'}</li>
                 </ul>
               )}
               {current.id === 'research' && (
                 <p className="mt-2 font-pixel text-[10px] leading-snug text-void-200 sm:text-xs">
-                  Diário científico: painéis solares (Missão 1) + rotina de saúde (Missão 2) organizados com fotos e
-                  observações da Capi.
+                  {researchNote ??
+                    'Diário científico: painéis solares (Missão 1) + rotina de saúde (Missão 2) organizados com fotos e observações da Capi.'}
                 </p>
               )}
               {current.id === 'storage' && (
@@ -162,7 +182,7 @@ export function NightReportModal({ open, playerName, choices, scores, onDone }: 
                 onDone()
               }}
             >
-              Amanhecer
+              {doneLabel}
             </McButton>
           </div>
         )}

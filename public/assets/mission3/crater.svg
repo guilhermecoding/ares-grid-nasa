@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" fill="none">
+  <defs>
+    <radialGradient id="ground" cx="48%" cy="46%" r="62%">
+      <stop offset="0" stop-color="#ff9a3c"/>
+      <stop offset="0.55" stop-color="#f06a1a"/>
+      <stop offset="0.82" stop-color="#e25812" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#e25812" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rim" cx="36%" cy="32%" r="64%">
+      <stop offset="0.5" stop-color="#ffe0b0"/>
+      <stop offset="0.7" stop-color="#ffb15a"/>
+      <stop offset="0.84" stop-color="#f06a1a"/>
+      <stop offset="1" stop-color="#9a3412"/>
+    </radialGradient>
+    <radialGradient id="bowl" cx="38%" cy="34%" r="70%">
+      <stop offset="0" stop-color="#ffd7a1"/>
+      <stop offset="0.22" stop-color="#ff8a2a"/>
+      <stop offset="0.58" stop-color="#e04e10"/>
+      <stop offset="1" stop-color="#7c2d12"/>
+    </radialGradient>
+    <radialGradient id="floor" cx="44%" cy="42%" r="68%">
+      <stop offset="0" stop-color="#ffc078"/>
+      <stop offset="0.5" stop-color="#e25812"/>
+      <stop offset="1" stop-color="#7c2d12"/>
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="240" cy="186" rx="220" ry="140" fill="url(#ground)"/>
+
+  <g fill="#ffb15a">
+    <ellipse cx="70" cy="168" rx="42" ry="12" transform="rotate(-24 70 168)"/>
+    <ellipse cx="124" cy="86" rx="36" ry="11" transform="rotate(-52 124 86)"/>
+    <ellipse cx="400" cy="108" rx="44" ry="12" transform="rotate(28 400 108)"/>
+    <ellipse cx="424" cy="210" rx="34" ry="10" transform="rotate(14 424 210)"/>
+    <ellipse cx="86" cy="258" rx="40" ry="12" transform="rotate(22 86 258)"/>
+    <ellipse cx="372" cy="286" rx="48" ry="13" transform="rotate(-18 372 286)"/>
+    <ellipse cx="210" cy="52" rx="30" ry="9" transform="rotate(-8 210 52)"/>
+  </g>
+
+  <ellipse cx="262" cy="210" rx="150" ry="96" fill="#4a1608" opacity="0.45"/>
+  <ellipse cx="228" cy="172" rx="148" ry="96" fill="url(#rim)"/>
+  <ellipse cx="228" cy="176" rx="112" ry="72" fill="url(#bowl)"/>
+  <path d="M128 168c28-46 78-70 132-62 18 3 34 12 46 24-36-28-96-24-140 10-16 12-28 22-38 28z" fill="#ffd7a1" opacity="0.55"/>
+  <ellipse cx="224" cy="186" rx="74" ry="46" fill="url(#floor)"/>
+  <ellipse cx="242" cy="202" rx="34" ry="20" fill="#9a3412"/>
+  <ellipse cx="206" cy="160" rx="22" ry="10" fill="#fff1d2" opacity="0.9"/>
+
+  <g fill="#7c2d12">
+    <ellipse cx="128" cy="148" rx="8" ry="5"/>
+    <ellipse cx="156" cy="214" rx="6" ry="3.5"/>
+    <ellipse cx="312" cy="154" rx="7" ry="4"/>
+    <ellipse cx="294" cy="226" rx="9" ry="5"/>
+    <ellipse cx="186" cy="232" rx="5" ry="3"/>
+    <ellipse cx="268" cy="132" rx="4" ry="2.5"/>
+  </g>
+  <g fill="#ffe0b0">
+    <ellipse cx="122" cy="144" rx="4.5" ry="2.2"/>
+    <ellipse cx="308" cy="150" rx="4" ry="2"/>
+    <ellipse cx="288" cy="222" rx="5" ry="2.4"/>
+  </g>
+
+  <ellipse cx="352" cy="112" rx="26" ry="16" fill="#f06a1a"/>
+  <ellipse cx="350" cy="110" rx="14" ry="8" fill="#9a3412"/>
+  <ellipse cx="346" cy="108" rx="5" ry="2.5" fill="#ffe0b0"/>
+</svg>

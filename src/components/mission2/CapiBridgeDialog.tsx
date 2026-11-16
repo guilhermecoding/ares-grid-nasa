@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
+import { dialogGroupOf, isDialogGroupSkipped } from '../../services/progressStore'
 
 interface Props {
   open: boolean
@@ -9,6 +10,7 @@ interface Props {
   highlightWords?: readonly string[]
   buttonLabel?: string
   onDone: () => void
+  dialogId?: string
 }
 
 /** One short Capi bridge between mission stages. */
@@ -18,11 +20,23 @@ export function CapiBridgeDialog({
   highlightWords,
   buttonLabel = 'Continuar',
   onDone,
+  dialogId,
 }: Props) {
   const [ready, setReady] = useState(false)
   const [boxOpen, setBoxOpen] = useState(true)
+  const onDoneRef = useRef(onDone)
+  const group = dialogId ? dialogGroupOf(dialogId) : null
+  const skipped = Boolean(group && isDialogGroupSkipped(group))
 
-  if (!open) return null
+  useEffect(() => {
+    onDoneRef.current = onDone
+  })
+
+  useEffect(() => {
+    if (skipped) onDoneRef.current()
+  }, [skipped])
+
+  if (!open || skipped) return null
 
   return (
     <PixelDialogBox
@@ -30,6 +44,8 @@ export function CapiBridgeDialog({
       open={boxOpen}
       lines={[...lines]}
       title="Capi"
+      dialogId={dialogId ?? `capi:${lines[0] ?? ''}`}
+      onSkip={() => setBoxOpen(false)}
       characterSrc={MEDIA.capi.neutral}
       characterAlt="Capi"
       highlightWords={highlightWords}

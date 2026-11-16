@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FullscreenButton } from '../components/FullscreenButton'
 import { StatusIndicators } from '../components/StatusIndicators'
 import {
   EXPOSURE_MS,
@@ -7,23 +8,35 @@ import {
   PANEL_CLEAN_EFFICIENCY_CAP,
   PANEL_CLEAN_EFFICIENCY_GAIN,
   PANEL_CLEAN_ENERGY_GAIN,
+  PANEL_TEST_CLEAN_WATER_COST,
+  PANEL_TEST_DUST_ENERGY_FACTOR,
+  PANEL_TEST_DUST_WATER_COST,
+  TRANSMISSION_LINES,
   type Mission1Step,
+  type PanelTestChoice,
   type SeasonId,
   type SiteId,
 } from '../data/mission1Data'
-import { loadProgress, updateProgress, type Mission1PanelSave } from '../services/progressStore'
+import {
+  DEFAULT_BASE_STATS,
+  clearMissionRun,
+  loadProgress,
+  saveMissionRun,
+  updateProgress,
+  type Mission1PanelSave,
+} from '../services/progressStore'
 import type { BaseStats } from '../types/game'
 import { MarsBackground } from './MarsBackground'
 import { GameOverOverlay } from './steps/GameOverOverlay'
 import { IntroHud } from './steps/IntroHud'
 import { LocationChallenge } from './steps/LocationChallenge'
-import { LogbookModal } from './steps/LogbookModal'
+import { MissionLogbook } from '../components/logbook/MissionLogbook'
+import { MissionOutro } from '../components/MissionOutro'
 import { PanelCleanSuccessDialog } from './steps/PanelCleanSuccessDialog'
 import { ReplayIntroHud } from './steps/ReplayIntroHud'
 import { RiskWarningHud } from './steps/RiskWarningHud'
+import { PanelConditionDialog } from './steps/PanelConditionDialog'
 import { SolarCalcChallenge } from './steps/SolarCalcChallenge'
-import { StormTestChallenge } from './steps/StormTestChallenge'
-import { TransmissionOutro } from './steps/TransmissionOutro'
 
 const DEFAULT_STATS: BaseStats = { energy: 0, water: 85, wellbeing: 70 }
 
@@ -33,35 +46,32 @@ function clampStat(n: number) {
 
 /**
  * HUD for Mission 01: external energy starts at 0 and only rises after the panel
- * is installed, according to site/tilt/season efficiency and storm choice.
+ * is installed, according to site/tilt/season efficiency and the panel test.
  */
 function deriveMissionStats(
   base: BaseStats,
   step: Mission1Step,
   efficiency: number,
   panelInstalled: boolean,
-  stormChoice: 'save' | 'max' | null,
+  panelTest: PanelTestChoice | null,
   wellbeingLive: number,
 ): BaseStats {
   let water = base.water
   let energy = 0
 
-  if (!panelInstalled) {
-    energy = 0
-  } else if (step === 'step3_storm_test') {
-    // Panel just online — energy mirrors installation efficiency.
+  if (panelInstalled && step === 'step3_panel_test') {
     energy = clampStat(efficiency)
-    water = clampStat(water - 3)
-  } else if (step === 'step4_logbook' || step === 'step5_transmission') {
-    if (stormChoice === 'save') {
-      energy = clampStat(efficiency * 0.92)
-    } else if (stormChoice === 'max') {
-      energy = clampStat(efficiency * 0.55)
-      water = clampStat(water - 6)
+  } else if (panelInstalled && (step === 'step4_logbook' || step === 'step5_transmission')) {
+    if (panelTest === 'clean') {
+      energy = clampStat(efficiency)
+      water = clampStat(water - PANEL_TEST_CLEAN_WATER_COST)
+    } else if (panelTest === 'dust') {
+      energy = clampStat(efficiency * PANEL_TEST_DUST_ENERGY_FACTOR)
+      water = clampStat(water - PANEL_TEST_DUST_WATER_COST)
     } else {
       energy = clampStat(efficiency)
     }
-  } else {
+  } else if (panelInstalled) {
     energy = clampStat(efficiency)
   }
 
@@ -93,17 +103,20 @@ export default function Mission01Screen({
   stats = DEFAULT_STATS,
 }: Props) {
   const savedPanel = useMemo(() => loadProgress().mission1Panel, [])
+  const savedRun = useMemo(() => loadProgress().missionRuns.m1, [])
   const hasSavedPanel = !!savedPanel
+  const resumedLate =
+    savedRun?.step === 'step3_panel_test' || savedRun?.step === 'step4_logbook' || savedRun?.step === 'step5_transmission'
 
-  const [step, setStep] = useState<Mission1Step>(() => (hasSavedPanel ? 'replay_intro' : 'intro'))
-  const [site, setSite] = useState<SiteId>(() => savedPanel?.site ?? 'B')
-  const [season, setSeason] = useState<SeasonId>(() => savedPanel?.season ?? 'summer_n')
-  const [tilt, setTilt] = useState(() => savedPanel?.tilt ?? 30)
-  const [azimuth, setAzimuth] = useState(() => savedPanel?.azimuth ?? 0)
-  const [efficiency, setEfficiency] = useState(() => savedPanel?.efficiency ?? 0)
-  const [panelInstalled, setPanelInstalled] = useState(() => hasSavedPanel)
-  const [stormChoice, setStormChoice] = useState<'save' | 'max' | null>(
-    () => savedPanel?.stormChoice ?? (hasSavedPanel ? 'save' : null),
+  const [step, setStep] = useState<Mission1Step>(() => savedRun?.step ?? (hasSavedPanel ? 'replay_intro' : 'intro'))
+  const [site, setSite] = useState<SiteId>(() => savedRun?.site ?? savedPanel?.site ?? 'B')
+  const [season, setSeason] = useState<SeasonId>(() => savedRun?.season ?? savedPanel?.season ?? 'summer_n')
+  const [tilt, setTilt] = useState(() => savedRun?.tilt ?? savedPanel?.tilt ?? 30)
+  const [azimuth, setAzimuth] = useState(() => savedRun?.azimuth ?? savedPanel?.azimuth ?? 0)
+  const [efficiency, setEfficiency] = useState(() => savedRun?.efficiency ?? savedPanel?.efficiency ?? 0)
+  const [panelInstalled, setPanelInstalled] = useState(() => hasSavedPanel || resumedLate)
+  const [panelTest, setPanelTest] = useState<PanelTestChoice | null>(
+    () => savedRun?.panelTest ?? savedPanel?.panelTest ?? (hasSavedPanel ? 'clean' : null),
   )
   const [firstInstalledAt, setFirstInstalledAt] = useState(
     () => savedPanel?.firstInstalledAt ?? Date.now(),
@@ -121,12 +134,12 @@ export default function Mission01Screen({
       tilt,
       azimuth,
       efficiency,
-      stormChoice: stormChoice ?? 'save',
+      panelTest,
       firstInstalledAt,
       lastCleanedAt,
       ...overrides,
     }),
-    [azimuth, efficiency, firstInstalledAt, lastCleanedAt, season, site, stormChoice, tilt],
+    [azimuth, efficiency, firstInstalledAt, lastCleanedAt, panelTest, season, site, tilt],
   )
 
   const wellbeingStart = useRef(Math.max(1, stats.wellbeing))
@@ -136,21 +149,34 @@ export default function Mission01Screen({
   const [gameOver, setGameOver] = useState(false)
   const gameOverLatched = useRef(false)
 
-  const storm = step === 'step3_storm_test'
   const outdoor = isOutdoorMission1Step(step)
-  /** Results meters sit under top-left HUD — park indicators next to exit only then. */
-  const indicatorsBesideExit = step === 'step3_storm_test'
+  /** The panel-test dialog sits in the center — park indicators next to exit. */
+  const indicatorsBesideExit = step === 'step3_panel_test'
   const siteLabel = INSTALL_SITES.find((s) => s.id === site)?.name ?? site
 
   const hudStats = useMemo(
-    () => deriveMissionStats(stats, step, efficiency, panelInstalled, stormChoice, wellbeingLive),
-    [stats, step, efficiency, panelInstalled, stormChoice, wellbeingLive],
+    () => deriveMissionStats(stats, step, efficiency, panelInstalled, panelTest, wellbeingLive),
+    [stats, step, efficiency, panelInstalled, panelTest, wellbeingLive],
   )
+
+  const handleGameOverExit = useCallback(() => {
+    const progress = loadProgress()
+    const missionCleared = progress.level >= 2
+    clearMissionRun('m1')
+    if (!missionCleared) {
+      const reset = { ...DEFAULT_BASE_STATS }
+      updateProgress({ mission1Panel: null, baseStats: reset })
+      onExit(reset)
+      return
+    }
+    onExit({ ...hudStats, wellbeing: DEFAULT_BASE_STATS.wellbeing })
+  }, [hudStats, onExit])
 
   const finish = useCallback(() => {
     if (panelInstalled && efficiency > 0) {
       persistPanel(buildPanelSave())
     }
+    clearMissionRun('m1')
     onComplete(hudStats)
   }, [buildPanelSave, efficiency, hudStats, onComplete, panelInstalled])
 
@@ -174,6 +200,11 @@ export default function Mission01Screen({
     })
     setCleanSuccessOpen(true)
   }, [buildPanelSave, efficiency])
+
+  useEffect(() => {
+    if (step === 'replay_intro' || step === 'replay_idle') return
+    saveMissionRun('m1', { step, site, season, tilt, azimuth, efficiency, panelTest })
+  }, [azimuth, efficiency, panelTest, season, site, step, tilt])
 
   const beginExposure = useCallback(() => {
     outdoorElapsedMs.current = 0
@@ -235,8 +266,8 @@ export default function Mission01Screen({
       <MarsBackground
         hour={hour}
         season={season}
-        storm={storm}
-        dustIntensity={storm ? 0.85 : 0.35}
+        storm={false}
+        dustIntensity={0.35}
       />
 
       {!indicatorsBesideExit && !gameOver && step !== 'step5_transmission' && (
@@ -247,6 +278,7 @@ export default function Mission01Screen({
         {indicatorsBesideExit && !gameOver && (
           <StatusIndicators stats={hudStats} placement="inline" />
         )}
+        <FullscreenButton className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud" />
         <button
           type="button"
           className="flex size-12 shrink-0 items-center justify-center rounded border border-cyan-hud/25 bg-[#0a1628]/35 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.22)] backdrop-blur-[2px] hover:border-cyan-hud/50 hover:text-cyan-hud"
@@ -321,17 +353,26 @@ export default function Mission01Screen({
                 lastCleanedAt: null,
               }),
             )
-            setStep('step3_storm_test')
+            setStep('step3_panel_test')
           }}
         />
       )}
 
-      {!gameOver && step === 'step3_storm_test' && (
-        <StormTestChallenge
+      {!gameOver && step === 'step3_panel_test' && (
+        <PanelConditionDialog
           baseEfficiency={efficiency}
           onDone={(choice) => {
-            setStormChoice(choice)
-            persistPanel(buildPanelSave({ stormChoice: choice }))
+            setPanelTest(choice)
+            if (choice === 'clean') {
+              const nextEfficiency = Math.min(
+                PANEL_CLEAN_EFFICIENCY_CAP,
+                efficiency + PANEL_CLEAN_EFFICIENCY_GAIN,
+              )
+              setEfficiency(nextEfficiency)
+              persistPanel(buildPanelSave({ panelTest: choice, efficiency: nextEfficiency }))
+            } else {
+              persistPanel(buildPanelSave({ panelTest: choice }))
+            }
             setStep('step4_logbook')
           }}
         />
@@ -340,20 +381,30 @@ export default function Mission01Screen({
       {!gameOver && step === 'step4_logbook' && (
         <>
           <MarsBackground hour={hour} season={season} storm={false} dustIntensity={0.25} />
-          <LogbookModal
-            siteLabel={siteLabel}
-            tilt={tilt}
-            stormChoice={stormChoice}
+          <MissionLogbook
+            missionId={1}
+            subtitle="Checklist da missão cumprida"
+            items={[
+              { label: 'Local de instalação escolhido', detail: siteLabel },
+              { label: 'Painéis solares ajustados', detail: `Inclinação ${tilt}°` },
+              {
+                label: 'Condição do painel testada',
+                detail:
+                  panelTest === 'dust' ? 'Poeira cobriu as células e a eficiência caiu' : 'Limpeza removeu a poeira',
+              },
+              { label: 'Energia externa ativada', detail: 'Base pronta para explorar' },
+              { label: 'Registro científico no diário', detail: 'Evento da Missão 1 documentado' },
+            ]}
             onDone={() => setStep('step5_transmission')}
           />
         </>
       )}
 
       {!gameOver && step === 'step5_transmission' && (
-        <TransmissionOutro stats={hudStats} onDone={finish} />
+        <MissionOutro missionId={1} lines={TRANSMISSION_LINES} stats={hudStats} onDone={finish} />
       )}
 
-      {gameOver && <GameOverOverlay onExit={() => onExit(hudStats)} />}
+      {gameOver && <GameOverOverlay onExit={handleGameOverExit} />}
     </div>
   )
 }

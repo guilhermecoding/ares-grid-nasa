@@ -1,6 +1,7 @@
 import { Brush } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { PANEL_CLEAN_COOLDOWN_MS } from '../../data/mission1Data'
+import { PANEL_CLEAN_COOLDOWN_MS, PANEL_CLEAN_EMERGENCY_MAX } from '../../data/mission1Data'
+import { loadProgress } from '../../services/progressStore'
 
 interface Props {
   firstInstalledAt: number
@@ -31,7 +32,8 @@ export function PanelCleanButton({ firstInstalledAt, lastCleanedAt, onClean, cla
 
   const anchor = cooldownAnchor(firstInstalledAt, lastCleanedAt)
   const progress = unlockProgress(anchor, now)
-  const unlocked = progress >= 1
+  const emergency = loadProgress().baseStats.energy <= PANEL_CLEAN_EMERGENCY_MAX
+  const unlocked = emergency || progress >= 1
   const label = unlocked
     ? 'Limpar painel'
     : 'O painel não está muito sujo ainda. Volte mais tarde.'

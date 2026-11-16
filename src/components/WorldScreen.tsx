@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { TOTAL_MISSIONS } from '../data/missionBadges'
 import { updateProgress } from '../services/progressStore'
 import type { WorldState } from '../types/game'
 import { FloatingControls } from './FloatingControls'
@@ -14,6 +15,8 @@ interface Props {
   onToggleMute: () => void
   onNasa: () => void
   onHome: () => void
+  onLogbook: () => void
+  onCertificate: () => void
 }
 
 export function WorldScreen({
@@ -25,6 +28,8 @@ export function WorldScreen({
   onToggleMute,
   onNasa,
   onHome,
+  onLogbook,
+  onCertificate,
 }: Props) {
   const handleLabelsDone = useCallback(() => {
     updateProgress({ controlsHintSeen: true })
@@ -55,6 +60,9 @@ export function WorldScreen({
         onNasa={onNasa}
         onHome={onHome}
         mapMode
+        onLogbook={onLogbook}
+        onCertificate={onCertificate}
+        certificateEarned={state.level > TOTAL_MISSIONS}
       />
     </div>
   )

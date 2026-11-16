@@ -1,13 +1,16 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { FullscreenButton } from './FullscreenButton'
 import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Award,
   BedDouble,
   BookOpen,
   Hand,
   Home,
+  NotebookPen,
   Volume2,
   VolumeX,
 } from 'lucide-react'
@@ -25,6 +28,18 @@ interface Props {
   onHome: () => void
   /** Mission-map hub: hide walk / interact / sleep pads */
   mapMode?: boolean
+  /** Mission-map hub: open the saved logbook pages. */
+  onLogbook?: () => void
+  /** Mission-map hub: open the player certificate. */
+  onCertificate?: () => void
+  /** All missions done: the certificate button turns gold. */
+  certificateEarned?: boolean
+}
+
+/** Gold look of the certificate button once the expedition is complete. */
+const CERTIFICATE_EARNED_STYLE: CSSProperties = {
+  color: 'var(--color-energy)',
+  boxShadow: '0 0 0 2px rgba(240, 180, 41, 0.85), 0 0 16px rgba(240, 180, 41, 0.55)',
 }
 
 function HintLabel({
@@ -61,6 +76,9 @@ export function FloatingControls({
   onNasa,
   onHome,
   mapMode = false,
+  onLogbook,
+  onCertificate,
+  certificateEarned = false,
 }: Props) {
   const btn =
     'flex items-center justify-center gap-1.5 rounded-full bg-void-900/75 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.45)] ring-1 ring-nebula/40 backdrop-blur-sm transition hover:bg-void-800/90 active:scale-95'
@@ -86,6 +104,7 @@ export function FloatingControls({
             NASA
           </HintLabel>
         </button>
+        {mapMode ? <FullscreenButton className={`pointer-events-auto ${btn} ${pad}`} /> : null}
         <button
           type="button"
           onClick={onHome}
@@ -104,6 +123,36 @@ export function FloatingControls({
           {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
         </button>
       </div>
+
+      {mapMode && (onLogbook || onCertificate) ? (
+        <div className="pointer-events-none absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-2 z-30 flex gap-1.5 sm:left-3">
+          {onLogbook ? (
+            <button
+              type="button"
+              onClick={onLogbook}
+              aria-label="Diário de bordo"
+              title="Diário de bordo"
+              className={`pointer-events-auto ${btn} ${action}`}
+            >
+              <NotebookPen className="size-5 shrink-0" />
+              <span className="hidden font-pixel text-xs sm:inline">Diário</span>
+            </button>
+          ) : null}
+          {onCertificate ? (
+            <button
+              type="button"
+              onClick={onCertificate}
+              aria-label="Certificado"
+              title="Certificado"
+              className={`pointer-events-auto ${btn} ${action}`}
+              style={certificateEarned ? CERTIFICATE_EARNED_STYLE : undefined}
+            >
+              <Award className="size-5 shrink-0" />
+              <span className="hidden font-pixel text-xs sm:inline">Certificado</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {!mapMode && (
         <>
