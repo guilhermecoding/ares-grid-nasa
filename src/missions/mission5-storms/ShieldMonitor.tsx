@@ -1,6 +1,6 @@
 import { Check, Droplets, Mountain, Radiation, ScanLine, ShieldCheck } from 'lucide-react'
+import { PlayerChibi } from '../../components/PlayerChibi'
 import { BarMeter, ChallengeBar, GameCta, Tag } from '../../components/missionKit/kit'
-import { MEDIA } from '../../constants/mediaAssets'
 import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
 
@@ -72,7 +72,7 @@ export function ShieldMonitor({ radiation, checked, onCheck, onLeave }: Props) {
           {/* Cabin */}
           <div className="absolute inset-x-0 bottom-0 h-[30%] bg-[linear-gradient(180deg,#14233a,#0a1422)]">
             <div className="absolute inset-x-[30%] top-0 h-full bg-[radial-gradient(closest-side,rgba(94,207,154,0.3),transparent)]" />
-            <img src={MEDIA.mission4.astronaut} alt="" className="gk-pixelated gk-bob absolute bottom-[6%] left-1/2 h-[78%] -translate-x-1/2" draggable={false} />
+            <PlayerChibi className="gk-pixelated gk-bob absolute bottom-[6%] left-1/2 h-[88%] -translate-x-1/2" />
             <Tag className="absolute bottom-2 left-2">{t('Protected cabin', 'Cabine protegida')}</Tag>
           </div>
           {checked ? (

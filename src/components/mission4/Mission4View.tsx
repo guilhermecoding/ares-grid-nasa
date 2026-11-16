@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FlaskConical, Recycle, Sprout, Wrench } from 'lucide-react'
+import { PlayerChibi } from '../PlayerChibi'
 import { FullscreenButton } from '../FullscreenButton'
 import { NightReportModal } from '../mission2/NightReportModal'
 import { StatusIndicators } from '../StatusIndicators'
@@ -414,12 +415,7 @@ export default function Mission4View({
               scene={
                 <div className="absolute inset-0 bg-[radial-gradient(70%_80%_at_55%_55%,#5a2416,#2a0f0c_75%)]">
                   <div className="absolute inset-x-0 bottom-0 h-[22%] border-t-4 border-[#9a3a19] bg-[#45190f]" />
-                  <img
-                    src={MEDIA.mission4.astronaut}
-                    alt=""
-                    className="gk-pixelated gk-bob absolute bottom-[6%] left-[8%] h-[30%]"
-                    draggable={false}
-                  />
+                  <PlayerChibi className="gk-pixelated gk-bob absolute bottom-[6%] left-[8%] h-[42%]" />
                   <img
                     src={MEDIA.mission4.dome}
                     alt={t('Geodesic dome greenhouse', 'Estufa em domo geodésico')}

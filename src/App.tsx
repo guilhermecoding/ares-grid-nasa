@@ -290,6 +290,7 @@ export default function App() {
           playerName={progress.playerName}
           initialProfile={{
             name: progress.playerName,
+            avatar: progress.avatar,
             suitColor: progress.suitColor,
             helmet: progress.helmet,
             backpack: progress.backpack,

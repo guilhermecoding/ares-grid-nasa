@@ -22,6 +22,7 @@ const CAPI_SCENE_REVEAL_S = 1.2
 
 export interface OpeningProfilePatch {
   playerName: string
+  avatar: AstronautProfile['avatar']
   suitColor: AstronautProfile['suitColor']
   helmet: AstronautProfile['helmet']
   backpack: AstronautProfile['backpack']
@@ -60,6 +61,7 @@ export function OpeningFlow({
       const p = profile ?? savedProfile
       onSaveProfile({
         playerName: p?.name ?? playerName ?? t('Astronaut', 'Astronauta'),
+        avatar: p?.avatar ?? initialProfile?.avatar ?? 'boy',
         suitColor: p?.suitColor ?? initialProfile?.suitColor ?? 'nasa-white',
         helmet: p?.helmet ?? initialProfile?.helmet ?? 'classic',
         backpack: p?.backpack ?? initialProfile?.backpack ?? 'standard',

@@ -94,9 +94,11 @@ export type SuitColorId = (typeof SUIT_COLORS)[number]['id']
 export type HelmetId = (typeof HELMET_STYLES)[number]['id']
 export type BackpackId = (typeof BACKPACK_STYLES)[number]['id']
 export type InsigniaId = (typeof INSIGNIAS)[number]['id']
+export type AvatarId = 'boy' | 'girl'
 
 export interface AstronautProfile {
   name: string
+  avatar: AvatarId
   suitColor: SuitColorId
   helmet: HelmetId
   backpack: BackpackId

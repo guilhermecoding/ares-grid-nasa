@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Home, Radiation, ShieldHalf, Sprout, type LucideIcon } from 'lucide-react'
+import { PlayerChibi } from '../../components/PlayerChibi'
 import { ChallengeBar } from '../../components/missionKit/kit'
-import { MEDIA } from '../../constants/mediaAssets'
 import { SHELTERS, type ShelterId } from '../../data/mission5Data'
 import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
@@ -229,11 +229,9 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
             </span>
           ) : null}
 
-          <img
-            src={MEDIA.mission4.astronaut}
+          <PlayerChibi
             alt={t('Astronaut', 'Astronauta')}
-            draggable={false}
-            className={`gk-pixelated pointer-events-none absolute h-[24%] ${goal ? 'gk-walk' : ''}`}
+            className={`gk-pixelated pointer-events-none absolute h-[28%] ${goal ? 'gk-walk' : ''}`}
             style={{
               left: `${pos.x}%`,
               top: `${pos.y}%`,

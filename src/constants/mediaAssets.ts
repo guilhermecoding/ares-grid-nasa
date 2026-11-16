@@ -2,6 +2,12 @@
 
 import emblem from '../assets/image/artefacts/arcadia_emblema_capivara.png'
 import astronautaCabeca from '../assets/image/artefacts/astronauta_cabeca.png'
+import astronautaCabecaMenina from '../assets/image/artefacts/astronauta_cabeca_menina.png'
+import astronautaFrontal from '../assets/image/artefacts/astronauta_frontal.png'
+import astronautaFrontalMenina from '../assets/image/artefacts/astronauta_frontal_menina.png'
+import chibiMenina from '../assets/image/artefacts/chibi-person-menina.png'
+import chibiMenino from '../assets/image/artefacts/chibi-person-menino.png'
+import type { AvatarId } from '../data/openingData'
 import capiDuvida from '../assets/image/artefacts/capi-duvida.png'
 import capiExcited2 from '../assets/image/artefacts/capi-excited2.png'
 import capiNeutral from '../assets/image/artefacts/capi-neutral.png'
@@ -14,11 +20,17 @@ import sitePlain from '../assets/image/mission1/site-planicie.jpg'
 import siteVale from '../assets/image/mission1/site-vale.jpg'
 import solarPanel from '../assets/image/mission1/solar-panel.svg'
 
+/** Portraits for the astronaut the player chose. */
+export const PLAYER_ART = {
+  boy: { head: astronautaCabeca, frontal: astronautaFrontal, chibi: chibiMenino },
+  girl: { head: astronautaCabecaMenina, frontal: astronautaFrontalMenina, chibi: chibiMenina },
+} as const
+
+export function playerArt(avatar: AvatarId | undefined) {
+  return PLAYER_ART[avatar === 'girl' ? 'girl' : 'boy']
+}
+
 export const MEDIA = {
-  player: {
-    /** Head portrait used as map marker / hover character */
-    head: astronautaCabeca,
-  },
   capi: {
     /** Emblem for title / ready gate */
     emblem,

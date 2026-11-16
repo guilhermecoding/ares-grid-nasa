@@ -11,7 +11,7 @@ import type {
   SpeciesId,
 } from '../data/mission4Data'
 import type { DustLatchId, InspectId, Mission5Run, Mission5Step, ShelterId } from '../data/mission5Data'
-import type { BackpackId, HelmetId, InsigniaId, SuitColorId } from '../data/openingData'
+import type { AvatarId, BackpackId, HelmetId, InsigniaId, SuitColorId } from '../data/openingData'
 import { MAX_WATER_RESERVE_L, type BaseStats, type ToolId } from '../types/game'
 
 const STORAGE_KEY = 'aresgrid-progress-v2'
@@ -49,6 +49,8 @@ export interface PlayerProgress {
   unlockedTools: ToolId[]
   muted: boolean
   openingCompleted: boolean
+  /** Boy or girl astronaut. Older saves without this field use the boy. */
+  avatar: AvatarId
   suitColor: SuitColorId
   helmet: HelmetId
   backpack: BackpackId
@@ -153,6 +155,7 @@ const DEFAULT_PROGRESS: PlayerProgress = {
   unlockedTools: ['walk', 'clean'],
   muted: true,
   openingCompleted: false,
+  avatar: 'boy',
   suitColor: 'nasa-white',
   helmet: 'classic',
   backpack: 'standard',
@@ -204,6 +207,7 @@ export function loadProgress(): PlayerProgress {
       skippedDialogGroups,
       missionRuns: parseMissionRuns(parsed.missionRuns),
       logbook: parseLogbook(parsed.logbook),
+      avatar: parsed.avatar === 'girl' ? 'girl' : 'boy',
       certificateSeen: parsed.certificateSeen === true,
       expeditionCompletedAt:
         typeof parsed.expeditionCompletedAt === 'number' && parsed.expeditionCompletedAt > 0

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Droplets, Heart, Leaf, Recycle, Utensils, Wind, type LucideIcon } from 'lucide-react'
+import { PlayerChibi } from '../../components/PlayerChibi'
 import { BarMeter, Burst, ChallengeBar, GameCta, Tag } from '../../components/missionKit/kit'
 import { SciTerm } from '../../components/SciTerm'
 import { MEDIA } from '../../constants/mediaAssets'
@@ -105,7 +106,7 @@ export function BlssStep({ linked, foodPct, o2Pct, onLink, onDone }: Props) {
             </svg>
 
             <figure className="absolute top-1/2 left-[2%] flex w-[19%] -translate-y-1/2 flex-col items-center gap-1">
-              <img src={MEDIA.mission4.astronaut} alt="" className="gk-pixelated gk-bob w-[70%]" draggable={false} />
+              <PlayerChibi className="gk-pixelated gk-bob w-[88%]" />
               <Tag tone="water">{t('Crew', 'Tripulação')}</Tag>
             </figure>
             <figure className="absolute top-1/2 right-[1%] flex w-[22%] -translate-y-1/2 flex-col items-center gap-1">

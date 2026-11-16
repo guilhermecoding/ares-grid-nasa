@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { MEDIA } from '../constants/mediaAssets'
+import { MEDIA, playerArt } from '../constants/mediaAssets'
+import { loadProgress } from '../services/progressStore'
 import { ARCADIA_MAP_SRC } from '../data/mapPois'
 import { TOTAL_MISSIONS, TROPHY_SPRITE } from '../data/missionBadges'
 import { getMissionNode, isPlayableMission, MISSION_NODES, missionPathD } from '../data/missionNodes'
@@ -230,7 +231,7 @@ function MarsMapComponent({ state, onEnterMission }: Props) {
         style={{ left: `${current.leftPct}%`, top: `${current.topPct}%` }}
       >
         <img
-          src={MEDIA.player.head}
+          src={playerArt(loadProgress().avatar).head}
           alt={t('Your astronaut', 'Seu astronauta')}
           draggable={false}
           className="rover-bob size-[min(16vw,80px)] object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.75)]"

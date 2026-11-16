@@ -13,6 +13,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { PlayerChibi } from '../../components/PlayerChibi'
 import { Burst, ChallengeBar, FloatDelta, GameCta, Tag } from '../../components/missionKit/kit'
 import { useDrag } from '../../components/missionKit/useDrag'
 import { MEDIA } from '../../constants/mediaAssets'
@@ -180,12 +181,7 @@ export function BuildStep({
             {online ? <span className="gk-blink size-1.5 bg-life" /> : null}
             {sceneLabel}
           </Tag>
-          <img
-            src={MEDIA.mission4.astronaut}
-            alt=""
-            className="gk-pixelated gk-bob absolute bottom-[5%] left-[9%] h-[30%]"
-            draggable={false}
-          />
+          <PlayerChibi className="gk-pixelated gk-bob absolute bottom-[5%] left-[9%] h-[42%]" />
           <div className="absolute right-[5%] bottom-[3%] aspect-[726/648] h-[88%]">
             {!has('shell') ? (
               <div className="gk-blink absolute inset-x-[4%] top-[6%] bottom-[10%] rounded-t-full border-2 border-dashed border-[#38bdf8]/70" />
