@@ -1,4 +1,5 @@
-import { Lock, X } from 'lucide-react'
+import { Download, Lock, X } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
 import { completedMissions, MISSION_BADGES, TOTAL_MISSIONS, TROPHY_SPRITE } from '../../data/missionBadges'
 import { INSIGNIAS, type InsigniaId } from '../../data/openingData'
@@ -40,15 +41,51 @@ function SuitInsignia({ id }: { id: InsigniaId }) {
   )
 }
 
+function certificateFileName(playerName: string, portuguese: boolean) {
+  const safe = playerName
+    .normalize('NFKD')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-|-$/g, '')
+  const who = safe || 'astronaut'
+  return `Mars-Adventures-${portuguese ? 'certificado' : 'certificate'}-${who}.jpg`
+}
+
 /** Player certificate: name, insignias and missions completed. */
 export function CertificateModal({ playerName, insignia, level, completedAt, celebrate = false, onClose }: Props) {
   const { locale, t } = useI18n()
+  const paperRef = useRef<HTMLDivElement>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   useEscapeKey(onClose)
   const done = completedMissions(level)
   const earned = done >= TOTAL_MISSIONS
   const name = playerName.trim() || t('Astronaut', 'Astronauta')
   const patch = INSIGNIAS.find((item) => item.id === insignia)
   const insigniaLabel = patch ? t(patch.en, patch.label) : 'Ares'
+
+  const downloadCertificate = async () => {
+    const node = paperRef.current
+    if (!node || saving || !earned) return
+    setSaving(true)
+    setSaveError(false)
+    try {
+      const { toJpeg } = await import('html-to-image')
+      const dataUrl = await toJpeg(node, {
+        quality: 0.92,
+        backgroundColor: '#fff8e6',
+        pixelRatio: 2,
+        filter: (domNode) => !(domNode instanceof HTMLElement && domNode.dataset.certificateIgnore === 'true'),
+      })
+      const link = document.createElement('a')
+      link.href = dataUrl
+      link.download = certificateFileName(name, locale === 'pt')
+      link.click()
+    } catch {
+      setSaveError(true)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div
@@ -63,9 +100,13 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
         frameClassName="gk-pop relative z-10 w-full max-w-2xl border-4 border-[#1a1c3a] bg-[#fff8e6] text-[#1a1c3a] shadow-[0_0_0_3px_#c9962b,0_0_40px_rgba(240,180,41,0.35)]"
         className="max-h-[min(94dvh,48rem)] p-2.5 sm:p-3"
       >
-        <div className="relative border-2 border-[#c9962b] px-3 py-4 text-center outline-1 outline-offset-[-6px] outline-[#c9962b]/60 sm:px-6 sm:py-5">
+        <div
+          ref={paperRef}
+          className="relative border-2 border-[#c9962b] px-3 py-4 text-center outline-1 outline-offset-[-6px] outline-[#c9962b]/60 sm:px-6 sm:py-5"
+        >
           <button
             type="button"
+            data-certificate-ignore="true"
             autoFocus
             aria-label={t('Close the certificate', 'Fechar o certificado')}
             className="absolute top-2 right-2 flex size-11 items-center justify-center border-2 border-[#1a1c3a] bg-[#30346d] text-[#fff8e6]"
@@ -192,10 +233,33 @@ export function CertificateModal({ playerName, insignia, level, completedAt, cel
             )}
           </div>
 
-          <McButton className="mt-4 min-h-12 w-full px-3 font-pixel text-base font-bold" onClick={onClose}>
+          {earned ? (
+            <McButton
+              data-certificate-ignore="true"
+              className="mc-btn-green mt-4 min-h-12 w-full px-3 font-pixel text-base font-bold disabled:opacity-60"
+              disabled={saving}
+              aria-busy={saving}
+              onClick={() => void downloadCertificate()}
+            >
+              <span className="inline-flex items-center justify-center gap-2">
+                <Download className="size-5" aria-hidden />
+                {saving ? t('Saving the picture…', 'Salvando a imagem…') : t('Download JPEG', 'Baixar JPEG')}
+              </span>
+            </McButton>
+          ) : null}
+          <McButton
+            data-certificate-ignore="true"
+            className="mt-2 min-h-12 w-full px-3 font-pixel text-base font-bold"
+            onClick={onClose}
+          >
             {t('Back to the map', 'Voltar ao mapa')}
           </McButton>
         </div>
+        {saveError ? (
+          <p className="px-3 pt-2 text-center font-body text-sm font-bold text-[#8a1c1c]" role="alert">
+            {t('Could not save the certificate. Try again.', 'Não foi possível salvar o certificado. Tente de novo.')}
+          </p>
+        ) : null}
       </ScrollHintArea>
     </div>
   )
