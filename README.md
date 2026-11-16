@@ -1,22 +1,29 @@
-# AresGrid — Fazenda espacial em Arcadia Planitia
+<img src="public/favicon.png" alt="Mars Adventures icon" width="96" />
 
-Jogo educacional (NASA Space Apps) estilo **Stardew Valley** para crianças de 7–12 anos: controle um robô 🤖, cuide da base em **Arcadia Planitia (AP-1)** e suba de nível enquanto o clima do Sol vem da **NASA DONKI**.
+# Mars Adventures
 
-## Quick start
+Mars Adventures is a science game for children from 7 to 12 years old. You play an astronaut at Arcadia Planitia, a plain on Mars. Your helper is Capi, a capybara in a space suit. The game reads real space-weather reports from NASA DONKI. DONKI is the NASA database of solar storms.
 
-```bash
-pnpm install
-pnpm dev
-```
+You choose a boy astronaut or a girl astronaut, and you type a name. The game plays a short flight and then lands on Mars. English is the first language. You can change the language to Brazilian Portuguese on the home screen or on the mission map. The game saves that choice in this browser.
 
-Abra `http://localhost:5173` (melhor em tablet landscape).
+Five missions open in order. Each mission teaches one part of life at the base. The base is the habitat where the astronaut lives.
 
-**Controles:** setas / D-pad para andar → **Interagir** → **Dormir** na casinha 🏠.
+1. Solar Power. Place the panels so the base gets power from the Sun.
+2. Health. Exercise, eat, wash, and sleep so the astronaut stays well.
+3. Mars Ice. Drill for ice and turn that ice into water.
+4. Greenhouse. Build a dome, plant crops, and close the cycle that gives the base food and oxygen.
+5. Storms. Protect the base from dust and from solar radiation.
 
-## Docs
+When you finish a mission, the game shows your meters and saves a photo in the logbook. The logbook is the book of science notes for the trip. When you finish all five missions, you earn a certificate. You can download that certificate as a JPEG file. A JPEG file is a picture file.
 
-[docs/planejamento_completo_do_projeto_aresgrid.md](docs/planejamento_completo_do_projeto_aresgrid.md)
+Your progress stays in this browser. If you start the game again from the mission map, you lose the missions, the logbook, and the certificate. The language stays.
 
-## Stack
+## Run the game
 
-React 19 · TypeScript · Vite 8 · Tailwind CSS 4 · Lucide · Web Audio · localStorage
+You need Node.js and pnpm on your computer. Node.js is the program that runs JavaScript tools. pnpm is the tool that installs the packages for this game.
+
+1. Run `pnpm install` in this folder.
+2. Run `pnpm dev`.
+3. Open `http://localhost:5173` in a browser.
+
+The authors of Mars Adventures are Aline, Joao Guilherme, Jackson, Daniel, Laura, and Julia.

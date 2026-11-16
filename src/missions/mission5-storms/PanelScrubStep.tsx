@@ -3,6 +3,7 @@ import { Brush, Lock, Sun, Wind, Zap } from 'lucide-react'
 import { DustScrubCanvas } from '../../components/DustScrubCanvas'
 import { BarMeter, ChallengeBar, GameCta, Tag } from '../../components/missionKit/kit'
 import { MISSION5_META } from '../../data/mission5Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
@@ -34,6 +35,7 @@ function arc(from: number, to: number): string {
 }
 
 export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSafe, onEarly, onClean, onDone }: Props) {
+  const { t } = useI18n()
   const [left, setLeft] = useState(windSafe ? 0 : WAIT_S)
   const [progress, setProgress] = useState(0)
   const lastScrubRef = useRef(0)
@@ -54,18 +56,21 @@ export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSa
     <>
       <ChallengeBar
         code="5.2"
-        title="Limpe os painéis com o vento seguro"
+        title={t('Clean the panels when the wind is safe', 'Limpe os painéis com o vento seguro')}
         icon={<Brush className="size-5" aria-hidden />}
-        counterLabel="Geração"
+        counterLabel={t('Power', 'Geração')}
         value={`${generation}%`}
-        hint="Espere o sensor de vento chegar ao verde. Depois esfregue a poeira do painel. A água da base fica guardada."
+        hint={t(
+          'Wait until the wind sensor turns green. Then scrub the dust off the panel. The base water stays stored.',
+          'Espere o sensor de vento chegar ao verde. Depois esfregue a poeira do painel. A água da base fica guardada.',
+        )}
       />
 
       <div className="grid gap-3 lg:grid-cols-[0.75fr_1.25fr]">
         {/* Wind sensor */}
         <div className="gk-panel flex flex-col items-center gap-2 p-3">
-          <p className="self-start font-pixel text-xs text-(--gk-accent) uppercase">Sensor de vento</p>
-          <svg viewBox="0 0 200 118" className="w-full max-w-xs" role="img" aria-label={`Vento a ${wind} quilômetros por hora`}>
+          <p className="self-start font-pixel text-xs text-(--gk-accent) uppercase">{t('Wind sensor', 'Sensor de vento')}</p>
+          <svg viewBox="0 0 200 118" className="w-full max-w-xs" role="img" aria-label={t(`Wind at ${wind} kilometers per hour`, `Vento a ${wind} quilômetros por hora`)}>
             <path d={arc(0, SAFE_BELOW)} fill="none" stroke="#5ecf9a" strokeWidth="14" />
             <path d={arc(SAFE_BELOW, 70)} fill="none" stroke="#f0b429" strokeWidth="14" />
             <path d={arc(70, WIND_MAX)} fill="none" stroke="#ff6b8a" strokeWidth="14" />
@@ -85,7 +90,11 @@ export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSa
           </p>
           <Tag tone={calm ? 'ok' : 'danger'}>
             <Wind className={`size-3 ${calm ? '' : 'gk-blink'}`} aria-hidden />
-            {windSafe ? 'Vento seguro · limpeza liberada' : calm ? 'Vento seguro' : `Vento forte · ${left}s`}
+            {windSafe
+              ? t('Safe wind · cleaning unlocked', 'Vento seguro · limpeza liberada')
+              : calm
+                ? t('Safe wind', 'Vento seguro')
+                : t(`Strong wind · ${left}s`, `Vento forte · ${left}s`)}
           </Tag>
           {!windSafe ? (
             <McButton
@@ -99,7 +108,7 @@ export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSa
                 onWindSafe()
               }}
             >
-              Liberar a limpeza
+              {t('Unlock cleaning', 'Liberar a limpeza')}
             </McButton>
           ) : null}
         </div>
@@ -107,7 +116,7 @@ export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSa
         {/* Solar panel under the dust */}
         <div className="gk-panel flex flex-col gap-3 p-3">
           <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
-            <BarMeter className="min-w-40 flex-1" label="Geração solar" value={generation} color="#ffb15a" icon={<Sun className="size-3" aria-hidden />} />
+            <BarMeter className="min-w-40 flex-1" label={t('Solar power', 'Geração solar')} value={generation} color="#ffb15a" icon={<Sun className="size-3" aria-hidden />} />
             <p className="flex items-center gap-1 font-pixel text-sm text-energy" aria-live="polite">
               <Zap className="size-4" aria-hidden />
               <span key={watts} className="gk-pop inline-block">
@@ -122,12 +131,12 @@ export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSa
               <div className="relative h-56 overflow-hidden md:h-64">
                 <SolarCells />
                 <div className="gk-sweep absolute inset-y-0 left-0 w-1/3 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent)]" aria-hidden />
-                <Tag tone="ok" className="absolute top-2 left-2">Painel limpo · {MISSION5_META.panelWatts} W</Tag>
+                <Tag tone="ok" className="absolute top-2 left-2">{t(`Clean panel · ${MISSION5_META.panelWatts} W`, `Painel limpo · ${MISSION5_META.panelWatts} W`)}</Tag>
               </div>
             ) : (
               <DustScrubCanvas
                 className="h-56 w-full md:h-64"
-                ariaLabel="Esfregar a poeira do painel solar"
+                ariaLabel={t('Scrub the dust off the solar panel', 'Esfregar a poeira do painel solar')}
                 brushRadius={30}
                 disabled={!windSafe}
                 onProgress={(fraction) => {
@@ -149,19 +158,19 @@ export function PanelScrubStep({ paused = false, windSafe, panelsClean, onWindSa
             {!windSafe ? (
               <div className="absolute inset-0 flex items-center justify-center bg-[#04080f]/55">
                 <span className="flex items-center gap-2 border-2 border-energy bg-[#04080f]/90 px-3 py-2 font-pixel text-xs text-energy uppercase">
-                  <Lock className="size-4" aria-hidden /> Painel travado até o vento baixar
+                  <Lock className="size-4" aria-hidden /> {t('Panel locked until the wind drops', 'Painel travado até o vento baixar')}
                 </span>
               </div>
             ) : !panelsClean && progress < 0.05 ? (
               <span className="gk-bob pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2 border-2 border-[#04080f] bg-energy px-3 py-1.5 font-pixel text-xs whitespace-nowrap text-[#1a1203] uppercase">
-                <Brush className="size-4" aria-hidden /> Esfregue aqui
+                <Brush className="size-4" aria-hidden /> {t('Scrub here', 'Esfregue aqui')}
               </span>
             ) : null}
           </div>
         </div>
       </div>
 
-      {panelsClean ? <GameCta onClick={onDone}>Alerta solar (Desafio 5.3)</GameCta> : null}
+      {panelsClean ? <GameCta onClick={onDone}>{t('Solar alert (Challenge 5.3)', 'Alerta solar (Desafio 5.3)')}</GameCta> : null}
     </>
   )
 }

@@ -25,7 +25,7 @@ export function HomeScreen({ playerName, level, solsPlayed, onNameChange, onStar
           <p className="mb-2 text-5xl" aria-hidden>
             🤖🌌☀️
           </p>
-          <h1 className="font-pixel text-5xl text-void-100 sm:text-6xl">AresGrid</h1>
+          <h1 className="font-pixel text-5xl text-void-100 sm:text-6xl">Mars Adventures</h1>
           <p className="mx-auto mt-3 max-w-xl text-base font-bold text-void-300 sm:text-lg">
             Sua fazendinha espacial em{' '}
             <span className="text-star">

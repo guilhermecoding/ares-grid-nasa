@@ -3,6 +3,7 @@ import { BatteryCharging, Check, ChevronsRight, Lock, LockOpen, Wind } from 'luc
 import { Burst, ChallengeBar, GameCta, Tag } from '../../components/missionKit/kit'
 import { MEDIA } from '../../constants/mediaAssets'
 import { DUST_LATCHES, type DustLatchId } from '../../data/mission5Data'
+import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
@@ -15,6 +16,7 @@ const HANDLE_PX = 52
 const LOCK_AT = 0.85
 
 export function DustProtocolStep({ sealed, onSeal, onHeld }: Props) {
+  const { t, locale } = useI18n()
   const [elapsed, setElapsed] = useState(0)
   const count = DUST_LATCHES.filter((latch) => sealed.includes(latch.id)).length
   const all = count === DUST_LATCHES.length
@@ -30,18 +32,21 @@ export function DustProtocolStep({ sealed, onSeal, onHeld }: Props) {
     <>
       <ChallengeBar
         code="5.1"
-        title="Protocolo de tempestade de poeira"
+        title={t('Dust storm protocol', 'Protocolo de tempestade de poeira')}
         icon={<Wind className="size-5" aria-hidden />}
-        counterLabel="Travas"
+        counterLabel={t('Latches', 'Travas')}
         value={count}
         total={DUST_LATCHES.length}
-        hint="Siga a ordem do protocolo. Arraste cada trava até o fim do trilho para vedar o habitat."
+        hint={t(
+          'Follow the protocol order. Drag each latch to the end of the rail to seal the habitat.',
+          'Siga a ordem do protocolo. Arraste cada trava até o fim do trilho para vedar o habitat.',
+        )}
       />
 
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Habitat window: one shutter closes for each latch */}
         <div className={`relative aspect-[16/10] overflow-hidden border-4 bg-black transition-colors duration-500 ${all ? 'border-life' : 'border-[#8a4a1c]'}`}>
-          <img src={MEDIA.mission5.stormWindow} alt="Tempestade de poeira vista pela janela" className="gk-pixelated h-full w-full scale-110 object-cover" draggable={false} />
+          <img src={MEDIA.mission5.stormWindow} alt={t('Dust storm seen through the window', 'Tempestade de poeira vista pela janela')} className="gk-pixelated h-full w-full scale-110 object-cover" draggable={false} />
           {!all ? (
             <>
               <div className="gk-dust absolute inset-0" />
@@ -61,7 +66,9 @@ export function DustProtocolStep({ sealed, onSeal, onHeld }: Props) {
           ))}
           <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_10px_#2a3142,inset_0_0_0_14px_#0c0f18]" />
           <Tag className="absolute top-5 left-5 z-10" tone={all ? 'accent' : 'energy'}>
-            {all ? 'Habitat vedado' : `Janela do habitat · tempestade há ${elapsed}s`}
+            {all
+              ? t('Habitat sealed', 'Habitat vedado')
+              : t(`Habitat window · storm for ${elapsed}s`, `Janela do habitat · tempestade há ${elapsed}s`)}
           </Tag>
           <span
             className={`absolute top-5 right-5 z-10 size-4 rounded-full border-2 border-[#0c0f18] ${all ? 'bg-life shadow-[0_0_12px_#5ecf9a]' : 'gk-blink bg-danger shadow-[0_0_12px_#ff6b8a]'}`}
@@ -70,7 +77,7 @@ export function DustProtocolStep({ sealed, onSeal, onHeld }: Props) {
           {all ? (
             <span className="gk-pop absolute inset-0 z-10 flex items-center justify-center">
               <span className="flex items-center gap-2 border-4 border-life bg-[#04130c]/90 px-4 py-2 font-pixel text-sm text-[#7dffb0] uppercase md:text-base">
-                <Lock className="size-5" aria-hidden /> Vedação completa
+                <Lock className="size-5" aria-hidden /> {t('Seal complete', 'Vedação completa')}
               </span>
             </span>
           ) : null}
@@ -87,9 +94,9 @@ export function DustProtocolStep({ sealed, onSeal, onHeld }: Props) {
                   shut ? 'border-life bg-[#0b2a1c]/90' : current ? 'border-energy bg-[#1c1608]/95' : 'border-[#3a2a22] bg-[#140b0c]/80 opacity-50'
                 }`}
               >
-                <p className={`font-pixel text-xs uppercase ${shut ? 'text-[#7dffb0]' : current ? 'text-energy' : 'text-[#f4fff4]/70'}`}>{latch.title}</p>
-                <p className="text-sm leading-snug text-[#f4fff4]/80">{latch.detail}</p>
-                <LatchSlider label={latch.title} sealed={shut} active={current} onSeal={() => onSeal(latch.id)} />
+                <p className={`font-pixel text-xs uppercase ${shut ? 'text-[#7dffb0]' : current ? 'text-energy' : 'text-[#f4fff4]/70'}`}>{latch.title[locale]}</p>
+                <p className="text-sm leading-snug text-[#f4fff4]/80">{latch.detail[locale]}</p>
+                <LatchSlider label={latch.title[locale]} sealed={shut} active={current} onSeal={() => onSeal(latch.id)} />
               </div>
             )
           })}
@@ -101,10 +108,13 @@ export function DustProtocolStep({ sealed, onSeal, onHeld }: Props) {
           <div className="gk-panel gk-pop flex items-center gap-3 px-3 py-2.5">
             <BatteryCharging className="size-6 shrink-0 text-energy" aria-hidden />
             <p className="text-sm leading-snug text-[#f4fff4] md:text-base">
-              A poeira cobriu os painéis e a geração solar caiu para 25%. A bateria da base segura o habitat.
+              {t(
+                'The dust covered the panels and solar power dropped to 25%. The base battery keeps the habitat going.',
+                'A poeira cobriu os painéis e a geração solar caiu para 25%. A bateria da base segura o habitat.',
+              )}
             </p>
           </div>
-          <GameCta onClick={onHeld}>Esperar o vento cair (Desafio 5.2)</GameCta>
+          <GameCta onClick={onHeld}>{t('Wait for the wind to drop (Challenge 5.2)', 'Esperar o vento cair (Desafio 5.2)')}</GameCta>
         </>
       ) : null}
     </>
@@ -113,6 +123,7 @@ export function DustProtocolStep({ sealed, onSeal, onHeld }: Props) {
 
 /** Slide the handle to the end of the rail. It springs back when released early. */
 function LatchSlider({ label, sealed, active, onSeal }: { label: string; sealed: boolean; active: boolean; onSeal: () => void }) {
+  const { t } = useI18n()
   const trackRef = useRef<HTMLDivElement>(null)
   const grabRef = useRef(0)
   const notchRef = useRef(0)
@@ -163,20 +174,20 @@ function LatchSlider({ label, sealed, active, onSeal }: { label: string; sealed:
       >
         {sealed ? (
           <>
-            <Check className="size-4" strokeWidth={3} /> Vedada
+            <Check className="size-4" strokeWidth={3} /> {t('Sealed', 'Vedada')}
           </>
         ) : active ? (
           <>
-            Arraste para travar <ChevronsRight className="gk-blink size-4" />
+            {t('Drag to lock', 'Arraste para travar')} <ChevronsRight className="gk-blink size-4" />
           </>
         ) : (
-          'Aguarde a trava anterior'
+          t('Wait for the previous latch', 'Aguarde a trava anterior')
         )}
       </span>
       <button
         type="button"
         disabled={sealed || !active}
-        aria-label={sealed ? `${label}: vedada` : `Arrastar a trava: ${label}`}
+        aria-label={sealed ? t(`${label}: sealed`, `${label}: vedada`) : t(`Drag the latch: ${label}`, `Arrastar a trava: ${label}`)}
         onPointerDown={(e) => {
           e.currentTarget.setPointerCapture(e.pointerId)
           grabRef.current = e.clientX - e.currentTarget.getBoundingClientRect().left

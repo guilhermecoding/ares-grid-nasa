@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import { useI18n } from '../i18n/locale'
+import { nodeCopy } from '../i18n/worldCopy'
 import { soundEngine } from '../services/soundEngine'
 
 interface Props {
@@ -28,6 +30,8 @@ export function MissionGateTransition({
   onClosed,
   onOpened,
 }: Props) {
+  const { t } = useI18n()
+  const plaque = nodeCopy(missionNumber, t).gate || title
   const [phase, setPhase] = useState<Phase>('idle')
   const [visible, setVisible] = useState(false)
   const closedNotified = useRef(false)
@@ -131,10 +135,10 @@ export function MissionGateTransition({
                   transition={{ duration: 0.2 }}
                 >
                   <p className="font-pixel text-[11px] tracking-wide text-[#30346d] uppercase sm:text-sm">
-                    Missão {missionNumber}
+                    {t(`Mission ${missionNumber}`, `Missão ${missionNumber}`)}
                   </p>
                   <p className="mt-2 max-w-full font-pixel text-sm leading-[1.45] text-[#1a1c3a] whitespace-normal sm:text-base md:text-lg">
-                    {title}
+                    {plaque}
                   </p>
                 </motion.div>
               </div>

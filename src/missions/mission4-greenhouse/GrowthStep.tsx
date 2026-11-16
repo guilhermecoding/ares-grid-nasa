@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Check, Droplets, Flame, Hand, Lightbulb, Snowflake, Sprout, Thermometer, type LucideIcon } from 'lucide-react'
 import { PlantTray } from '../../components/mission4/PlantTray'
 import { GROWTH_SCALE, TRAY_BEDS, TRAY_ORDER } from '../../components/mission4/trayLayout'
@@ -6,6 +6,7 @@ import { BarMeter, Burst, ChallengeBar, FloatDelta, GameCta } from '../../compon
 import { useDrag } from '../../components/missionKit/useDrag'
 import { MEDIA } from '../../constants/mediaAssets'
 import { GROWTH_STAGES, speciesLabel, type PlantGroupId, type SpeciesId } from '../../data/mission4Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
@@ -22,7 +23,7 @@ interface Props {
   onMist: () => void
   onAdvance: () => void
   onHarvest: (id: SpeciesId) => void
-  onStress: (message: string) => void
+  onStress: (fault: Fault) => void
   onWaterShort: () => void
   onDone: () => void
 }
@@ -33,10 +34,10 @@ type Fault = 'light' | 'temp' | 'mist'
 const MIST_WATER_L = 2
 const MIST_PER_MOVE = 5
 
-const TEMPS: readonly { id: Temp; label: string; value: string; Icon: LucideIcon; color: string }[] = [
-  { id: 'cold', label: 'Frio', value: '8 °C', Icon: Snowflake, color: '#7dd3fc' },
-  { id: 'mild', label: 'Ameno', value: '22 °C', Icon: Thermometer, color: '#5ecf9a' },
-  { id: 'hot', label: 'Quente', value: '38 °C', Icon: Flame, color: '#ff6b8a' },
+const TEMPS: readonly { id: Temp; labelEn: string; labelPt: string; value: string; Icon: LucideIcon; color: string }[] = [
+  { id: 'cold', labelEn: 'Cold', labelPt: 'Frio', value: '8 °C', Icon: Snowflake, color: '#7dd3fc' },
+  { id: 'mild', labelEn: 'Mild', labelPt: 'Ameno', value: '22 °C', Icon: Thermometer, color: '#5ecf9a' },
+  { id: 'hot', labelEn: 'Hot', labelPt: 'Quente', value: '38 °C', Icon: Flame, color: '#ff6b8a' },
 ]
 
 const LED_COUNT = 12
@@ -58,6 +59,11 @@ export function GrowthStep({
   onWaterShort,
   onDone,
 }: Props) {
+  const { t, locale } = useI18n()
+  const stageNames = useMemo(
+    () => [t('Seeds', 'Sementes'), t('Sprout', 'Broto'), t('Harvest', 'Colheita')],
+    [t],
+  )
   const [temp, setTemp] = useState<Temp>(tempOk ? 'mild' : 'cold')
   const [humidity, setHumidity] = useState(0)
   const [fault, setFault] = useState<Fault | null>(null)
@@ -96,17 +102,11 @@ export function GrowthStep({
   const { drag, start } = useDrag<'mister'>(onSprayEnd, onSprayMove)
 
   const tryAdvance = () => {
-    const problem: [Fault, string] | null = !lightOn
-      ? ['light', 'A luz está errada. As folhas pedem o LED ligado.']
-      : !tempOk
-        ? ['temp', 'A temperatura saiu do intervalo ameno. Ajuste o controle.']
-        : !misted
-          ? ['mist', 'Sem névoa, as folhas murcham. Passe o borrifador sobre elas.']
-          : null
+    const problem: Fault | null = !lightOn ? 'light' : !tempOk ? 'temp' : !misted ? 'mist' : null
     if (problem) {
       soundEngine.fail()
-      setFault(problem[0])
-      onStress(problem[1])
+      setFault(problem)
+      onStress(problem)
       return
     }
     soundEngine.grow()
@@ -124,9 +124,13 @@ export function GrowthStep({
     <>
       <ChallengeBar
         code="4.4"
-        title={stage < 2 ? 'Cuide da luz, da temperatura e da névoa' : 'Hora da colheita'}
+        title={
+          stage < 2
+            ? t('Take care of the light, the temperature, and the mist', 'Cuide da luz, da temperatura e da névoa')
+            : t('Time to harvest', 'Hora da colheita')
+        }
         icon={<Sprout className="size-5" aria-hidden />}
-        counterLabel={stage < 2 ? 'Estágio' : 'Colheita'}
+        counterLabel={stage < 2 ? t('Stage', 'Estágio') : t('Harvest', 'Colheita')}
         value={stage < 2 ? stage + 1 : picked}
         total={stage < 2 ? GROWTH_STAGES.length : beds.length}
       />
@@ -134,9 +138,9 @@ export function GrowthStep({
       <div className="grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
         {/* Tray under the LED bar */}
         <div className={`gk-panel relative flex flex-col items-center overflow-hidden p-3 ${fault ? 'gk-shake' : ''}`}>
-          <ol className="flex w-full items-center gap-1.5" aria-label="Estágios de crescimento">
-            {GROWTH_STAGES.map((label, index) => (
-              <li key={label} className="flex flex-1 items-center gap-1.5">
+            <ol className="flex w-full items-center gap-1.5" aria-label={t('Growth stages', 'Estágios de crescimento')}>
+            {stageNames.map((label, index) => (
+                <li key={GROWTH_STAGES[index]} className="flex flex-1 items-center gap-1.5">
                 <span
                   className={`flex flex-1 items-center justify-center gap-1 border px-1.5 py-1 font-pixel text-[10px] leading-none uppercase sm:text-xs ${
                     index === stage
@@ -198,17 +202,17 @@ export function GrowthStep({
                           bump(group)
                           onHarvest(species)
                         }}
-                        aria-label={`Colher ${speciesLabel(species)}`}
+                        aria-label={t(`Harvest ${speciesLabel(species, 'en')}`, `Colher ${speciesLabel(species, 'pt')}`)}
                         className={`flex min-h-12 items-center gap-1 border-2 border-[#04080f] bg-energy px-2 font-pixel text-[11px] whitespace-nowrap text-[#1a1203] uppercase shadow-[0_3px_0_#7a5a0c] sm:gap-1.5 sm:px-3 sm:text-xs ${
                           misted ? 'gk-bob' : 'opacity-50'
                         }`}
                         style={{ touchAction: 'manipulation' }}
                       >
-                        <Hand className="size-4" aria-hidden /> Colher
+                        <Hand className="size-4" aria-hidden /> {t('Harvest', 'Colher')}
                       </button>
                     ) : done ? (
                       <span className="gk-pop flex items-center gap-1 border border-life bg-[#04130c]/90 px-1.5 py-1 font-pixel text-[9px] leading-none whitespace-nowrap text-[#7dffb0] uppercase sm:text-[10px]">
-                        <Check className="size-3" strokeWidth={3} aria-hidden /> {speciesLabel(species)}
+                        <Check className="size-3" strokeWidth={3} aria-hidden /> {speciesLabel(species, locale)}
                       </span>
                     ) : null}
                     {fx && (fx.kind === 'grow' || fx.kind === group) ? <Burst key={fx.key} color={bed.color} /> : null}
@@ -221,22 +225,22 @@ export function GrowthStep({
           <p className={`mt-1 font-pixel text-[10px] uppercase sm:text-xs ${misted ? 'text-[#7dffb0]' : 'text-[#ffc2cf]'}`} aria-live="polite">
             {misted
               ? stage === 2 && !allHarvested
-                ? 'Folhas frescas · toque em Colher'
-                : 'Folhas úmidas e saudáveis'
-              : 'Folhas secas · passe o borrifador'}
+                ? t('Fresh leaves · tap Harvest', 'Folhas frescas · toque em Colher')
+                : t('Moist, healthy leaves', 'Folhas úmidas e saudáveis')
+              : t('Dry leaves · move the sprayer', 'Folhas secas · passe o borrifador')}
           </p>
         </div>
 
         {/* Control board */}
         <div className="gk-panel flex flex-col gap-3 p-3">
-          <p className="font-pixel text-xs text-(--gk-accent) uppercase">Painel de controle</p>
+          <p className="font-pixel text-xs text-(--gk-accent) uppercase">{t('Control panel', 'Painel de controle')}</p>
 
-          <Control label="Luz LED" ok={lightOn} alert={fault === 'light'}>
+          <Control label={t('LED light', 'Luz LED')} ok={lightOn} alert={fault === 'light'}>
             <button
               type="button"
               role="switch"
               aria-checked={lightOn}
-              aria-label="Luz LED"
+              aria-label={t('LED light', 'Luz LED')}
               onClick={() => {
                 soundEngine.click()
                 if (!lightOn) setFault((value) => (value === 'light' ? null : value))
@@ -248,15 +252,15 @@ export function GrowthStep({
               style={{ touchAction: 'manipulation' }}
             >
               <Lightbulb className="size-5 shrink-0" aria-hidden />
-              <span className="flex-1 text-left">{lightOn ? 'Ligada' : 'Apagada'}</span>
+              <span className="flex-1 text-left">{lightOn ? t('On', 'Ligada') : t('Off', 'Apagada')}</span>
               <span className={`relative h-6 w-12 border-2 ${lightOn ? 'border-[#ff6ad5] bg-[#ff6ad5]/30' : 'border-[#30346d] bg-[#04080f]'}`} aria-hidden>
                 <span className={`absolute top-0.5 size-4 transition-[left] duration-150 ${lightOn ? 'left-6 bg-[#ff6ad5]' : 'left-0.5 bg-[#5b6190]'}`} />
               </span>
             </button>
           </Control>
 
-          <Control label="Temperatura" ok={tempOk} alert={fault === 'temp'}>
-            <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Temperatura da estufa">
+          <Control label={t('Temperature', 'Temperatura')} ok={tempOk} alert={fault === 'temp'}>
+            <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label={t('Greenhouse temperature', 'Temperatura da estufa')}>
               {TEMPS.map((option) => {
                 const selected = temp === option.id
                 return (
@@ -277,7 +281,7 @@ export function GrowthStep({
                     style={{ touchAction: 'manipulation', borderColor: selected ? option.color : undefined }}
                   >
                     <option.Icon className="size-5" style={{ color: option.color }} aria-hidden />
-                    {option.label}
+                    {t(option.labelEn, option.labelPt)}
                     <span style={{ color: option.color }}>{option.value}</span>
                   </button>
                 )
@@ -285,7 +289,7 @@ export function GrowthStep({
             </div>
           </Control>
 
-          <Control label="Névoa" ok={misted} alert={fault === 'mist'}>
+          <Control label={t('Mist', 'Névoa')} ok={misted} alert={fault === 'mist'}>
             <div className="relative flex items-center gap-3">
               <button
                 type="button"
@@ -299,7 +303,7 @@ export function GrowthStep({
                   soundEngine.pickup()
                   start('mister', e)
                 }}
-                aria-label="Arrastar o borrifador sobre as folhas"
+                aria-label={t('Drag the sprayer over the leaves', 'Arrastar o borrifador sobre as folhas')}
                 className={`flex size-16 shrink-0 touch-none items-center justify-center border-2 border-[#38bdf8] bg-[#38bdf8]/10 select-none ${
                   misted ? 'opacity-50' : drag ? 'opacity-30' : 'gk-pulse cursor-grab'
                 }`}
@@ -308,14 +312,16 @@ export function GrowthStep({
                 <img src={MEDIA.mission4.mister} alt="" className="size-11" draggable={false} />
               </button>
               <div className="min-w-0 flex-1">
-                <BarMeter label="Umidade" value={shownHumidity} color="#38bdf8" icon={<Droplets className="size-3" aria-hidden />} />
+                <BarMeter label={t('Humidity', 'Umidade')} value={shownHumidity} color="#38bdf8" icon={<Droplets className="size-3" aria-hidden />} />
                 <p className="mt-1.5 text-sm leading-snug text-[#f4fff4]/80">
-                  {misted ? 'Névoa aplicada.' : `Arraste o borrifador sobre as folhas · −${MIST_WATER_L} L`}
+                  {misted
+                    ? t('Mist applied.', 'Névoa aplicada.')
+                    : t(`Drag the sprayer over the leaves · −${MIST_WATER_L} L`, `Arraste o borrifador sobre as folhas · −${MIST_WATER_L} L`)}
                 </p>
               </div>
               {fx?.kind === 'mist' ? (
                 <FloatDelta key={fx.key} color="#7dd3fc" className="top-0 right-0">
-                  −{MIST_WATER_L} L de água
+                  {t(`−${MIST_WATER_L} L of water`, `−${MIST_WATER_L} L de água`)}
                 </FloatDelta>
               ) : null}
             </div>
@@ -326,17 +332,21 @@ export function GrowthStep({
               className={`min-h-14 w-full px-4 font-pixel text-base ${ready ? 'btn-bob' : ''}`}
               onClick={tryAdvance}
             >
-              Fazer crescer ▸
+              {t('Grow ▸', 'Fazer crescer ▸')}
             </McButton>
           ) : allHarvested ? null : (
             <p className="border border-[#30346d] bg-[#04080f]/70 px-3 py-2 text-sm text-[#f4fff4]/85">
-              {misted ? 'Toque em cada berço para colher.' : 'Borrife as folhas para liberar a colheita.'}
+              {misted
+                ? t('Tap each bed to harvest.', 'Toque em cada berço para colher.')
+                : t('Spray the leaves to unlock the harvest.', 'Borrife as folhas para liberar a colheita.')}
             </p>
           )}
         </div>
       </div>
 
-      {stage === 2 && allHarvested ? <GameCta onClick={onDone}>Abrir o ciclo da base (Desafio 4.5)</GameCta> : null}
+      {stage === 2 && allHarvested ? (
+        <GameCta onClick={onDone}>{t('Open the base cycle (Challenge 4.5)', 'Abrir o ciclo da base (Desafio 4.5)')}</GameCta>
+      ) : null}
 
       {drag ? (
         <div className="pointer-events-none fixed z-[80]" style={{ left: drag.x - 28, top: drag.y - 56 }} aria-hidden>
@@ -357,12 +367,15 @@ export function GrowthStep({
 }
 
 function Control({ label, ok, alert, children }: { label: string; ok: boolean; alert: boolean; children: ReactNode }) {
+  const { t } = useI18n()
   return (
     <div className={`border-l-4 pl-2.5 ${alert ? 'border-danger' : ok ? 'border-life' : 'border-[#30346d]'}`}>
       <p className="mb-1.5 flex items-center gap-1.5 font-pixel text-[10px] text-[#f4fff4]/80 uppercase">
         <span className={`size-2 rounded-full ${ok ? 'bg-life shadow-[0_0_8px_#5ecf9a]' : alert ? 'gk-blink bg-danger' : 'bg-[#5b6190]'}`} aria-hidden />
         {label}
-        <span className={ok ? 'text-[#7dffb0]' : alert ? 'text-[#ffc2cf]' : 'text-[#f4fff4]/50'}>{ok ? '· ok' : '· ajustar'}</span>
+        <span className={ok ? 'text-[#7dffb0]' : alert ? 'text-[#ffc2cf]' : 'text-[#f4fff4]/50'}>
+          {ok ? '· ok' : t('· adjust', '· ajustar')}
+        </span>
       </p>
       {children}
     </div>

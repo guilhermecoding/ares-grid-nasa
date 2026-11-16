@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { MEDIA } from '../../constants/mediaAssets'
 import { PANEL_CLEAN_EFFICIENCY_GAIN, PANEL_CLEAN_ENERGY_GAIN } from '../../data/mission1Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 import { useEffect } from 'react'
@@ -15,6 +16,7 @@ interface Props {
 
 /** Success dialog after cleaning — panel with dust-clear / shine effect. */
 export function PanelCleanSuccessDialog({ open, tilt, azimuth, efficiency, onClose }: Props) {
+  const { t } = useI18n()
   useEffect(() => {
     if (!open) return
     soundEngine.success()
@@ -34,7 +36,7 @@ export function PanelCleanSuccessDialog({ open, tilt, azimuth, efficiency, onClo
         animate={{ opacity: 1, scale: 1, y: 0 }}
       >
         <p id="panel-clean-title" className="font-pixel text-xs tracking-widest text-cyan-hud uppercase">
-          Painel limpo!
+          {t('Panel cleaned!', 'Painel limpo!')}
         </p>
 
         <div className="relative mx-auto mt-4 flex h-36 w-full max-w-[16rem] items-end justify-center overflow-hidden">
@@ -70,12 +72,17 @@ export function PanelCleanSuccessDialog({ open, tilt, azimuth, efficiency, onClo
         </div>
 
         <p className="mt-3 font-pixel text-[11px] leading-snug text-[#f4fff4] sm:text-sm">
-          Poeira removida! O painel volta a gerar melhor.
+          {t('Dust cleared! The panel makes power better again.', 'Poeira removida! O painel volta a gerar melhor.')}
         </p>
         <p className="mt-2 font-pixel text-[10px] text-energy sm:text-xs">
-          +{PANEL_CLEAN_EFFICIENCY_GAIN}% eficiência · +{PANEL_CLEAN_ENERGY_GAIN}% energia
+          {t(
+            `+${PANEL_CLEAN_EFFICIENCY_GAIN}% efficiency · +${PANEL_CLEAN_ENERGY_GAIN}% energy`,
+            `+${PANEL_CLEAN_EFFICIENCY_GAIN}% eficiência · +${PANEL_CLEAN_ENERGY_GAIN}% energia`,
+          )}
         </p>
-        <p className="mt-1 font-pixel text-[10px] text-void-300">Eficiência atual: {Math.round(efficiency)}%</p>
+        <p className="mt-1 font-pixel text-[10px] text-void-300">
+          {t(`Efficiency now: ${Math.round(efficiency)}%`, `Eficiência atual: ${Math.round(efficiency)}%`)}
+        </p>
 
         <McButton className="mt-5 min-h-12 w-full font-pixel text-lg font-bold" onClick={onClose}>
           Ok

@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
-import { METHODOLOGY_STEPS, NASA_CITATIONS } from '../../../data/mission3Data'
+import { METHODOLOGY_STEPS, NASA_CITATIONS, NASA_CITATIONS_EN } from '../../../data/mission3Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
 import { CapiBeat } from '../CapiBeat'
@@ -23,6 +24,13 @@ const BEATS = [
   ['Protocolo completo!', 'Agora sim podemos abrir o mapa científico.'],
 ] as const
 
+const BEATS_EN = [
+  ['Tap the big card that pulses.', 'Step 1 is the SHARAD radar, from up in orbit.'],
+  ['Nice! Now step 2.', 'Before we go outside, NASA checks what scientists already found.'],
+  ['Last step of the plan.', 'We drill only at the end — and just a little, to check.'],
+  ['Plan complete!', 'Now we can open the science map.'],
+] as const
+
 function StepArrow({ vertical }: { vertical: boolean }) {
   return (
     <motion.div
@@ -40,24 +48,32 @@ function StepArrow({ vertical }: { vertical: boolean }) {
 
 /** Desafio 3.1 — unlock the three NASA investigation stages in order. */
 export function MethodologyStep({ energy, waterL, onContinue }: Props) {
+  const { t, locale } = useI18n()
   const [unlocked, setUnlocked] = useState(0)
   const [beat, setBeat] = useState(0)
   const allDone = unlocked >= METHODOLOGY_STEPS.length
+  const beatLines = useMemo(() => {
+    const beats = locale === 'en' ? BEATS_EN : BEATS
+    return beats[beat] ?? beats[beats.length - 1]!
+  }, [beat, locale])
 
   return (
     <Mission3Stage
-      title="Desafio 3.1 — As 3 Etapas da Investigação"
+      title={t('Challenge 3.1 — The 3 Investigation Steps', 'Desafio 3.1 — As 3 Etapas da Investigação')}
       subtitle={
         <>
-          Siga a ordem 1, 2 e 3. Toque só no card que pulsa para entender o{' '}
-          <SciTermM3 term="Subsolo">subsolo</SciTermM3>.
+          {t(
+            'Follow the order 1, 2, and 3. Tap only the card that pulses to learn about the',
+            'Siga a ordem 1, 2 e 3. Toque só no card que pulsa para entender o',
+          )}{' '}
+          <SciTermM3 term={t('Subsurface', 'Subsolo')} />.
         </>
       }
       energy={energy}
       waterL={waterL}
       overlay={
         beat <= METHODOLOGY_STEPS.length ? (
-          <CapiBeat id={`m3-method-${beat}`} lines={BEATS[beat]!} onDone={() => setBeat(METHODOLOGY_STEPS.length + 1)} />
+          <CapiBeat id={`m3-method-${beat}`} lines={beatLines} onDone={() => setBeat(METHODOLOGY_STEPS.length + 1)} />
         ) : null
       }
     >
@@ -89,13 +105,13 @@ export function MethodologyStep({ energy, waterL, onContinue }: Props) {
                   {open ? '✓' : i + 1}
                 </span>
                 <img src={ICONS[i]} alt="" className={`size-16 object-contain ${open || next ? '' : 'opacity-70'}`} draggable={false} />
-                <p className="font-pixel text-base leading-snug text-[#f4fff4] md:text-lg">{step.title}</p>
+                <p className="font-pixel text-base leading-snug text-[#f4fff4] md:text-lg">{t(step.titleEn, step.title)}</p>
                 {open ? (
-                  <p className="text-base text-void-100/90">{step.detail}</p>
+                  <p className="text-base text-void-100/90">{t(step.detailEn, step.detail)}</p>
                 ) : next ? (
-                  <p className="font-pixel text-lg text-energy">TOQUE AQUI</p>
+                  <p className="font-pixel text-lg text-energy">{t('TAP HERE', 'TOQUE AQUI')}</p>
                 ) : (
-                  <p className="text-base text-void-100/80">Depois da etapa {i}</p>
+                  <p className="text-base text-void-100/80">{t(`After step ${i}`, `Depois da etapa ${i}`)}</p>
                 )}
               </motion.button>
               {i < METHODOLOGY_STEPS.length - 1 ? <StepArrow vertical /> : null}
@@ -105,13 +121,16 @@ export function MethodologyStep({ energy, waterL, onContinue }: Props) {
       </div>
 
       <section className="mx-auto w-full max-w-6xl rounded border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-4">
-        <p className="font-pixel text-xs text-cyan-hud md:text-sm">FONTES NASA</p>
-        <p className="mt-2 text-sm text-void-100/85 md:text-base">{NASA_CITATIONS.iceCores}</p>
+        <p className="font-pixel text-xs text-cyan-hud md:text-sm">{t('NASA SOURCES', 'FONTES NASA')}</p>
+        <p className="mt-2 text-sm text-void-100/85 md:text-base">
+          {locale === 'en' ? NASA_CITATIONS_EN.iceCores : NASA_CITATIONS.iceCores}
+        </p>
         <p className="mt-1 text-sm text-void-100/85 md:text-base">
-          {NASA_CITATIONS.sharad} <SciTermM3 term="Radar SHARAD">O que é o SHARAD?</SciTermM3>
+          {locale === 'en' ? NASA_CITATIONS_EN.sharad : NASA_CITATIONS.sharad}{' '}
+          <SciTermM3 term={t('SHARAD radar', 'Radar SHARAD')} />
         </p>
         <McButton className={`mt-4 min-h-14 px-5 font-pixel text-base ${allDone ? 'mc-btn-green' : 'opacity-50'}`} disabled={!allDone} onClick={onContinue}>
-          Abrir mapa científico
+          {t('Open the science map', 'Abrir mapa científico')}
         </McButton>
       </section>
     </Mission3Stage>

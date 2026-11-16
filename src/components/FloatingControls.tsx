@@ -11,9 +11,11 @@ import {
   Hand,
   Home,
   NotebookPen,
+  RotateCcw,
   Volume2,
   VolumeX,
 } from 'lucide-react'
+import { useI18n } from '../i18n/locale'
 
 interface Props {
   canSleep: boolean
@@ -34,6 +36,8 @@ interface Props {
   onCertificate?: () => void
   /** All missions done: the certificate button turns gold. */
   certificateEarned?: boolean
+  /** Mission-map hub: ask before wiping the saved game. */
+  onRestart?: () => void
 }
 
 /** Gold look of the certificate button once the expedition is complete. */
@@ -79,7 +83,9 @@ export function FloatingControls({
   onLogbook,
   onCertificate,
   certificateEarned = false,
+  onRestart,
 }: Props) {
+  const { t } = useI18n()
   const btn =
     'flex items-center justify-center gap-1.5 rounded-full bg-void-900/75 text-void-100 shadow-[0_4px_14px_rgba(0,0,0,0.45)] ring-1 ring-nebula/40 backdrop-blur-sm transition hover:bg-void-800/90 active:scale-95'
   const pad = 'size-12'
@@ -95,9 +101,9 @@ export function FloatingControls({
         <button
           type="button"
           onClick={onNasa}
-          aria-label="Ciência NASA"
+          aria-label={t('NASA science', 'Ciência NASA')}
           className={`pointer-events-auto ${btn} ${pad}`}
-          title="Ciência NASA"
+          title={t('NASA science', 'Ciência NASA')}
         >
           <BookOpen className="size-5" />
           <HintLabel show={showLabels} onDone={mapMode ? onLabelsDone : undefined}>
@@ -108,16 +114,16 @@ export function FloatingControls({
         <button
           type="button"
           onClick={onHome}
-          aria-label="Menu"
+          aria-label={t('Home', 'Início')}
           className={`pointer-events-auto ${btn} ${pad}`}
-          title="Menu"
+          title={t('Home', 'Início')}
         >
           <Home className="size-5" />
         </button>
         <button
           type="button"
           onClick={onToggleMute}
-          aria-label={muted ? 'Ativar som' : 'Silenciar'}
+          aria-label={muted ? t('Turn sound on', 'Ativar som') : t('Mute', 'Silenciar')}
           className={`pointer-events-auto ${btn} ${pad}`}
         >
           {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
@@ -130,25 +136,36 @@ export function FloatingControls({
             <button
               type="button"
               onClick={onLogbook}
-              aria-label="Diário de bordo"
-              title="Diário de bordo"
+              aria-label={t('Logbook', 'Diário de bordo')}
+              title={t('Logbook', 'Diário de bordo')}
               className={`pointer-events-auto ${btn} ${action}`}
             >
               <NotebookPen className="size-5 shrink-0" />
-              <span className="hidden font-pixel text-xs sm:inline">Diário</span>
+              <span className="hidden font-pixel text-xs sm:inline">{t('Log', 'Diário')}</span>
             </button>
           ) : null}
           {onCertificate ? (
             <button
               type="button"
               onClick={onCertificate}
-              aria-label="Certificado"
-              title="Certificado"
+              aria-label={t('Certificate', 'Certificado')}
+              title={t('Certificate', 'Certificado')}
               className={`pointer-events-auto ${btn} ${action}`}
               style={certificateEarned ? CERTIFICATE_EARNED_STYLE : undefined}
             >
               <Award className="size-5 shrink-0" />
-              <span className="hidden font-pixel text-xs sm:inline">Certificado</span>
+              <span className="hidden font-pixel text-xs sm:inline">{t('Certificate', 'Certificado')}</span>
+            </button>
+          ) : null}
+          {onRestart ? (
+            <button
+              type="button"
+              onClick={onRestart}
+              aria-label={t('Start over', 'Recomeçar')}
+              title={t('Start over', 'Recomeçar')}
+              className={`pointer-events-auto ${btn} ${pad}`}
+            >
+              <RotateCcw className="size-5" />
             </button>
           ) : null}
         </div>
@@ -161,11 +178,11 @@ export function FloatingControls({
               type="button"
               onClick={onInteract}
               className={`pointer-events-auto ${btn} ${action}`}
-              aria-label="Interagir"
+              aria-label={t('Interact', 'Interagir')}
             >
               <Hand className="size-5 shrink-0" />
               <HintLabel show={showLabels} onDone={onLabelsDone}>
-                Interagir
+                {t('Interact', 'Interagir')}
               </HintLabel>
             </button>
             <button
@@ -173,32 +190,32 @@ export function FloatingControls({
               onClick={onSleep}
               disabled={!canSleep}
               className={`pointer-events-auto ${btn} ${action} disabled:opacity-40`}
-              aria-label="Dormir"
+              aria-label={t('Sleep', 'Dormir')}
             >
               <BedDouble className="size-5 shrink-0" />
-              <HintLabel show={showLabels}>Dormir</HintLabel>
+              <HintLabel show={showLabels}>{t('Sleep', 'Dormir')}</HintLabel>
             </button>
           </div>
 
           <div className="pointer-events-none absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-2 z-20 sm:right-3">
             <div className="pointer-events-auto grid grid-cols-3 gap-1.5">
               <span />
-              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(0, -1)} aria-label="Norte">
+              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(0, -1)} aria-label={t('North', 'Norte')}>
                 <ArrowUp className="size-5" />
               </button>
               <span />
-              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(-1, 0)} aria-label="Oeste">
+              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(-1, 0)} aria-label={t('West', 'Oeste')}>
                 <ArrowLeft className="size-5" />
               </button>
-              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(0, 1)} aria-label="Sul">
+              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(0, 1)} aria-label={t('South', 'Sul')}>
                 <ArrowDown className="size-5" />
               </button>
-              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(1, 0)} aria-label="Leste">
+              <button type="button" className={`${btn} ${pad}`} onClick={() => onMove(1, 0)} aria-label={t('East', 'Leste')}>
                 <ArrowRight className="size-5" />
               </button>
             </div>
             {showLabels && (
-              <p className="hint-label-collapse mt-1 text-center text-[10px] font-bold text-void-100/80">Mover</p>
+              <p className="hint-label-collapse mt-1 text-center text-[10px] font-bold text-void-100/80">{t('Move', 'Mover')}</p>
             )}
           </div>
         </>

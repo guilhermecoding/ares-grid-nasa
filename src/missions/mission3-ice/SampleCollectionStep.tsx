@@ -1,17 +1,19 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { DustScrubCanvas } from '../../components/DustScrubCanvas'
 import { CapiBeat } from '../../components/mission3/CapiBeat'
 import { Mission3Stage } from '../../components/mission3/Mission3Stage'
 import { SciTermM3 } from '../../components/mission3/SciTermM3'
 import {
   CAPI_SAMPLE,
+  CAPI_SAMPLE_EN,
   CRYO_SEAL_C,
   DRILL_TARGET_M,
   MISSION3_META,
   SCRUB_CLEAN_GOAL,
   formatDepth,
 } from '../../data/mission3Data'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { soundEngine } from '../../services/soundEngine'
 
@@ -60,6 +62,7 @@ function IceCore({ sparkle }: { sparkle: boolean }) {
 
 /** Desafio 3.4 — scrub the regolith crust, then seal the ice core cryogenically. */
 export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: Props) {
+  const { t, locale } = useI18n()
   const [phase, setPhase] = useState<Phase>('scrub')
   const [beat, setBeat] = useState<keyof typeof CAPI_SAMPLE | null>('scrub')
   const [cleanPct, setCleanPct] = useState(0)
@@ -96,14 +99,20 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
     soundEngine.success()
   }
 
+  const beatLines = useMemo(() => {
+    if (!beat) return []
+    const copy = locale === 'en' ? CAPI_SAMPLE_EN : CAPI_SAMPLE
+    return [copy[beat]]
+  }, [beat, locale])
+
   return (
     <Mission3Stage
-      title="Desafio 3.4 — Coleta da Amostra"
+      title={t('Challenge 3.4 — Collect the Sample', 'Desafio 3.4 — Coleta da Amostra')}
       subtitle={
         <>
-          Limpe o <SciTermM3 term="Ice Core">cilindro de gelo</SciTermM3> e guarde-o no recipiente{' '}
-          <SciTermM3 term="Criogênico">criogênico</SciTermM3> sem contaminar a{' '}
-          <SciTermM3 term="Amostra">amostra</SciTermM3>.
+          {t('Clean the', 'Limpe o')} <SciTermM3 term={t('Ice core', 'Ice Core')} />{' '}
+          {t('and store it in the', 'e guarde-o no recipiente')} <SciTermM3 term={t('Cryogenic', 'Criogênico')} />{' '}
+          {t('container without contaminating the', 'sem contaminar a')} <SciTermM3 term={t('Sample', 'Amostra')} />.
         </>
       }
       energy={energy}
@@ -112,7 +121,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
         beat ? (
           <CapiBeat
             id={`m3-sample-${beat}`}
-            lines={[CAPI_SAMPLE[beat]]}
+            lines={beatLines}
             onDone={() => setBeat(null)}
           />
         ) : null
@@ -123,13 +132,13 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
           className={`rounded border-2 bg-[#0a1628]/92 p-3 md:p-4 ${phase === 'scrub' ? 'border-cyan-hud/30' : 'border-life'}`}
         >
           <div className="flex items-center justify-between gap-2">
-            <p className="font-pixel text-sm text-cyan-hud md:text-base">1 · Esfregue aqui</p>
+            <p className="font-pixel text-sm text-cyan-hud md:text-base">{t('1 · Rub here', '1 · Esfregue aqui')}</p>
             <span className={`font-pixel text-sm ${cleanPct >= 100 ? 'text-life' : 'text-energy'}`}>{cleanPct}%</span>
           </div>
           <div
             className="mt-2 h-3 border-2 border-black/50 bg-void-900"
             role="progressbar"
-            aria-label="Limpeza do cilindro"
+            aria-label={t('Cylinder cleaning', 'Limpeza do cilindro')}
             aria-valuenow={cleanPct}
             aria-valuemin={0}
             aria-valuemax={100}
@@ -138,8 +147,11 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
           </div>
           <p className="mt-2 text-sm text-void-100/85">
             {phase === 'scrub'
-              ? `Esfregue com o cursor ou o dedo até ${Math.round(SCRUB_CLEAN_GOAL * 100)}% da poeira sair.`
-              : 'Cristais de gelo à mostra! Arraste o cilindro até o recipiente.'}
+              ? t(
+                  `Rub with the cursor or your finger until ${Math.round(SCRUB_CLEAN_GOAL * 100)}% of the dust is gone.`,
+                  `Esfregue com o cursor ou o dedo até ${Math.round(SCRUB_CLEAN_GOAL * 100)}% da poeira sair.`,
+                )
+              : t('Ice crystals are showing! Drag the cylinder to the container.', 'Cristais de gelo à mostra! Arraste o cilindro até o recipiente.')}
           </p>
 
           <div className="relative mt-3 flex min-h-44 items-center justify-center rounded border border-cyan-hud/20 bg-[#050b14] p-4 md:min-h-56">
@@ -149,7 +161,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
                 goal={SCRUB_CLEAN_GOAL}
                 onProgress={handleProgress}
                 onClean={handleClean}
-                ariaLabel="Cilindro de gelo coberto de regolito"
+                ariaLabel={t('Ice cylinder covered in regolith', 'Cilindro de gelo coberto de regolito')}
               >
                 <IceCore sparkle={false} />
               </DustScrubCanvas>
@@ -158,7 +170,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
                 ref={coreRef}
                 role="button"
                 tabIndex={0}
-                aria-label="Cilindro de gelo limpo — arraste até o recipiente"
+                aria-label={t('Clean ice cylinder — drag it to the container', 'Cilindro de gelo limpo — arraste até o recipiente')}
                 aria-pressed={selected}
                 className={`relative h-28 w-full max-w-xl cursor-grab touch-none select-none md:h-36 ${
                   selected ? 'outline-4 outline-offset-4 outline-cyan-hud' : ''
@@ -201,7 +213,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
                 <IceCore sparkle />
               </motion.div>
             ) : (
-              <p className="font-pixel text-sm text-life">Cilindro guardado no recipiente →</p>
+              <p className="font-pixel text-sm text-life">{t('Cylinder stored in the container →', 'Cilindro guardado no recipiente →')}</p>
             )}
           </div>
         </section>
@@ -209,12 +221,12 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
         <section
           className={`flex flex-col rounded border-2 bg-[#0a1628]/92 p-3 md:p-4 ${phase === 'sealed' ? 'border-life' : 'border-cyan-hud/30'}`}
         >
-          <p className="font-pixel text-sm text-cyan-hud md:text-base">2 · Arraste até aqui</p>
+          <p className="font-pixel text-sm text-cyan-hud md:text-base">{t('2 · Drag it here', '2 · Arraste até aqui')}</p>
           <button
             ref={containerRef}
             type="button"
             disabled={phase !== 'store'}
-            aria-label="Recipiente criogênico"
+            aria-label={t('Cryogenic container', 'Recipiente criogênico')}
             className={`relative mx-auto mt-3 flex h-48 w-36 flex-col items-center justify-end overflow-hidden rounded-t-[2rem] rounded-b-md border-4 transition-colors ${
               phase === 'sealed'
                 ? 'border-life bg-[#0b2a3a]'
@@ -240,7 +252,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
                 </motion.div>
               ) : (
                 <span className="mb-6 px-2 text-center text-sm text-void-100/80">
-                  {phase === 'store' ? 'Solte aqui' : 'Aguardando amostra'}
+                  {phase === 'store' ? t('Drop here', 'Solte aqui') : t('Waiting for the sample', 'Aguardando amostra')}
                 </span>
               )}
             </AnimatePresence>
@@ -267,7 +279,7 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
             {phase === 'sealed' ? `${CRYO_SEAL_C} °C` : '-- °C'}
           </p>
           <p className="text-center text-sm text-void-100/80">
-            {phase === 'sealed' ? 'Selo criogênico ativado' : 'Selo criogênico desligado'}
+            {phase === 'sealed' ? t('Cryogenic seal on', 'Selo criogênico ativado') : t('Cryogenic seal off', 'Selo criogênico desligado')}
           </p>
         </section>
       </div>
@@ -278,33 +290,35 @@ export function SampleCollectionStep({ siteName, energy, waterL, onContinue }: P
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <p className="font-pixel text-xs text-life md:text-sm">AMOSTRA REGISTRADA</p>
+          <p className="font-pixel text-xs text-life md:text-sm">{t('SAMPLE LOGGED', 'AMOSTRA REGISTRADA')}</p>
           <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-xs text-cyan-hud">LOCAL</dt>
+              <dt className="font-pixel text-xs text-cyan-hud">{t('PLACE', 'LOCAL')}</dt>
               <dd className="text-[#f4fff4]">{siteName}</dd>
             </div>
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-xs text-cyan-hud">COORDENADAS</dt>
+              <dt className="font-pixel text-xs text-cyan-hud">{t('COORDINATES', 'COORDENADAS')}</dt>
               <dd className="text-[#f4fff4]">
                 {MISSION3_META.lat} · {MISSION3_META.lon}
               </dd>
             </div>
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-xs text-cyan-hud">PROFUNDIDADE</dt>
-              <dd className="text-[#f4fff4]">{formatDepth(DRILL_TARGET_M)}</dd>
+              <dt className="font-pixel text-xs text-cyan-hud">{t('DEPTH', 'PROFUNDIDADE')}</dt>
+              <dd className="text-[#f4fff4]">{formatDepth(DRILL_TARGET_M, locale)}</dd>
             </div>
             <div className="border border-cyan-hud/25 px-2 py-1.5">
-              <dt className="font-pixel text-xs text-cyan-hud">DESTINO</dt>
-              <dd className="text-[#f4fff4]">Fração A → base · Fração B → Terra</dd>
+              <dt className="font-pixel text-xs text-cyan-hud">{t('DESTINATION', 'DESTINO')}</dt>
+              <dd className="text-[#f4fff4]">{t('Part A → base · Part B → Earth', 'Fração A → base · Fração B → Terra')}</dd>
             </div>
           </dl>
           <p className="mt-2 text-sm text-void-100/85">
-            A fração A vira água no laboratório. A fração B fica guardada e selada para cientistas na Terra estudarem
-            depois.
+            {t(
+              'Part A becomes water in the lab. Part B stays sealed for scientists on Earth to study later.',
+              'A fração A vira água no laboratório. A fração B fica guardada e selada para cientistas na Terra estudarem depois.',
+            )}
           </p>
           <McButton className="mc-btn-green mt-3 min-h-12 px-5 font-pixel" onClick={onContinue}>
-            Levar Amostra ao Laboratório (3.5)
+            {t('Take the sample to the lab (3.5)', 'Levar Amostra ao Laboratório (3.5)')}
           </McButton>
         </motion.section>
       ) : null}

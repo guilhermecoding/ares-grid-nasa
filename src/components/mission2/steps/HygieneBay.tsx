@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import type { HygieneId } from '../../../data/mission2Data'
+import { useI18n } from '../../../i18n/locale'
 import { soundEngine } from '../../../services/soundEngine'
 
 const SCRUB_GOAL = 560
@@ -141,6 +142,7 @@ function StationFrame({
   onPointerMove?: (event: ReactPointerEvent<HTMLDivElement>) => void
   onPointerUp?: (event: ReactPointerEvent<HTMLDivElement>) => void
 }) {
+  const { t } = useI18n()
   return (
     <section
       className={`flex flex-col border-2 bg-[#0a1628]/92 shadow-[0_8px_20px_rgba(0,0,0,0.35)] ${
@@ -150,7 +152,7 @@ function StationFrame({
       <div className="flex items-center justify-between gap-2 px-3 pt-3">
         <h3 className="font-pixel text-xs text-cyan-hud sm:text-sm">{title}</h3>
         <span className={`font-pixel text-[10px] ${done ? 'text-life' : 'text-void-200'}`}>
-          {done ? 'Limpo' : `${Math.round(progress * 100)}%`}
+          {done ? t('Clean', 'Limpo') : `${Math.round(progress * 100)}%`}
         </span>
       </div>
       <div
@@ -172,7 +174,9 @@ function StationFrame({
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </div>
-      <p className="px-3 pt-2 pb-3 text-sm text-void-100">{blocked ? 'Sem água ou energia para esta etapa.' : hint}</p>
+      <p className="px-3 pt-2 pb-3 text-sm text-void-100">
+        {blocked ? t('Not enough water or energy for this step.', 'Sem água ou energia para esta etapa.') : hint}
+      </p>
     </section>
   )
 }
@@ -200,6 +204,7 @@ function paintMouthDirt(ctx: CanvasRenderingContext2D, w: number, h: number) {
 }
 
 function MouthStation({ done, blocked, onDone }: { done: boolean; blocked: boolean; onDone: () => void }) {
+  const { t } = useI18n()
   const { canvasRef, progress, scrub, release } = useScrub(done, onDone, paintMouthDirt)
   const [brush, setBrush] = useState<{ x: number; y: number } | null>(null)
 
@@ -211,8 +216,8 @@ function MouthStation({ done, blocked, onDone }: { done: boolean; blocked: boole
 
   return (
     <StationFrame
-      title="Escovar os dentes"
-      hint="Esfregue a boca com o cursor."
+      title={t('Brush your teeth', 'Escovar os dentes')}
+      hint={t('Scrub the mouth with the cursor.', 'Esfregue a boca com o cursor.')}
       progress={progress}
       done={done}
       blocked={blocked}
@@ -253,6 +258,7 @@ function MouthStation({ done, blocked, onDone }: { done: boolean; blocked: boole
 }
 
 function FaucetStation({ done, blocked, onDone }: { done: boolean; blocked: boolean; onDone: () => void }) {
+  const { t } = useI18n()
   const bayRef = useRef<HTMLDivElement>(null)
   const gloveRef = useRef<HTMLDivElement>(null)
   const streamRef = useRef<HTMLDivElement>(null)
@@ -313,8 +319,8 @@ function FaucetStation({ done, blocked, onDone }: { done: boolean; blocked: bool
 
   return (
     <StationFrame
-      title="Lavar a luva"
-      hint="Arraste a luva para debaixo da torneira."
+      title={t('Wash the glove', 'Lavar a luva')}
+      hint={t('Drag the glove under the faucet.', 'Arraste a luva para debaixo da torneira.')}
       progress={progress}
       done={done}
       blocked={blocked}
@@ -361,7 +367,7 @@ function FaucetStation({ done, blocked, onDone }: { done: boolean; blocked: bool
           onPointerUp={stopWash}
           onPointerCancel={stopWash}
         >
-          <svg viewBox="0 0 64 64" className="h-full w-full" aria-label="Luva do astronauta">
+          <svg viewBox="0 0 64 64" className="h-full w-full" aria-label={t('Astronaut glove', 'Luva do astronauta')}>
             <path d="M14 30c0-8 6-14 14-14h12c6 0 10 4 10 10v16c0 10-8 16-18 16H24C16 58 14 48 14 40Z" fill="#f4fff4" stroke="#1a1c3a" strokeWidth="3" />
             <path d="M18 28c2-10 8-16 14-16" fill="none" stroke="#5ee7ff" strokeWidth="3" />
             <rect x="16" y="40" width="28" height="8" rx="2" fill="#f97316" />
@@ -395,12 +401,13 @@ function paintBenchDirt(ctx: CanvasRenderingContext2D, w: number, h: number) {
 }
 
 function BenchStation({ done, blocked, onDone }: { done: boolean; blocked: boolean; onDone: () => void }) {
+  const { t } = useI18n()
   const { canvasRef, progress, scrub, release } = useScrub(done, onDone, paintBenchDirt)
 
   return (
     <StationFrame
-      title="Limpar a bancada"
-      hint="Esfregue a poeira até a bancada brilhar."
+      title={t('Wipe the bench', 'Limpar a bancada')}
+      hint={t('Scrub the dust until the bench shines.', 'Esfregue a poeira até a bancada brilhar.')}
       progress={progress}
       done={done}
       blocked={blocked}

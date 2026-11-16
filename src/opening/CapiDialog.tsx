@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { MEDIA } from '../constants/mediaAssets'
+import { useI18n } from '../i18n/locale'
 import { McButton } from './McButton'
 import { PixelDialogBox } from './PixelDialogBox'
 
@@ -23,6 +24,7 @@ export function CapiDialog({
   characterSrc = MEDIA.capi.neutral,
   dialogId,
 }: CapiDialogProps) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(true)
   const [idx, setIdx] = useState(0)
   const [ready, setReady] = useState(false)
@@ -55,7 +57,7 @@ export function CapiDialog({
       footer={
         ready ? (
           <McButton className="min-h-12 min-w-[140px] px-5 font-pixel text-lg font-bold" onClick={advance}>
-            {confirmMode ? 'OK!' : continueLabel}
+            {confirmMode ? 'OK!' : continueLabel === 'Continuar' ? t('Continue', 'Continuar') : continueLabel}
           </McButton>
         ) : null
       }

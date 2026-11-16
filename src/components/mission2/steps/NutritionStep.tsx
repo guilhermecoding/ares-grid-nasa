@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ScrollHintArea } from '../../ScrollHintArea'
 import { MEDIA } from '../../../constants/mediaAssets'
 import {
@@ -19,6 +19,7 @@ import {
   type FoodGroupId,
   type FoodItem,
 } from '../../../data/mission2Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { PixelDialogBox } from '../../../opening/PixelDialogBox'
 import { soundEngine } from '../../../services/soundEngine'
@@ -35,6 +36,16 @@ const BAR_TONE = {
   balanced: 'bg-life',
   high: 'bg-[#f97316]',
 } as const
+
+const EMPTY_MEAL_LINES: readonly string[] = []
+
+const INTENSITY_EN: Record<string, string> = {
+  Leve: 'Light',
+  Moderado: 'Medium',
+  'Alta Energia': 'High energy',
+  'Ultra Leve': 'Extra light',
+  Nutritivo: 'Nutritious',
+}
 
 function placeFood(picks: TrayPicks, id: string): TrayPicks {
   const item = foodById(id)
@@ -56,7 +67,10 @@ function FoodCard({
   placed: boolean
   onPlace: (id: string) => void
 }) {
+  const { t } = useI18n()
   const dragRef = useRef({ x: 0, y: 0, moved: false })
+  const label = t(item.labelEn, item.label)
+  const intensity = t(INTENSITY_EN[item.intensity] ?? item.intensity, item.intensity)
 
   return (
     <button
@@ -64,7 +78,7 @@ function FoodCard({
       draggable
       data-food-id={item.id}
       aria-pressed={placed}
-      aria-label={`${item.label}, ${item.kcal} kcal, ${item.intensity}`}
+      aria-label={`${label}, ${item.kcal} kcal, ${intensity}`}
       onDragStart={(event) => {
         event.dataTransfer.setData('text/plain', item.id)
         event.dataTransfer.effectAllowed = 'move'
@@ -91,8 +105,8 @@ function FoodCard({
       style={{ touchAction: 'manipulation' }}
     >
       <span className="min-w-0 flex-1">
-        <span className="block font-pixel text-[11px] leading-tight text-[#f4fff4] sm:text-xs">{item.label}</span>
-        <span className="mt-0.5 block text-[11px] text-void-200">{item.intensity}</span>
+        <span className="block font-pixel text-[11px] leading-tight text-[#f4fff4] sm:text-xs">{label}</span>
+        <span className="mt-0.5 block text-[11px] text-void-200">{intensity}</span>
       </span>
       <span className="shrink-0 bg-energy px-1.5 py-1 font-pixel text-[10px] text-void-950 sm:text-xs">
         {item.kcal} kcal
@@ -102,24 +116,38 @@ function FoodCard({
 }
 
 function TraySlot({ group, foodId }: { group: FoodGroupId; foodId?: string }) {
+  const { t } = useI18n()
   const food = foodId ? foodById(foodId) : undefined
   const meta = FOOD_GROUPS[group]
   return (
     <div className="flex min-h-12 flex-1 flex-col justify-center border border-cyan-hud/25 bg-[#061018]/80 px-2 py-1.5">
-      <p className="font-pixel text-[9px] text-cyan-hud">{meta.label}</p>
+      <p className="font-pixel text-[9px] text-cyan-hud">{t(groupLabelEn(group), meta.label)}</p>
       {food ? (
         <p className="text-xs text-[#f4fff4]">
-          {food.label} · {food.kcal} kcal
+          {t(food.labelEn, food.label)} · {food.kcal} kcal
         </p>
       ) : (
-        <p className="text-xs text-void-300">Vazio</p>
+        <p className="text-xs text-void-300">{t('Empty', 'Vazio')}</p>
       )}
     </div>
   )
 }
 
+function groupLabelEn(group: FoodGroupId) {
+  if (group === 'protein') return 'Protein'
+  if (group === 'veggie') return 'Vegetables'
+  return 'Carbohydrates'
+}
+
+function groupHintEn(group: FoodGroupId) {
+  if (group === 'protein') return 'Muscles'
+  if (group === 'veggie') return 'Vitamins and fiber'
+  return 'Energy'
+}
+
 /** Desafio 2.2 — mount one food from each group and match the day's energy spend. */
 export function NutritionStep({ onConfirm }: Props) {
+  const { t, locale } = useI18n()
   const [picks, setPicks] = useState<TrayPicks>({})
   const [waterMl, setWaterMl] = useState<number>(WATER_DISPENSER.defaultMl)
   const [closedSig, setClosedSig] = useState<string | null>(null)
@@ -136,6 +164,38 @@ export function NutritionStep({ onConfirm }: Props) {
   const showCapi = verdict !== null && closedSig !== signature
   const capiReady = readySig === signature
   const canConfirm = verdict === 'balanced'
+  const mealLines = useMemo(() => {
+    if (verdict === 'low') {
+      return [
+        t(
+          'Heads up, commander! You used a lot of energy exercising, and this meal does not have enough calories.',
+          CAPI_MEAL_LINES.low[0],
+        ),
+        t(
+          'The astronaut will run out of strength — swap in foods with more energy!',
+          CAPI_MEAL_LINES.low[1],
+        ),
+      ]
+    }
+    if (verdict === 'balanced') {
+      return [
+        t(
+          'Perfect mix! You put back the energy you used in training, with the right amount of protein, vitamins, and carbohydrates!',
+          CAPI_MEAL_LINES.balanced[0],
+        ),
+      ]
+    }
+    if (verdict === 'high') {
+      return [
+        t('This meal has more energy than you used today!', CAPI_MEAL_LINES.high[0]),
+        t(
+          'Too much stored energy can feel uncomfortable before the next activity. Try a lighter item.',
+          CAPI_MEAL_LINES.high[1],
+        ),
+      ]
+    }
+    return EMPTY_MEAL_LINES
+  }, [verdict, t])
   const fillPct = Math.min(100, (kcal / MEAL_KCAL_SCALE) * 100)
   const bandLeft = (MEAL_KCAL_MIN / MEAL_KCAL_SCALE) * 100
   const bandWidth = ((MEAL_KCAL_MAX - MEAL_KCAL_MIN) / MEAL_KCAL_SCALE) * 100
@@ -166,20 +226,20 @@ export function NutritionStep({ onConfirm }: Props) {
             {MISSION2_META.solLabel} · {MISSION2_META.location}
           </p>
           <p className="mt-1 font-pixel text-sm text-[#f4fff4] drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] md:text-base">
-            Desafio 2.2 — Nutrição e Hidratação
+            {t('Challenge 2.2 — Food and water', 'Desafio 2.2 — Nutrição e Hidratação')}
           </p>
           <p className="mt-1 text-sm text-void-100/90">
-            Arraste ou toque um alimento de cada grupo. A <SciTermM2 term="Hidratação" /> fica no dispensador.
+            {t('Drag or tap one food from each group. ', 'Arraste ou toque um alimento de cada grupo. ')}{locale === 'pt' ? 'A ' : null}<SciTermM2 term={t('Hydration', 'Hidratação')} />{t(' is at the dispenser.', ' fica no dispensador.')}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <div className="border-2 border-cyan-hud/30 bg-[#0a1628]/92 px-3 py-2">
-              <p className="font-pixel text-[10px] text-cyan-hud">Gasto energético da atividade</p>
+              <p className="font-pixel text-[10px] text-cyan-hud">{t('Energy used by the workout', 'Gasto energético da atividade')}</p>
               <p className="font-pixel text-lg text-energy">~{ACTIVITY_ENERGY_KCAL} kcal</p>
             </div>
             <div className="border-2 border-cyan-hud/30 bg-[#0a1628]/92 px-3 py-2">
-              <p className="font-pixel text-[10px] text-cyan-hud">Meta de reposição da refeição</p>
+              <p className="font-pixel text-[10px] text-cyan-hud">{t('Meal energy goal', 'Meta de reposição da refeição')}</p>
               <p className="font-pixel text-lg text-[#f4fff4]">
-                {MEAL_KCAL_MIN} kcal a {MEAL_KCAL_MAX} kcal
+                {t(`${MEAL_KCAL_MIN} kcal to ${MEAL_KCAL_MAX} kcal`, `${MEAL_KCAL_MIN} kcal a ${MEAL_KCAL_MAX} kcal`)}
               </p>
             </div>
           </div>
@@ -190,8 +250,10 @@ export function NutritionStep({ onConfirm }: Props) {
             {MEAL_GROUP_ORDER.map((group) => (
               <section key={group} className="flex flex-col gap-2">
                 <h2 className="font-pixel text-xs text-cyan-hud md:text-sm">
-                  {FOOD_GROUPS[group].label}
-                  <span className="mt-0.5 block text-[10px] font-normal text-void-200">{FOOD_GROUPS[group].hint}</span>
+                  {t(groupLabelEn(group), FOOD_GROUPS[group].label)}
+                  <span className="mt-0.5 block text-[10px] font-normal text-void-200">
+                    {t(groupHintEn(group), FOOD_GROUPS[group].hint)}
+                  </span>
                 </h2>
                 {FOOD_ITEMS.filter((item) => item.group === group).map((item) => (
                   <FoodCard key={item.id} item={item} placed={picks[group] === item.id} onPlace={onPlace} />
@@ -202,7 +264,7 @@ export function NutritionStep({ onConfirm }: Props) {
 
           <section
             data-meal-tray
-            aria-label="Bandeja do astronauta"
+            aria-label={t('Astronaut tray', 'Bandeja do astronauta')}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault()
@@ -211,7 +273,7 @@ export function NutritionStep({ onConfirm }: Props) {
             }}
             className="flex flex-col gap-3 border-2 border-energy/50 bg-[#0a1628]/92 p-3"
           >
-            <h2 className="font-pixel text-sm text-energy">BANDEJA DO ASTRONAUTA</h2>
+            <h2 className="font-pixel text-sm text-energy">{t('ASTRONAUT TRAY', 'BANDEJA DO ASTRONAUTA')}</h2>
             <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
               {MEAL_GROUP_ORDER.map((group) => (
                 <TraySlot key={group} group={group} foodId={picks[group]} />
@@ -219,9 +281,11 @@ export function NutritionStep({ onConfirm }: Props) {
             </div>
             <div>
               <div className="flex items-baseline justify-between gap-2">
-                <p className="font-pixel text-sm text-[#f4fff4]">Total: {kcal} kcal</p>
+                <p className="font-pixel text-sm text-[#f4fff4]">
+                  {t('Total', 'Total')}: {kcal} kcal
+                </p>
                 <p className="text-xs text-void-200">
-                  meta {MEAL_KCAL_MIN}–{MEAL_KCAL_MAX}
+                  {t('goal', 'meta')} {MEAL_KCAL_MIN}–{MEAL_KCAL_MAX}
                 </p>
               </div>
               <div className="relative mt-2 h-4 overflow-hidden bg-void-950">
@@ -238,14 +302,14 @@ export function NutritionStep({ onConfirm }: Props) {
             </div>
 
             <label className="block text-sm text-[#f4fff4]">
-              Dispensador de água · {waterMl} ml
+              {t('Water dispenser', 'Dispensador de água')} · {waterMl} ml
               <input
                 type="range"
                 min={WATER_DISPENSER.minMl}
                 max={WATER_DISPENSER.maxMl}
                 step={WATER_DISPENSER.stepMl}
                 value={waterMl}
-                aria-label="Dispensador de água"
+                aria-label={t('Water dispenser', 'Dispensador de água')}
                 onChange={(event) => setWaterMl(Number(event.target.value))}
                 className="mt-1 h-10 w-full accent-cyan-hud"
               />
@@ -259,7 +323,7 @@ export function NutritionStep({ onConfirm }: Props) {
               disabled={!canConfirm}
               onClick={confirm}
             >
-              Confirmar refeição
+              {t('Confirm meal', 'Confirmar refeição')}
             </McButton>
           </section>
         </div>
@@ -269,7 +333,7 @@ export function NutritionStep({ onConfirm }: Props) {
         open={showCapi}
         position="center"
         title="Capi"
-        lines={verdict ? [...CAPI_MEAL_LINES[verdict]] : []}
+        lines={mealLines}
         characterSrc={verdict === 'balanced' ? MEDIA.capi.excited2 : MEDIA.capi.duvida}
         characterAlt="Capi"
         onTypingComplete={() => setReadySig(signature)}
@@ -277,12 +341,12 @@ export function NutritionStep({ onConfirm }: Props) {
           verdict === 'balanced' ? (
             capiReady ? (
               <McButton className="mc-btn-green min-h-12 px-4 font-pixel" onClick={confirm}>
-                Confirmar refeição
+                {t('Confirm meal', 'Confirmar refeição')}
               </McButton>
             ) : null
           ) : (
             <McButton className="min-h-12 px-4 font-pixel" onClick={() => setClosedSig(signature)}>
-              Fechar
+              {t('Close', 'Fechar')}
             </McButton>
           )
         }

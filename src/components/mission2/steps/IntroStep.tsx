@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
 import { INTRO_HIGHLIGHT_WORDS_M2, INTRO_PARTS_M2 } from '../../../data/mission2Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { PixelDialogBox } from '../../../opening/PixelDialogBox'
 import { useHideFollowingDialogs } from '../../../opening/useHideFollowingDialogs'
@@ -11,20 +12,35 @@ interface Props {
 }
 
 export function IntroStep({ onContinue }: Props) {
+  const { t, locale } = useI18n()
   const [part, setPart] = useState(0)
   const [ready, setReady] = useState(false)
   const [open, setOpen] = useState(true)
 
-  const lines = INTRO_PARTS_M2[part]!
-  const isLast = part >= INTRO_PARTS_M2.length - 1
+  const introLines = useMemo(
+    () => [
+      [t('Life away from Earth can shake the health of a brave astronaut.', INTRO_PARTS_M2[0][0])],
+      [t('With the power on, we will take care of YOU.', INTRO_PARTS_M2[1][0])],
+      [t('Today: exercise, a meal, hygiene, and rest.', INTRO_PARTS_M2[2][0])],
+    ],
+    [t],
+  )
+  const highlightWords = useMemo(
+    () =>
+      locale === 'en'
+        ? (['health', 'YOU', 'exercise', 'meal', 'hygiene', 'rest'] as const)
+        : INTRO_HIGHLIGHT_WORDS_M2,
+    [locale],
+  )
+  const lines = introLines[part]!
+  const isLast = part >= introLines.length - 1
   const { blocked, hideDialog, afterClose } = useHideFollowingDialogs('m2', onContinue)
 
   return (
     <>
       <div className="pointer-events-none absolute inset-x-0 bottom-24 z-20 px-4 text-center sm:bottom-28">
         <p className="mx-auto max-w-md font-pixel text-[10px] leading-snug text-[#f4fff4]/90 sm:text-xs">
-          Rotina diária no habitat — cuidado com{' '}
-          <SciTermM2 term="Microgravidade">microgravidade</SciTermM2>, isolamento e sono.
+          {t('Daily routine in the habitat — be careful with ', 'Rotina diária no habitat — cuidado com ')}<SciTermM2 term={t('Microgravity', 'Microgravidade')}>{t('microgravity', 'microgravidade')}</SciTermM2>{t(', isolation, and sleep.', ', isolamento e sono.')}
         </p>
       </div>
 
@@ -32,7 +48,7 @@ export function IntroStep({ onContinue }: Props) {
       <PixelDialogBox
         key={`m2-intro-${part}`}
         open={open}
-        lines={[...lines]}
+        lines={lines}
         title="Capi"
         dialogId={`m2-intro-${part}`}
         onSkip={() => {
@@ -41,7 +57,7 @@ export function IntroStep({ onContinue }: Props) {
         }}
         characterSrc={MEDIA.capi.neutral}
         characterAlt="Capi"
-        highlightWords={INTRO_HIGHLIGHT_WORDS_M2}
+        highlightWords={highlightWords}
         onTypingComplete={() => setReady(true)}
         onClosed={() => {
           afterClose(isLast, () => {
@@ -57,7 +73,7 @@ export function IntroStep({ onContinue }: Props) {
               style={{ touchAction: 'manipulation' }}
               onClick={() => setOpen(false)}
             >
-              {isLast ? 'Começar o dia' : 'Continuar'}
+              {isLast ? t('Start the day', 'Começar o dia') : t('Continue', 'Continuar')}
             </McButton>
           ) : null
         }

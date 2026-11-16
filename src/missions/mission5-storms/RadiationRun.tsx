@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Home, Radiation, ShieldHalf, Sprout, type LucideIcon } from 'lucide-react'
+import { PlayerChibi } from '../../components/PlayerChibi'
 import { ChallengeBar } from '../../components/missionKit/kit'
-import { MEDIA } from '../../constants/mediaAssets'
 import { SHELTERS, type ShelterId } from '../../data/mission5Data'
+import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
@@ -39,6 +40,7 @@ function doorAt(y: number): ShelterId {
 }
 
 export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
+  const { t, locale } = useI18n()
   const [pos, setPos] = useState({ x: 8, y: 50 })
   const [dose, setDose] = useState(12)
   const [goal, setGoal] = useState<{ x: number; y: number } | null>(null)
@@ -79,7 +81,7 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
         if (Math.random() < (1.2 + (doseRef.current / 100) * 10) * dt) soundEngine.geiger()
         if (doseRef.current >= 100) {
           ended.current = true
-          failRef.current('A dose de radiação chegou ao limite. Corra de novo até o abrigo certo.')
+          failRef.current('dose')
         }
       }
       const aim = target.current
@@ -110,7 +112,7 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
           if (next.x > DOOR_X) {
             ended.current = true
             if (doorAt(next.y) === 'shield') safeRef.current()
-            else failRef.current('Essa porta não segura a radiação. A estufa de vidro e o módulo comum não bastam.')
+            else failRef.current('door')
           }
         }
       }
@@ -152,15 +154,18 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
     <>
       <ChallengeBar
         code="5.3"
-        title="Corra para o abrigo certo"
+        title={t('Run to the right shelter', 'Corra para o abrigo certo')}
         icon={<Radiation className="gk-blink size-5" aria-hidden />}
-        counterLabel="Dose"
+        counterLabel={t('Dose', 'Dose')}
         value={`${Math.round(dose)}%`}
-        hint="Toque no caminho ou use as setas. Desvie das rochas e entre no abrigo que segura a radiação solar."
+        hint={t(
+          'Tap the path or use the arrow keys. Go around the rocks and enter the shelter that stops solar radiation.',
+          'Toque no caminho ou use as setas. Desvie das rochas e entre no abrigo que segura a radiação solar.',
+        )}
       />
 
       <div className="gk-panel p-3">
-        <div className="flex items-center gap-2" role="meter" aria-label="Dose de radiação" aria-valuenow={Math.round(dose)} aria-valuemin={0} aria-valuemax={100}>
+        <div className="flex items-center gap-2" role="meter" aria-label={t('Radiation dose', 'Dose de radiação')} aria-valuenow={Math.round(dose)} aria-valuemin={0} aria-valuemax={100}>
           <Radiation className="size-5 shrink-0" style={{ color: doseColor }} aria-hidden />
           <div className="h-4 flex-1 border-2 border-[#30346d] bg-[#04080f]">
             <div className="h-full" style={{ width: `${dose}%`, background: doseColor, boxShadow: `0 0 10px ${doseColor}` }} />
@@ -171,7 +176,7 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
           className="relative mt-3 h-[clamp(15rem,46dvh,26rem)] w-full touch-none overflow-hidden border-4 border-[#8a4a1c] bg-[linear-gradient(180deg,#6a2c16,#3b140c)] select-none"
           style={{ touchAction: 'none' }}
           role="application"
-          aria-label="Campo de corrida até os abrigos"
+          aria-label={t('Running field to the shelters', 'Campo de corrida até os abrigos')}
           onPointerDown={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             aimAt({
@@ -208,7 +213,7 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
                 style={{ top: `${1.5 + index * 33}%` }}
               >
                 <Icon className="size-6 text-[#f4fff4] md:size-8" aria-hidden />
-                <span className="font-pixel text-[9px] leading-tight text-[#f4fff4] uppercase sm:text-xs">{door.title}</span>
+                <span className="font-pixel text-[9px] leading-tight text-[#f4fff4] uppercase sm:text-xs">{door.title[locale]}</span>
               </div>
             )
           })}
@@ -224,11 +229,9 @@ export function RadiationRun({ paused = false, onFail, onSafe }: Props) {
             </span>
           ) : null}
 
-          <img
-            src={MEDIA.mission4.astronaut}
-            alt="Astronauta"
-            draggable={false}
-            className={`gk-pixelated pointer-events-none absolute h-[24%] ${goal ? 'gk-walk' : ''}`}
+          <PlayerChibi
+            alt={t('Astronaut', 'Astronauta')}
+            className={`gk-pixelated pointer-events-none absolute h-[28%] ${goal ? 'gk-walk' : ''}`}
             style={{
               left: `${pos.x}%`,
               top: `${pos.y}%`,

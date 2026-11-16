@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MEDIA } from '../../constants/mediaAssets'
+import { useI18n } from '../../i18n/locale'
 import { McButton } from '../../opening/McButton'
 import { PixelDialogBox } from '../../opening/PixelDialogBox'
 import { dialogGroupOf, isDialogGroupSkipped } from '../../services/progressStore'
@@ -18,10 +19,12 @@ export function CapiBridgeDialog({
   open,
   lines,
   highlightWords,
-  buttonLabel = 'Continuar',
+  buttonLabel,
   onDone,
   dialogId,
 }: Props) {
+  const { t } = useI18n()
+  const dialogLines = useMemo(() => [...lines], [lines])
   const [ready, setReady] = useState(false)
   const [boxOpen, setBoxOpen] = useState(true)
   const onDoneRef = useRef(onDone)
@@ -42,7 +45,7 @@ export function CapiBridgeDialog({
     <PixelDialogBox
       key={lines.join('|')}
       open={boxOpen}
-      lines={[...lines]}
+      lines={dialogLines}
       title="Capi"
       dialogId={dialogId ?? `capi:${lines[0] ?? ''}`}
       onSkip={() => setBoxOpen(false)}
@@ -62,7 +65,7 @@ export function CapiBridgeDialog({
             style={{ touchAction: 'manipulation' }}
             onClick={() => setBoxOpen(false)}
           >
-            {buttonLabel}
+            {buttonLabel ?? t('Continue', 'Continuar')}
           </McButton>
         ) : null
       }

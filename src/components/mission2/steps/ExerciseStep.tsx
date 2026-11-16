@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MEDIA } from '../../../constants/mediaAssets'
 import {
   EXERCISES,
@@ -6,6 +6,7 @@ import {
   type ExerciseId,
   type ExerciseOption,
 } from '../../../data/mission2Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { PixelDialogBox } from '../../../opening/PixelDialogBox'
 import { soundEngine } from '../../../services/soundEngine'
@@ -17,6 +18,13 @@ const ICONS: Record<ExerciseId, string> = {
   resistance: MEDIA.mission2.resistance,
   stretch: MEDIA.mission2.stretch,
   balance: MEDIA.mission2.balance,
+}
+
+const FOCUS_EN: Record<ExerciseId, string> = {
+  treadmill: 'Heart and stamina',
+  resistance: 'Muscle strength and bone density',
+  stretch: 'Flexibility and recovery',
+  balance: 'Getting used to Mars gravity',
 }
 
 interface Props {
@@ -49,6 +57,8 @@ function ExerciseCard({
   blocked: boolean
   onToggle: (id: ExerciseId) => void
 }) {
+  const { t } = useI18n()
+  const title = t(exercise.titleEn, exercise.title)
   return (
     <div
       className={`flex flex-col border-2 bg-[#0a1628]/92 text-left shadow-[0_8px_20px_rgba(0,0,0,0.35)] ${
@@ -64,20 +74,29 @@ function ExerciseCard({
         />
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3 md:p-4">
-        <p className="font-pixel text-sm text-cyan-hud md:text-base">{exercise.title}</p>
-        <p className="text-sm leading-snug text-void-100">{exercise.focus}</p>
+        <p className="font-pixel text-sm text-cyan-hud md:text-base">{title}</p>
+        <p className="text-sm leading-snug text-void-100">{t(FOCUS_EN[exercise.id], exercise.focus)}</p>
         <p className="text-sm text-energy">
-          −{exercise.energyCost}% energia · −{exercise.waterCostL} L água
+          {t(
+            `−${exercise.energyCost}% energy · −${exercise.waterCostL} L water`,
+            `−${exercise.energyCost}% energia · −${exercise.waterCostL} L água`,
+          )}
         </p>
-        <p className="text-sm text-life">+{exercise.wellbeingGain} saúde</p>
+        <p className="text-sm text-life">
+          {t(`+${exercise.wellbeingGain} health`, `+${exercise.wellbeingGain} saúde`)}
+        </p>
         <div className="mt-auto pt-3">
           <McButton
             className={`min-h-12 w-full font-pixel text-base font-bold ${selected ? 'mc-btn-green' : ''}`}
             disabled={blocked}
-            aria-label={selected ? `Tirar ${exercise.title}` : `Escolher ${exercise.title}`}
+            aria-label={
+              selected
+                ? t(`Remove ${exercise.titleEn}`, `Tirar ${exercise.title}`)
+                : t(`Choose ${exercise.titleEn}`, `Escolher ${exercise.title}`)
+            }
             onClick={() => onToggle(exercise.id)}
           >
-            {selected ? 'Escolhido' : 'Escolher'}
+            {selected ? t('Chosen', 'Escolhido') : t('Choose', 'Escolher')}
           </McButton>
         </div>
       </div>
@@ -87,10 +106,15 @@ function ExerciseCard({
 
 /** Desafio 2.1 — pick two activities, then Capi logs them. */
 export function ExerciseStep({ energyPct, waterL, completedIds, onCompleteOne, onContinue }: Props) {
+  const { t } = useI18n()
   const [picked, setPicked] = useState<ExerciseId[]>(completedIds)
   const [praise, setPraise] = useState(false)
   const [praiseReady, setPraiseReady] = useState(false)
   const locked = praise || completedIds.length >= EXERCISE_REQUIRED_COUNT
+  const praiseLines = useMemo(
+    () => [t('Nice work! I will log the activity you finished.', 'Muito bem! Vou registrar a atividade realizada.')],
+    [t],
+  )
 
   const toggle = (id: ExerciseId) => {
     if (locked) return
@@ -127,14 +151,16 @@ export function ExerciseStep({ energyPct, waterL, completedIds, onCompleteOne, o
           disabled={!ready || locked}
           onClick={confirm}
         >
-          Registrar treino
+          {t('Log the workout', 'Registrar treino')}
         </McButton>
       }
-      title="Desafio 2.1 — Exercícios físicos"
+      title={t('Challenge 2.1 — Physical exercise', 'Desafio 2.1 — Exercícios físicos')}
       subtitle={
         <>
-          Escolha {EXERCISE_REQUIRED_COUNT} atividades para cuidar dos músculos na{' '}
-          <SciTermM2 term="Microgravidade" />. Feitas: {picked.length}/{EXERCISE_REQUIRED_COUNT}
+          {t(
+            `Choose ${EXERCISE_REQUIRED_COUNT} activities to care for your muscles in`,
+            `Escolha ${EXERCISE_REQUIRED_COUNT} atividades para cuidar dos músculos na`,
+          )} <SciTermM2 term={t('Microgravity', 'Microgravidade')} />. {t('Done', 'Feitas')}: {picked.length}/{EXERCISE_REQUIRED_COUNT}
         </>
       }
     >
@@ -160,14 +186,14 @@ export function ExerciseStep({ energyPct, waterL, completedIds, onCompleteOne, o
         open={praise}
         position="center"
         title="Capi"
-        lines={['Muito bem! Vou registrar a atividade realizada.']}
+        lines={praiseLines}
         characterSrc={MEDIA.capi.excited2}
         characterAlt="Capi"
         onTypingComplete={() => setPraiseReady(true)}
         footer={
           praiseReady ? (
             <McButton className="mc-btn-green min-h-12 px-4 font-pixel" onClick={onContinue}>
-              Hora da refeição
+              {t('Meal time', 'Hora da refeição')}
             </McButton>
           ) : null
         }

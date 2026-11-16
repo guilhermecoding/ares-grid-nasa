@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   CAPI_INTRO_LINES,
   TAKEOFF_HUD_LINES,
   type AstronautProfile,
   type OpeningPhase,
 } from '../data/openingData'
+import { useI18n } from '../i18n/locale'
 import { setMuted, soundEngine, unlockAudio } from '../services/soundEngine'
 import { AstronautCustomizer } from './AstronautCustomizer'
 import { CapiDialog } from './CapiDialog'
@@ -21,6 +22,7 @@ const CAPI_SCENE_REVEAL_S = 1.2
 
 export interface OpeningProfilePatch {
   playerName: string
+  avatar: AstronautProfile['avatar']
   suitColor: AstronautProfile['suitColor']
   helmet: AstronautProfile['helmet']
   backpack: AstronautProfile['backpack']
@@ -43,6 +45,9 @@ export function OpeningFlow({
   onSaveProfile,
   onEnterWorld,
 }: OpeningFlowProps) {
+  const { t, locale } = useI18n()
+  const takeoffLines = useMemo(() => TAKEOFF_HUD_LINES.map((line) => line[locale]), [locale])
+  const capiLines = useMemo(() => CAPI_INTRO_LINES.map((line) => line[locale]), [locale])
   const [phase, setPhase] = useState<OpeningPhase>('ready_gate')
   const [hologram, setHologram] = useState(false)
   const [takeoffReady, setTakeoffReady] = useState(false)
@@ -55,7 +60,8 @@ export function OpeningFlow({
     (profile?: AstronautProfile) => {
       const p = profile ?? savedProfile
       onSaveProfile({
-        playerName: p?.name ?? playerName ?? 'Astronauta',
+        playerName: p?.name ?? playerName ?? t('Astronaut', 'Astronauta'),
+        avatar: p?.avatar ?? initialProfile?.avatar ?? 'boy',
         suitColor: p?.suitColor ?? initialProfile?.suitColor ?? 'nasa-white',
         helmet: p?.helmet ?? initialProfile?.helmet ?? 'classic',
         backpack: p?.backpack ?? initialProfile?.backpack ?? 'standard',
@@ -64,7 +70,7 @@ export function OpeningFlow({
       })
       onEnterWorld()
     },
-    [savedProfile, playerName, initialProfile, onSaveProfile, onEnterWorld],
+    [savedProfile, playerName, initialProfile, onSaveProfile, onEnterWorld, t],
   )
 
   const startIntro = () => {
@@ -94,7 +100,6 @@ export function OpeningFlow({
             void unlockAudio()
             onEnterWorld()
           }}
-          onReplayIntro={startIntro}
         />
       )}
 
@@ -108,8 +113,8 @@ export function OpeningFlow({
           {takeoffRevealed && (
             <PixelDialogBox
               open={takeoffDialogOpen}
-              lines={TAKEOFF_HUD_LINES}
-              title="SYS // DECOLAGEM"
+              lines={takeoffLines}
+              title={t('SYS // TAKEOFF', 'SYS // DECOLAGEM')}
               dialogId="opening-takeoff"
               onSkip={() => setTakeoffDialogOpen(false)}
               onTypingComplete={() => {
@@ -123,7 +128,7 @@ export function OpeningFlow({
               footer={
                 takeoffReady ? (
                   <McButton className="min-h-12 px-6 font-pixel text-lg font-bold" onClick={() => setTakeoffDialogOpen(false)}>
-                    Continuar
+                    {t('Continue', 'Continuar')}
                   </McButton>
                 ) : null
               }
@@ -148,7 +153,7 @@ export function OpeningFlow({
           {capiSceneReady && (
             <CapiDialog
               dialogId="opening-capi"
-              lines={CAPI_INTRO_LINES}
+              lines={capiLines}
               onComplete={() => setPhase('scene3_1_customizer')}
             />
           )}

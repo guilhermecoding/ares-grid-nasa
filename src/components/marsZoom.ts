@@ -248,3 +248,54 @@ export function drawMarsZoom(
   ctx.stroke()
   ctx.globalAlpha = 1
 }
+
+/** Name in space, tied to the approaching planet. Grows and moves with the globe. */
+export function drawMarsNameCallout(
+  ctx: CanvasRenderingContext2D,
+  frame: { cx: number; cy: number; radius: number },
+  label: string,
+  bounds: { w: number; h: number },
+) {
+  const { cx, cy, radius: R } = frame
+  const fontSize = Math.round(Math.max(13, Math.min(28, R * 0.22)))
+  ctx.save()
+  ctx.font = `400 ${fontSize}px Silkscreen, Nunito, sans-serif`
+  ctx.textBaseline = 'middle'
+  const textW = ctx.measureText(label).width
+  const margin = 16
+  const tipX = cx - Math.cos(0.42) * (R + Math.max(3, R * 0.03))
+  const tipY = cy + Math.sin(0.42) * (R + Math.max(3, R * 0.03))
+  const leader = Math.max(26, R * 0.5)
+  let lineY = tipY
+  let textX = tipX - leader - textW
+  if (textX < margin) textX = margin
+  const textRight = textX + textW
+  if (lineY < margin + fontSize) lineY = margin + fontSize
+  if (lineY > bounds.h - margin - fontSize) lineY = bounds.h - margin - fontSize
+
+  ctx.strokeStyle = '#5ee7ff'
+  ctx.fillStyle = '#5ee7ff'
+  ctx.lineWidth = Math.max(1.5, fontSize * 0.09)
+  ctx.lineCap = 'square'
+  ctx.beginPath()
+  ctx.moveTo(textRight + fontSize * 0.35, lineY)
+  if (Math.abs(tipY - lineY) > 8 && textRight + fontSize * 0.35 < tipX - 8) {
+    const kneeX = textRight + fontSize * 0.35 + (tipX - textRight) * 0.42
+    ctx.lineTo(kneeX, lineY)
+    ctx.lineTo(tipX, tipY)
+  } else {
+    ctx.lineTo(tipX, tipY)
+  }
+  ctx.stroke()
+
+  ctx.beginPath()
+  ctx.arc(tipX, tipY, Math.max(2.5, fontSize * 0.16), 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.lineWidth = Math.max(3, fontSize * 0.22)
+  ctx.strokeStyle = 'rgba(2, 6, 16, 0.9)'
+  ctx.strokeText(label, textX, lineY)
+  ctx.fillStyle = '#f4fff4'
+  ctx.fillText(label, textX, lineY)
+  ctx.restore()
+}

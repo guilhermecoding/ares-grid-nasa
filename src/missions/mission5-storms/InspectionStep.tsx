@@ -3,6 +3,7 @@ import { Check, DoorClosed, RadioTower, ScanSearch, ShieldCheck, Sprout, Sun, ty
 import { BarMeter, Burst, ChallengeBar, FloatDelta, GameCta, Tag } from '../../components/missionKit/kit'
 import { MEDIA } from '../../constants/mediaAssets'
 import { INSPECTION_POINTS, type InspectId } from '../../data/mission5Data'
+import { useI18n } from '../../i18n/locale'
 import { soundEngine } from '../../services/soundEngine'
 
 interface Props {
@@ -21,6 +22,7 @@ const SPOTS: Record<InspectId, { x: number; y: number; icon: LucideIcon }> = {
 }
 
 export function InspectionStep({ inspected, integrity, onInspect, onDone }: Props) {
+  const { t, locale } = useI18n()
   const [last, setLast] = useState<InspectId | null>(null)
   const done = INSPECTION_POINTS.every((point) => inspected.includes(point.id))
 
@@ -35,23 +37,28 @@ export function InspectionStep({ inspected, integrity, onInspect, onDone }: Prop
     <>
       <ChallengeBar
         code="5.4"
-        title="Inspeção da base depois da tempestade"
+        title={t('Base inspection after the storm', 'Inspeção da base depois da tempestade')}
         icon={<ScanSearch className="size-5" aria-hidden />}
-        counterLabel="Pontos"
+        counterLabel={t('Spots', 'Pontos')}
         value={inspected.length}
         total={INSPECTION_POINTS.length}
-        hint="Toque em cada marcador que pisca na base para escanear o sistema."
+        hint={t(
+          'Tap each blinking marker on the base to scan that system.',
+          'Toque em cada marcador que pisca na base para escanear o sistema.',
+        )}
       />
 
       <div className="grid gap-3 lg:grid-cols-[1.45fr_0.55fr]">
         <div className="relative aspect-[620/341] overflow-hidden border-4 border-(--gk-line) bg-[#3b140c]">
-          <img src={MEDIA.mission5.baseClear} alt="Base em Arcádia com o céu limpo" className="gk-pixelated absolute inset-0 h-full w-full object-cover" draggable={false} />
-          <Tag className="absolute top-2 left-2">Céu limpo · varredura</Tag>
+          <img src={MEDIA.mission5.baseClear} alt={t('Base at Arcadia Planitia under a clear sky', 'Base em Arcadia Planitia com o céu limpo')} className="gk-pixelated absolute inset-0 h-full w-full object-cover" draggable={false} />
+          <Tag className="absolute top-2 left-2">{t('Clear sky · scan', 'Céu limpo · varredura')}</Tag>
 
           {INSPECTION_POINTS.map((point) => {
             const spot = SPOTS[point.id]
             const ok = inspected.includes(point.id)
             const Icon = spot.icon
+            const title = point.title[locale]
+            const detail = point.detail[locale]
             return (
               <div key={point.id} className="absolute" style={{ left: `${spot.x}%`, top: `${spot.y}%` }}>
                 {ok && last === point.id ? (
@@ -59,14 +66,14 @@ export function InspectionStep({ inspected, integrity, onInspect, onDone }: Prop
                     <span className="gk-scan-ring pointer-events-none absolute top-0 left-0 size-14 rounded-full border-4 border-[#7dffe0]" aria-hidden />
                     <Burst color="#7dffe0" className="top-0 left-0" />
                     <FloatDelta color="#7dffb0" className="-top-12 -left-8 whitespace-nowrap">
-                      +7,5% integridade
+                      {t('+7.5% integrity', '+7,5% integridade')}
                     </FloatDelta>
                   </>
                 ) : null}
                 <button
                   type="button"
                   disabled={ok}
-                  aria-label={ok ? `${point.title}: ${point.detail}` : `Inspecionar: ${point.title}`}
+                  aria-label={ok ? `${title}: ${detail}` : t(`Inspect: ${title}`, `Inspecionar: ${title}`)}
                   onClick={() => inspect(point.id)}
                   className={`absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 md:size-12 ${
                     ok ? 'border-[#04080f] bg-life text-[#04140a]' : 'gk-pulse border-[#04080f] bg-energy text-[#1a1203]'
@@ -82,7 +89,7 @@ export function InspectionStep({ inspected, integrity, onInspect, onDone }: Prop
                   }`}
                   aria-hidden
                 >
-                  {point.title}
+                  {title}
                 </span>
               </div>
             )
@@ -90,11 +97,13 @@ export function InspectionStep({ inspected, integrity, onInspect, onDone }: Prop
         </div>
 
         <div className="gk-panel flex flex-col gap-2 p-3">
-          <BarMeter label="Integridade da base" value={integrity} color="#5ecf9a" icon={<ShieldCheck className="size-3" aria-hidden />} />
+          <BarMeter label={t('Base integrity', 'Integridade da base')} value={integrity} color="#5ecf9a" icon={<ShieldCheck className="size-3" aria-hidden />} />
           <ul className="mt-1 grid gap-1.5">
             {INSPECTION_POINTS.map((point) => {
               const ok = inspected.includes(point.id)
               const Icon = SPOTS[point.id].icon
+              const title = point.title[locale]
+              const detail = point.detail[locale]
               return (
                 <li
                   key={point.id}
@@ -102,8 +111,8 @@ export function InspectionStep({ inspected, integrity, onInspect, onDone }: Prop
                 >
                   <Icon className={`size-4 shrink-0 ${ok ? 'text-[#7dffb0]' : 'text-[#f4fff4]/50'}`} aria-hidden />
                   <span className="min-w-0 flex-1">
-                    <span className="block font-pixel text-[10px] text-[#f4fff4] uppercase">{point.title}</span>
-                    <span className={`block text-xs ${ok ? 'text-[#7dffb0]' : 'text-[#f4fff4]/50'}`}>{ok ? point.detail : 'Aguardando varredura'}</span>
+                    <span className="block font-pixel text-[10px] text-[#f4fff4] uppercase">{title}</span>
+                    <span className={`block text-xs ${ok ? 'text-[#7dffb0]' : 'text-[#f4fff4]/50'}`}>{ok ? detail : t('Waiting for the scan', 'Aguardando varredura')}</span>
                   </span>
                   {ok ? <Check className="size-4 shrink-0 text-[#7dffb0]" strokeWidth={3} aria-hidden /> : null}
                 </li>
@@ -113,7 +122,7 @@ export function InspectionStep({ inspected, integrity, onInspect, onDone }: Prop
         </div>
       </div>
 
-      {done ? <GameCta onClick={onDone}>Registrar o alerta</GameCta> : null}
+      {done ? <GameCta onClick={onDone}>{t('Log the alert', 'Registrar o alerta')}</GameCta> : null}
     </>
   )
 }

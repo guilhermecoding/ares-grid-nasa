@@ -3,6 +3,7 @@ import {
   HYGIENE_BONUS_CARD,
   type HygieneId,
 } from '../../../data/mission2Data'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
 import { Mission2Stage } from '../Mission2Stage'
@@ -37,6 +38,7 @@ export function HygieneStep({
   onCompleteOne,
   onContinue,
 }: Props) {
+  const { t } = useI18n()
   const requiredDone = completedIds.length >= HYGIENE_ACTIONS.length
 
   const canAfford = (id: HygieneId) => {
@@ -69,13 +71,13 @@ export function HygieneStep({
             onContinue()
           }}
         >
-          Continuar
+          {t('Continue', 'Continuar')}
         </McButton>
       }
-      title="Desafio 2.3 — Higiene pessoal"
+      title={t('Challenge 2.3 — Personal hygiene', 'Desafio 2.3 — Higiene pessoal')}
       subtitle={
         <>
-          Esfregue, lave e limpe a bancada para zerar a <SciTermM2 term="Contaminação" />. Risco agora:{' '}
+          {t('Scrub, wash, and wipe the bench to clear', 'Esfregue, lave e limpe a bancada para zerar a')} <SciTermM2 term={t('Contamination', 'Contaminação')} />. {t('Risk now', 'Risco agora')}:{' '}
           <strong className={contaminationRisk === 0 ? 'text-life' : 'text-danger'}>{contaminationRisk}%</strong>
         </>
       }
@@ -107,8 +109,8 @@ export function HygieneStep({
 
       {requiredDone ? (
         <div className="mx-auto w-full max-w-6xl border-2 border-cyan-hud/30 bg-[#0a1628]/92 p-3 md:max-w-md">
-          <p className="font-pixel text-sm text-cyan-hud">{HYGIENE_BONUS_CARD.title}</p>
-          <p className="mt-1 text-sm text-void-100">{HYGIENE_BONUS_CARD.detail}</p>
+          <p className="font-pixel text-sm text-cyan-hud">{t('Check the cabin', HYGIENE_BONUS_CARD.title)}</p>
+          <p className="mt-1 text-sm text-void-100">{t('Last hygiene check', HYGIENE_BONUS_CARD.detail)}</p>
           <McButton
             className={`mt-3 min-h-12 w-full font-pixel text-base font-bold ${cabinDone ? 'mc-btn-green' : ''}`}
             disabled={cabinDone || HYGIENE_BONUS_CARD.waterCostL > waterL}
@@ -123,7 +125,7 @@ export function HygieneStep({
               )
             }
           >
-            {cabinDone ? 'Cabine revisada' : 'Revisar cabine'}
+            {cabinDone ? t('Cabin checked', 'Cabine revisada') : t('Check the cabin', 'Revisar cabine')}
           </McButton>
         </div>
       ) : null}

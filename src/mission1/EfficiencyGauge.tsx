@@ -1,3 +1,5 @@
+import { useI18n } from '../i18n/locale'
+
 const SIZE = 112
 const STROKE = 10
 const RADIUS = (SIZE - STROKE) / 2
@@ -43,6 +45,7 @@ interface Props {
 }
 
 export function EfficiencyGauge({ value, active = false, className = '' }: Props) {
+  const { t } = useI18n()
   const pct = Math.min(100, Math.max(0, value))
   const color = efficiencyColor(pct)
   const offset = CIRCUMFERENCE * (1 - pct / 100)
@@ -51,7 +54,7 @@ export function EfficiencyGauge({ value, active = false, className = '' }: Props
     <div
       className={`relative flex size-[5.25rem] flex-col items-center justify-center sm:size-[6.5rem] ${className}`}
       role="img"
-      aria-label={`Eficiência prevista ${pct} por cento`}
+      aria-label={t(`Predicted efficiency ${pct} percent`, `Eficiência prevista ${pct} por cento`)}
     >
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0 size-full -rotate-90" aria-hidden>
         <circle
@@ -79,8 +82,8 @@ export function EfficiencyGauge({ value, active = false, className = '' }: Props
         <span className="font-pixel text-lg text-[#f4fff4] sm:text-2xl" style={{ color }}>
           {pct}%
         </span>
-        <span className="mt-0.5 text-[9px] tracking-wide text-cyan-hud/80 sm:text-[10px]">Eficiência</span>
-        {active ? <span className="mt-0.5 text-[8px] text-life">Ativo</span> : null}
+        <span className="mt-0.5 text-[9px] tracking-wide text-cyan-hud/80 sm:text-[10px]">{t('Efficiency', 'Eficiência')}</span>
+        {active ? <span className="mt-0.5 text-[8px] text-life">{t('Active', 'Ativo')}</span> : null}
       </div>
     </div>
   )

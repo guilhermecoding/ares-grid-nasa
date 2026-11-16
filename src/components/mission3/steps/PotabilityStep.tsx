@@ -1,13 +1,15 @@
 import { motion } from 'framer-motion'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   CAPI_POTABILITY,
+  CAPI_POTABILITY_EN,
   POTABILITY_INDICATORS,
   RETREAT_ENERGY_COST,
   WATER_REWARD_L,
   type PotabilityId,
 } from '../../../data/mission3Data'
 import { MEDIA } from '../../../constants/mediaAssets'
+import { useI18n } from '../../../i18n/locale'
 import { McButton } from '../../../opening/McButton'
 import { soundEngine } from '../../../services/soundEngine'
 import { CapiBeat } from '../CapiBeat'
@@ -81,7 +83,7 @@ function AssayCard({
   onAnalyze,
 }: {
   id: PotabilityId
-  label: string
+  label: ReactNode
   done: boolean
   ok: boolean
   busy: boolean
@@ -90,6 +92,7 @@ function AssayCard({
   unsafe?: string
   onAnalyze: () => void
 }) {
+  const { t } = useI18n()
   return (
     <motion.button
       type="button"
@@ -115,14 +118,14 @@ function AssayCard({
       <span className="flex w-full items-center justify-between gap-2">
         <AssayIcon id={id} />
         <span className={`font-pixel text-sm ${done && ok ? 'text-life' : done ? 'text-danger' : 'text-energy'}`}>
-          {busy ? 'LENDO…' : done && ok ? '✓ OK' : done ? '✕ FORA' : 'ABERTO'}
+          {busy ? t('READING…', 'LENDO…') : done && ok ? t('✓ OK', '✓ OK') : done ? t('✕ OUT', '✕ FORA') : t('OPEN', 'ABERTO')}
         </span>
       </span>
       <span className="text-base font-semibold text-[#f4fff4]">
         {id === 'conductivity' ? <SciTermM3 term="Condutividade Elétrica">{label}</SciTermM3> : label}
       </span>
-      {waiting ? <span className="font-pixel text-base text-energy">TOQUE AQUI</span> : null}
-      {done ? <span className={`text-sm ${ok ? 'text-life' : 'text-danger'}`}>{ok ? safe : unsafe ?? 'fora do padrão'}</span> : null}
+      {waiting ? <span className="font-pixel text-base text-energy">{t('TAP HERE', 'TOQUE AQUI')}</span> : null}
+      {done ? <span className={`text-sm ${ok ? 'text-life' : 'text-danger'}`}>{ok ? safe : unsafe ?? t('out of range', 'fora do padrão')}</span> : null}
     </motion.button>
   )
 }
@@ -139,6 +142,7 @@ export function PotabilityStep({
   onEnergyShort,
   onContinue,
 }: Props) {
+  const { t, locale } = useI18n()
   const [treated, setTreated] = useState(initialTreated)
   const [analyzed, setAnalyzed] = useState<Set<PotabilityId>>(() => new Set(initialAnalyzed))
   const [scanning, setScanning] = useState<PotabilityId | null>(null)
@@ -146,11 +150,28 @@ export function PotabilityStep({
     initialAnalyzed.length === POTABILITY_INDICATORS.length &&
     POTABILITY_INDICATORS.every((ind) => initialTreated || !ind.failsInitially)
   const [approved, setApproved] = useState(alreadyOk)
-  const [beat, setBeat] = useState<{ id: string; lines: readonly string[] } | null>(
-    alreadyOk || initialAnalyzed.length > 0
-      ? null
-      : { id: 'm3-pot-intro', lines: ['Toque em cada indicador para analisar a água.', 'Água transparente ainda pode esconder sal.'] },
+  const [beatKind, setBeatKind] = useState<'intro' | 'fail' | 'pass' | 'retry' | null>(
+    alreadyOk || initialAnalyzed.length > 0 ? null : 'intro',
   )
+  const beatLines = useMemo(() => {
+    if (beatKind === 'intro') {
+      return [
+        t('Tap each indicator to test the water.', 'Toque em cada indicador para analisar a água.'),
+        t('Clear water can still hide salt.', 'Água transparente ainda pode esconder sal.'),
+      ]
+    }
+    if (beatKind === 'fail') return locale === 'en' ? [...CAPI_POTABILITY_EN.fail] : [...CAPI_POTABILITY.fail]
+    if (beatKind === 'pass') return locale === 'en' ? [...CAPI_POTABILITY_EN.pass] : [...CAPI_POTABILITY.pass]
+    if (beatKind === 'retry') {
+      return [
+        t('Treatment done again!', 'Tratamento refeito!'),
+        t('Now repeat the test on all 6 indicators.', 'Agora repita a análise dos 6 indicadores.'),
+      ]
+    }
+    return []
+  }, [beatKind, locale, t])
+  const beatId =
+    beatKind === 'intro' ? 'm3-pot-intro' : beatKind === 'fail' ? 'm3-pot-fail' : beatKind === 'pass' ? 'm3-pot-pass' : 'm3-pot-retry'
   const timerRef = useRef<number | null>(null)
 
   useEffect(() => () => {
@@ -177,12 +198,12 @@ export function PotabilityStep({
       if (next.size < POTABILITY_INDICATORS.length) return
       const anyFail = POTABILITY_INDICATORS.some((i) => !passes(i.id))
       if (anyFail) {
-        setBeat({ id: 'm3-pot-fail', lines: CAPI_POTABILITY.fail })
+        setBeatKind('fail')
       } else {
         setApproved(true)
         onApprove(WATER_REWARD_L)
         soundEngine.success()
-        setBeat({ id: 'm3-pot-pass', lines: CAPI_POTABILITY.pass })
+        setBeatKind('pass')
       }
     }, SCAN_MS)
   }
@@ -198,21 +219,23 @@ export function PotabilityStep({
     setTreated(true)
     setAnalyzed(new Set())
     onProgress(true, [])
-    setBeat({ id: 'm3-pot-retry', lines: ['Tratamento refeito!', 'Agora repita a análise dos 6 indicadores.'] })
+    setBeatKind('retry')
   }
 
   return (
     <Mission3Stage
-      title="Desafio 3.6 — Testando a Potabilidade"
+      title={t('Challenge 3.6 — Testing Potability', 'Desafio 3.6 — Testando a Potabilidade')}
       subtitle={
         <>
-          Água transparente pode esconder sais e <SciTermM3 term="Percloratos">percloratos</SciTermM3>. Analise os 6
-          indicadores de <SciTermM3 term="Potabilidade">potabilidade</SciTermM3>.
+          {t('Clear water can still hide salts and', 'Água transparente pode esconder sais e')}{' '}
+          <SciTermM3 term={t('Perchlorates', 'Percloratos')} />
+          {t('. Check the 6', '. Analise os 6 indicadores de')} <SciTermM3 term={t('Potability', 'Potabilidade')} />
+          {t(' indicators.', '.')}
         </>
       }
       energy={energy}
       waterL={waterL}
-      overlay={beat ? <CapiBeat id={beat.id} lines={beat.lines} onDone={() => setBeat(null)} /> : null}
+      overlay={beatKind ? <CapiBeat id={beatId} lines={beatLines} onDone={() => setBeatKind(null)} /> : null}
     >
       <section
         className={`mx-auto w-full max-w-6xl rounded border-2 bg-[#0a1628]/92 p-3 md:p-4 ${
@@ -221,13 +244,20 @@ export function PotabilityStep({
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="font-pixel text-sm text-cyan-hud">
-            {treated ? 'ANÁLISE 2 · APÓS NOVO TRATAMENTO' : 'ANÁLISE 1'} · {analyzed.size}/{POTABILITY_INDICATORS.length}
+            {treated
+              ? t('TEST 2 · AFTER A NEW TREATMENT', 'ANÁLISE 2 · APÓS NOVO TRATAMENTO')
+              : t('TEST 1', 'ANÁLISE 1')}{' '}
+            · {analyzed.size}/{POTABILITY_INDICATORS.length}
           </p>
           <p
             className={`font-pixel text-xs md:text-sm ${allGreen ? 'text-life' : failing ? 'text-danger' : 'text-void-100/70'}`}
             aria-live="polite"
           >
-            {allGreen ? 'APROVADO PARA CONSUMO' : failing ? 'CONSUMO BLOQUEADO' : 'EM ANÁLISE'}
+            {allGreen
+              ? t('SAFE TO DRINK', 'APROVADO PARA CONSUMO')
+              : failing
+                ? t('DRINKING BLOCKED', 'CONSUMO BLOQUEADO')
+                : t('TESTING', 'EM ANÁLISE')}
           </p>
         </div>
 
@@ -239,13 +269,22 @@ export function PotabilityStep({
               <AssayCard
                 key={ind.id}
                 id={ind.id}
-                label={ind.label}
+                label={
+                  ind.id === 'conductivity' ? (
+                    <>
+                      <SciTermM3 term={t('Electrical conductivity', 'Condutividade Elétrica')} />
+                      {t(' and salts', ' e sais')}
+                    </>
+                  ) : (
+                    t(ind.labelEn, ind.label)
+                  )
+                }
                 done={done}
                 ok={passes(ind.id)}
                 busy={busy}
                 waiting={!done && !scanning && !approved}
-                safe={ind.safe}
-                unsafe={ind.unsafe}
+                safe={t(ind.safeEn, ind.safe)}
+                unsafe={ind.unsafeEn && ind.unsafe ? t(ind.unsafeEn, ind.unsafe) : undefined}
                 onAnalyze={() => analyze(ind.id)}
               />
             )
@@ -260,7 +299,10 @@ export function PotabilityStep({
             className="mc-btn mt-3 min-h-14 w-full font-pixel text-sm md:text-base"
             style={{ touchAction: 'manipulation' }}
           >
-            Executar Novo Tratamento e Repetir Análise (−{RETREAT_ENERGY_COST}% de energia)
+            {t(
+              `Run a new treatment and test again (−${RETREAT_ENERGY_COST}% energy)`,
+              `Executar Novo Tratamento e Repetir Análise (−${RETREAT_ENERGY_COST}% de energia)`,
+            )}
           </motion.button>
         ) : null}
       </section>
@@ -273,11 +315,16 @@ export function PotabilityStep({
         >
           <p className="flex items-center gap-2 font-pixel text-sm text-life md:text-base">
             <img src={MEDIA.mission3.waterDrop} alt="" className="size-10 object-contain" draggable={false} />
-            +{WATER_REWARD_L} L na reserva da base!
+            {t(`+${WATER_REWARD_L} L in the base reserve!`, `+${WATER_REWARD_L} L na reserva da base!`)}
           </p>
-          <p className="mt-1 text-sm text-void-100/85">Reserva atual: {Math.round(waterL)} L de água potável.</p>
+          <p className="mt-1 text-sm text-void-100/85">
+            {t(
+              `Water reserve now: ${Math.round(waterL)} L of drinking water.`,
+              `Reserva atual: ${Math.round(waterL)} L de água potável.`,
+            )}
+          </p>
           <McButton className="mc-btn-green mt-3 min-h-12 px-5 font-pixel" onClick={onContinue}>
-            Abrir Diário de Bordo
+            {t('Open the logbook', 'Abrir Diário de Bordo')}
           </McButton>
         </motion.section>
       ) : null}
