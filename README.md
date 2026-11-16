@@ -1,75 +1,29 @@
-# React + TypeScript + Vite
+<img src="public/favicon.png" alt="Mars Adventures icon" width="96" />
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Mars Adventures
 
-Currently, two official plugins are available:
+Mars Adventures is a science game for children from 7 to 12 years old. You play an astronaut at Arcadia Planitia, a plain on Mars. Your helper is Capi, a capybara in a space suit. The game reads real space-weather reports from NASA DONKI. DONKI is the NASA database of solar storms.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+You choose a boy astronaut or a girl astronaut, and you type a name. The game plays a short flight and then lands on Mars. English is the first language. You can change the language to Brazilian Portuguese on the home screen or on the mission map. The game saves that choice in this browser.
 
-## React Compiler
+Five missions open in order. Each mission teaches one part of life at the base. The base is the habitat where the astronaut lives.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Solar Power. Place the panels so the base gets power from the Sun.
+2. Health. Exercise, eat, wash, and sleep so the astronaut stays well.
+3. Mars Ice. Drill for ice and turn that ice into water.
+4. Greenhouse. Build a dome, plant crops, and close the cycle that gives the base food and oxygen.
+5. Storms. Protect the base from dust and from solar radiation.
 
-## Expanding the ESLint configuration
+When you finish a mission, the game shows your meters and saves a photo in the logbook. The logbook is the book of science notes for the trip. When you finish all five missions, you earn a certificate. You can download that certificate as a JPEG file. A JPEG file is a picture file.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Your progress stays in this browser. If you start the game again from the mission map, you lose the missions, the logbook, and the certificate. The language stays.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Run the game
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+You need Node.js and pnpm on your computer. Node.js is the program that runs JavaScript tools. pnpm is the tool that installs the packages for this game.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Run `pnpm install` in this folder.
+2. Run `pnpm dev`.
+3. Open `http://localhost:5173` in a browser.
 
-```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+The authors of Mars Adventures are Aline, Joao Guilherme, Jackson, Daniel, Laura, and Julia.

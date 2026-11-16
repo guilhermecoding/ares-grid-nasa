@@ -1,0 +1,120 @@
+/** Centralized media paths for the opening sequence and shared UI. */
+
+import emblem from '../assets/image/artefacts/arcadia_emblema_capivara.png'
+import astronautaCabeca from '../assets/image/artefacts/astronauta_cabeca.png'
+import astronautaCabecaMenina from '../assets/image/artefacts/astronauta_cabeca_menina.png'
+import astronautaFrontal from '../assets/image/artefacts/astronauta_frontal.png'
+import astronautaFrontalMenina from '../assets/image/artefacts/astronauta_frontal_menina.png'
+import chibiMenina from '../assets/image/artefacts/chibi-person-menina.png'
+import chibiMenino from '../assets/image/artefacts/chibi-person-menino.png'
+import type { AvatarId } from '../data/openingData'
+import capiDuvida from '../assets/image/artefacts/capi-duvida.png'
+import capiExcited2 from '../assets/image/artefacts/capi-excited2.png'
+import capiNeutral from '../assets/image/artefacts/capi-neutral.png'
+import capiRef from '../assets/image/capi/capi-ref.jpeg'
+import pointA from '../assets/image/mission1/point-a.svg'
+import pointB from '../assets/image/mission1/point-b.svg'
+import pointC from '../assets/image/mission1/point-c.svg'
+import siteSlope from '../assets/image/mission1/site-encosta.jpg'
+import sitePlain from '../assets/image/mission1/site-planicie.jpg'
+import siteVale from '../assets/image/mission1/site-vale.jpg'
+import solarPanel from '../assets/image/mission1/solar-panel.svg'
+
+/** Portraits for the astronaut the player chose. */
+export const PLAYER_ART = {
+  boy: { head: astronautaCabeca, frontal: astronautaFrontal, chibi: chibiMenino },
+  girl: { head: astronautaCabecaMenina, frontal: astronautaFrontalMenina, chibi: chibiMenina },
+} as const
+
+export function playerArt(avatar: AvatarId | undefined) {
+  return PLAYER_ART[avatar === 'girl' ? 'girl' : 'boy']
+}
+
+export const MEDIA = {
+  capi: {
+    /** Emblem for title / ready gate */
+    emblem,
+    /** Portrait used in PixelDialogBox / CapiDialog */
+    neutral: capiNeutral,
+    /** Excited portrait (confirm astronaut / celebration) */
+    excited2: capiExcited2,
+    /** Doubt / trade-off feedback (e.g. non-ideal panel site) */
+    duvida: capiDuvida,
+    ref: capiRef,
+  },
+  opening: {
+    pixelDialogFrame: '/art/opening/pixel-dialog-frame.png',
+    pixelDialogRef: '/art/opening/pixel-dialog-ref.png',
+  },
+  mission1: {
+    pointA,
+    pointB,
+    pointC,
+    panel: solarPanel,
+    sites: {
+      A: siteVale,
+      B: sitePlain,
+      C: siteSlope,
+    },
+  },
+  /** Mission 02 sprites — public paths with SVG/icon UI fallbacks when missing. */
+  mission2: {
+    treadmill: '/assets/mission2/treadmill.png',
+    resistance: '/assets/mission2/resistance.png',
+    stretch: '/assets/mission2/stretch.png',
+    balance: '/assets/mission2/balance.png',
+    tray: '/assets/mission2/food-tray.svg',
+    hygiene: '/assets/mission2/hygiene.svg',
+    bunk: '/assets/mission2/bunk.svg',
+  },
+  /** Mission 03 — ice exploration (SVG fallbacks under public/assets/mission3). */
+  mission3: {
+    drill: '/assets/mission3/drill.svg',
+    sample: '/assets/mission3/sample.svg',
+    lab: '/assets/mission3/lab.svg',
+    radar: '/assets/mission3/radar.svg',
+    sectorAlpha: '/assets/mission3/sector-alpha.svg',
+    sectorBeta: '/assets/mission3/sector-beta.svg',
+    sectorGamma: '/assets/mission3/sector-gamma.svg',
+    crater: '/assets/mission3/crater.svg',
+    processIdentify: '/assets/mission3/process-identify.svg',
+    processSeparate: '/assets/mission3/process-separate.svg',
+    processMelt: '/assets/mission3/process-melt.svg',
+    processFilter: '/assets/mission3/process-filter.svg',
+    processTreat: '/assets/mission3/process-treat.svg',
+    processQuality: '/assets/mission3/process-quality.svg',
+    waterDrop: '/assets/mission3/water-drop.svg',
+    camera: '/assets/mission3/camera.svg',
+  },
+  mission4: {
+    interior: '/assets/mission4/greenhouse-interior.jpg',
+    dome: '/assets/mission4/dome.png',
+    astronaut: '/assets/mission4/astronaut.png',
+    mister: '/assets/mission4/mister.svg',
+    trayEmpty: '/assets/mission4/tray-empty.png',
+    tray: {
+      veggie: '/assets/mission4/tray-veggie.png',
+      fruit: '/assets/mission4/tray-fruit.png',
+      grain: '/assets/mission4/tray-grain.png',
+      flower: '/assets/mission4/tray-flower.png',
+    },
+    seeds: {
+      lettuce: '/assets/mission4/seed-lettuce.png',
+      tomato: '/assets/mission4/seed-tomato.png',
+      carrot: '/assets/mission4/seed-carrot.png',
+      strawberry: '/assets/mission4/seed-strawberry.png',
+      wheat: '/assets/mission4/seed-wheat.png',
+      zinnia: '/assets/mission4/seed-zinnia.png',
+    },
+    methods: {
+      hydro: '/assets/mission4/method-hydro.jpg',
+      aero: '/assets/mission4/method-aero.jpg',
+      regolith: '/assets/mission4/method-regolith.jpg',
+    },
+  },
+  mission5: {
+    storm: '/assets/mission5/storm-base.jpg',
+    stormWindow: '/assets/mission5/storm-window.jpg',
+    baseClear: '/assets/mission5/base-clear.jpg',
+  },
+} as const
